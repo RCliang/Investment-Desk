@@ -1,1 +1,7 @@
-node_modules/\ndist/\n*.pyc\n__pycache__/\nbackend/data/\n.DS_Store\n*.db
+node_modules/
+dist/
+*.pyc
+__pycache__/
+backend/data/
+.DS_Store
+*.db
