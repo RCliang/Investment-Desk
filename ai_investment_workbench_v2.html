@@ -1,0 +1,751 @@
+
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: var(--font-sans); }
+
+:root {
+  --bg: #0d1117;
+  --bg2: #161b22;
+  --bg3: #1c2330;
+  --bg4: #21262d;
+  --border: rgba(48,54,61,0.9);
+  --border2: rgba(99,109,123,0.4);
+  --text1: #e6edf3;
+  --text2: #8b949e;
+  --text3: #6e7681;
+  --accent: #1f6feb;
+  --accent2: #388bfd;
+  --accent-glow: rgba(31,111,235,0.15);
+  --green: #3fb950;
+  --green-bg: rgba(63,185,80,0.1);
+  --amber: #d29922;
+  --amber-bg: rgba(210,153,34,0.1);
+  --red: #f85149;
+  --purple: #a371f7;
+  --mono: var(--font-mono);
+}
+
+.workbench {
+  background: var(--bg);
+  color: var(--text1);
+  min-height: 600px;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--border);
+  overflow: hidden;
+}
+
+.top-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px;
+  background: var(--bg2);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.top-bar .logo {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--accent2);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.top-bar .sep { flex: 1; }
+
+.status-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--green);
+  flex-shrink: 0;
+}
+
+.top-bar .status-label { font-size: 11px; color: var(--text3); }
+
+.nav-tabs {
+  display: flex;
+  background: var(--bg2);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.nav-tab {
+  padding: 8px 16px;
+  font-size: 12px;
+  color: var(--text2);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: color 0.15s, border-color 0.15s;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.nav-tab:hover { color: var(--text1); }
+.nav-tab.active { color: var(--accent2); border-bottom-color: var(--accent2); }
+.nav-tab i { font-size: 13px; }
+
+.main-area {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+.left-panel {
+  width: 220px;
+  flex-shrink: 0;
+  background: var(--bg2);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+}
+
+.panel-section {
+  border-bottom: 1px solid var(--border);
+  padding: 12px;
+}
+
+.panel-label {
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--text3);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+
+.industry-input {
+  width: 100%;
+  background: var(--bg3);
+  border: 1px solid var(--border2);
+  border-radius: 6px;
+  padding: 7px 10px;
+  font-size: 12px;
+  color: var(--text1);
+  font-family: var(--font-sans);
+  outline: none;
+  margin-bottom: 6px;
+  display: block;
+}
+
+.industry-input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent-glow);
+}
+
+.btn-primary {
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 7px 12px;
+  font-size: 12px;
+  cursor: pointer;
+  font-family: var(--font-sans);
+  font-weight: 500;
+  width: 100%;
+  transition: background 0.15s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+}
+
+.btn-primary:hover { background: var(--accent2); }
+
+.btn-sm {
+  background: var(--bg4);
+  color: var(--text1);
+  border: 1px solid var(--border2);
+  border-radius: 5px;
+  padding: 5px 10px;
+  font-size: 11px;
+  cursor: pointer;
+  font-family: var(--font-sans);
+  transition: background 0.15s;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.btn-sm:hover { background: var(--bg3); }
+
+.skill-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background 0.12s;
+  margin-bottom: 2px;
+}
+
+.skill-item:hover { background: var(--bg4); }
+.skill-item.active { background: var(--accent-glow); }
+
+.skill-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.skill-name { font-size: 12px; color: var(--text1); flex: 1; }
+
+.skill-badge {
+  font-size: 10px;
+  padding: 2px 5px;
+  border-radius: 3px;
+  font-family: var(--mono);
+}
+
+.badge-ok   { background: var(--green-bg); color: var(--green); }
+.badge-warn { background: var(--amber-bg); color: var(--amber); }
+
+.history-item {
+  font-size: 11px;
+  color: var(--text3);
+  cursor: pointer;
+  padding: 4px 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.history-item:hover { color: var(--text2); }
+
+.center-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-width: 0;
+}
+
+.view-area {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px 20px;
+}
+
+.view-section { display: none; }
+.view-section.active { display: block; }
+
+.insight-cards {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.insight-card {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 10px 12px;
+}
+
+.ic-label { font-size: 10px; color: var(--text3); margin-bottom: 4px; }
+.ic-value { font-size: 20px; font-weight: 500; font-family: var(--mono); }
+.ic-sub   { font-size: 10px; color: var(--text2); margin-top: 2px; }
+
+.chain-title {
+  font-size: 10px;
+  color: var(--text3);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+  font-weight: 500;
+}
+
+.chain-grid {
+  display: grid;
+  grid-template-columns: 1fr 24px 1fr 24px 1fr;
+  gap: 0;
+  margin-bottom: 16px;
+  align-items: start;
+}
+
+.chain-col {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.chain-col-header {
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--border);
+}
+
+.chain-col-title { font-size: 11px; font-weight: 500; }
+
+.chain-arrow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text3);
+  padding-top: 30px;
+}
+
+.chain-items { padding: 6px; }
+
+.chain-item {
+  padding: 6px 8px;
+  margin-bottom: 3px;
+  border-radius: 4px;
+  background: var(--bg4);
+  font-size: 11px;
+  color: var(--text1);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  transition: background 0.12s;
+}
+
+.chain-item:hover { background: rgba(31,111,235,0.15); }
+
+.opp-tag {
+  font-size: 9px;
+  padding: 1px 5px;
+  border-radius: 3px;
+}
+
+.opp-high { background: rgba(63,185,80,0.15); color: var(--green); }
+.opp-mid  { background: var(--amber-bg); color: var(--amber); }
+.opp-low  { background: rgba(139,148,158,0.12); color: var(--text3); }
+
+.section-divider {
+  font-size: 10px;
+  color: var(--text3);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 10px 0 6px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.section-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+.opp-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+
+.opp-table th {
+  text-align: left;
+  padding: 5px 8px;
+  color: var(--text3);
+  font-size: 10px;
+  font-weight: 500;
+  border-bottom: 1px solid var(--border);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.opp-table td {
+  padding: 7px 8px;
+  border-bottom: 1px solid rgba(48,54,61,0.5);
+  color: var(--text2);
+  vertical-align: middle;
+}
+
+.opp-table tr:hover td { background: var(--bg3); }
+.opp-table .td-name { color: var(--text1); font-weight: 500; }
+
+.progress-bar-wrap {
+  background: var(--bg4);
+  border-radius: 3px;
+  height: 5px;
+  overflow: hidden;
+  margin-top: 4px;
+}
+
+.progress-bar { height: 100%; border-radius: 3px; }
+
+.report-tag {
+  display: inline-block;
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 3px;
+  margin-right: 4px;
+  margin-bottom: 3px;
+  font-family: var(--mono);
+}
+
+.rt-source { background: rgba(163,113,247,0.12); color: var(--purple); }
+.rt-conf   { background: rgba(63,185,80,0.1); color: var(--green); }
+.rt-risk   { background: rgba(248,81,73,0.1); color: var(--red); }
+
+.report-block {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 14px 16px;
+  margin-bottom: 12px;
+  font-size: 12px;
+  color: var(--text2);
+  line-height: 1.7;
+}
+
+.report-block h3 {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text1);
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.report-block h3 i { font-size: 14px; color: var(--accent2); }
+
+.data-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 5px 0;
+  border-bottom: 1px solid rgba(48,54,61,0.5);
+  font-size: 11px;
+}
+
+.data-row:last-child { border-bottom: none; }
+.data-row .dk { color: var(--text3); }
+.data-row .dv { color: var(--text1); font-family: var(--mono); }
+.data-row .dv.up { color: var(--green); }
+.data-row .dv.dn { color: var(--red); }
+
+.skill-card {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 10px 12px;
+  cursor: pointer;
+  transition: border-color 0.15s;
+}
+
+.skill-card:hover { border-color: var(--accent); }
+
+.skill-card-off {
+  background: var(--bg4);
+  border: 1px dashed var(--border2);
+  opacity: 0.6;
+}
+</style>
+
+<h2 class="sr-only">InvestLens AI 投资工作台 — 产业链研究与机会分析</h2>
+
+<div class="workbench">
+
+  <div class="top-bar">
+    <span class="logo"><i class="ti ti-chart-dots-3" aria-hidden="true"></i> InvestLens</span>
+    <span style="font-size:11px; color:var(--text3); font-family:var(--mono);">v2.1</span>
+    <span class="sep"></span>
+    <span class="status-dot"></span>
+    <span class="status-label">3 个 Skill 在线</span>
+    <button class="btn-sm" onclick="sendPrompt('帮我导出当前新能源汽车的投资研究报告')">
+      <i class="ti ti-download" aria-hidden="true"></i> 导出报告
+    </button>
+  </div>
+
+  <div class="nav-tabs">
+    <div class="nav-tab active" onclick="switchTab(this,'chain')">
+      <i class="ti ti-sitemap" aria-hidden="true"></i> 产业链图谱
+    </div>
+    <div class="nav-tab" onclick="switchTab(this,'data')">
+      <i class="ti ti-database" aria-hidden="true"></i> 数据查询
+    </div>
+    <div class="nav-tab" onclick="switchTab(this,'report')">
+      <i class="ti ti-file-analytics" aria-hidden="true"></i> 投资报告
+    </div>
+  </div>
+
+  <div class="main-area">
+
+    <div class="left-panel">
+      <div class="panel-section">
+        <div class="panel-label">研究标的</div>
+        <input class="industry-input" id="industryInput" placeholder="输入产业名称…" value="新能源汽车" />
+        <button class="btn-primary" onclick="runAnalysis()">
+          <i class="ti ti-sparkles" aria-hidden="true"></i> 启动 AI 分析
+        </button>
+        <div style="font-size:10px; color:var(--text3); margin-top:6px;">自动调用已启用的 Skill</div>
+      </div>
+
+      <div class="panel-section">
+        <div class="panel-label">已挂载 Skills</div>
+        <div class="skill-item active" onclick="toggleSkill(this)">
+          <span class="skill-dot" style="background:#a371f7;"></span>
+          <span class="skill-name">Wind 行业数据</span>
+          <span class="skill-badge badge-ok">ON</span>
+        </div>
+        <div class="skill-item active" onclick="toggleSkill(this)">
+          <span class="skill-dot" style="background:#388bfd;"></span>
+          <span class="skill-name">研报抓取</span>
+          <span class="skill-badge badge-ok">ON</span>
+        </div>
+        <div class="skill-item active" onclick="toggleSkill(this)">
+          <span class="skill-dot" style="background:#3fb950;"></span>
+          <span class="skill-name">财务分析</span>
+          <span class="skill-badge badge-ok">ON</span>
+        </div>
+        <div class="skill-item" onclick="toggleSkill(this)">
+          <span class="skill-dot" style="background:#8b949e;"></span>
+          <span class="skill-name">Bloomberg</span>
+          <span class="skill-badge badge-warn">OFF</span>
+        </div>
+        <div style="margin-top:8px;">
+          <button class="btn-sm" style="width:100%; justify-content:center;" onclick="sendPrompt('我想添加一个新的Skill来查询供应链数据，应该如何配置？')">
+            <i class="ti ti-plus" aria-hidden="true"></i> 添加 Skill
+          </button>
+        </div>
+      </div>
+
+      <div class="panel-section" style="flex:1;">
+        <div class="panel-label">历史研究</div>
+        <div class="history-item"><i class="ti ti-history" aria-hidden="true"></i> 半导体设备 · 2天前</div>
+        <div class="history-item"><i class="ti ti-history" aria-hidden="true"></i> 锂电池材料 · 5天前</div>
+        <div class="history-item"><i class="ti ti-history" aria-hidden="true"></i> 光伏逆变器 · 8天前</div>
+      </div>
+    </div>
+
+    <div class="center-panel">
+      <div class="view-area">
+
+        <!-- 产业链图谱 -->
+        <div class="view-section active" id="view-chain">
+          <div class="insight-cards">
+            <div class="insight-card">
+              <div class="ic-label">产业规模 (2024)</div>
+              <div class="ic-value" style="color:var(--accent2);">¥1.2T</div>
+              <div class="ic-sub">同比 +18.3%</div>
+            </div>
+            <div class="insight-card">
+              <div class="ic-label">识别机会数</div>
+              <div class="ic-value" style="color:var(--green);">14</div>
+              <div class="ic-sub">高确信度 3 个</div>
+            </div>
+            <div class="insight-card">
+              <div class="ic-label">综合评级</div>
+              <div class="ic-value" style="color:var(--amber);">B+</div>
+              <div class="ic-sub">关注政策风险</div>
+            </div>
+            <div class="insight-card">
+              <div class="ic-label">数据更新</div>
+              <div class="ic-value" style="font-size:13px; color:var(--text2); padding-top:3px;">06-21 09:32</div>
+              <div class="ic-sub">Wind · 研报 · 财务</div>
+            </div>
+          </div>
+
+          <div class="chain-title">产业链全景 — 新能源汽车 （点击环节深入分析）</div>
+
+          <div class="chain-grid">
+            <div class="chain-col">
+              <div class="chain-col-header">
+                <span class="chain-col-title" style="color:#a371f7;">上游原材料</span>
+              </div>
+              <div class="chain-items">
+                <div class="chain-item" onclick="sendPrompt('分析锂矿资源的投资机会，重点看供需缺口和主要标的')">锂矿资源 <span class="opp-tag opp-high">高</span></div>
+                <div class="chain-item" onclick="sendPrompt('钴镍稀土的上游资源投资机会怎么看？')">钴镍稀土 <span class="opp-tag opp-mid">中</span></div>
+                <div class="chain-item" onclick="sendPrompt('正极材料行业竞争格局和主要标的分析')">正极材料 <span class="opp-tag opp-high">高</span></div>
+                <div class="chain-item" onclick="sendPrompt('负极材料（石墨、硅碳）的投资机会分析')">负极材料 <span class="opp-tag opp-mid">中</span></div>
+                <div class="chain-item" onclick="sendPrompt('碳纤维复合材料在新能源汽车中的应用前景如何？')">碳纤维 <span class="opp-tag opp-low">低</span></div>
+              </div>
+            </div>
+
+            <div class="chain-arrow"><i class="ti ti-arrow-right" aria-hidden="true"></i></div>
+
+            <div class="chain-col">
+              <div class="chain-col-header">
+                <span class="chain-col-title" style="color:#388bfd;">中游制造</span>
+              </div>
+              <div class="chain-items">
+                <div class="chain-item" onclick="sendPrompt('动力电池行业集中度、宁德时代以外的主要标的分析')">动力电池 <span class="opp-tag opp-high">高</span></div>
+                <div class="chain-item" onclick="sendPrompt('智能座舱和车载芯片的投资机会详细分析')">智能座舱 <span class="opp-tag opp-high">高</span></div>
+                <div class="chain-item" onclick="sendPrompt('电机电控系统的国产替代进展和主要玩家')">电机电控 <span class="opp-tag opp-mid">中</span></div>
+                <div class="chain-item" onclick="sendPrompt('热管理系统在新能源汽车中的重要性和主要供应商')">热管理 <span class="opp-tag opp-mid">中</span></div>
+                <div class="chain-item" onclick="sendPrompt('车身底盘轻量化技术的投资逻辑')">车身底盘 <span class="opp-tag opp-low">低</span></div>
+              </div>
+            </div>
+
+            <div class="chain-arrow"><i class="ti ti-arrow-right" aria-hidden="true"></i></div>
+
+            <div class="chain-col">
+              <div class="chain-col-header">
+                <span class="chain-col-title" style="color:#3fb950;">下游应用</span>
+              </div>
+              <div class="chain-items">
+                <div class="chain-item" onclick="sendPrompt('充换电桩的政策背景和主要上市公司投资价值分析')">充换电桩 <span class="opp-tag opp-high">高</span></div>
+                <div class="chain-item" onclick="sendPrompt('储能与V2G技术商业化进展和投资逻辑')">V2G储能 <span class="opp-tag opp-high">高</span></div>
+                <div class="chain-item" onclick="sendPrompt('整车品牌格局：比亚迪vs造车新势力竞争分析')">整车品牌 <span class="opp-tag opp-mid">中</span></div>
+                <div class="chain-item" onclick="sendPrompt('新能源汽车后市场服务（保险、维修）的机会')">后市场服务 <span class="opp-tag opp-mid">中</span></div>
+                <div class="chain-item" onclick="sendPrompt('二手新能源车市场的投资机会在哪里？')">二手车市场 <span class="opp-tag opp-low">低</span></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="section-divider">机会优先级排序</div>
+          <table class="opp-table">
+            <thead>
+              <tr>
+                <th>环节</th>
+                <th>机会类型</th>
+                <th>时间窗口</th>
+                <th>确信度</th>
+                <th style="width:36px;"></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="td-name">正极材料</td>
+                <td><span class="report-tag rt-conf" style="margin:0;">供需缺口</span></td>
+                <td style="font-family:var(--mono);">6–12 个月</td>
+                <td>
+                  <div style="color:var(--green);font-size:11px;font-family:var(--mono);">87%</div>
+                  <div class="progress-bar-wrap" style="width:80px;"><div class="progress-bar" style="width:87%;background:var(--green);"></div></div>
+                </td>
+                <td><button class="btn-sm" onclick="sendPrompt('深度分析正极材料投资机会，调用Wind数据查询龙头公司财务情况')"><i class="ti ti-zoom-in" aria-hidden="true"></i></button></td>
+              </tr>
+              <tr>
+                <td class="td-name">充换电桩</td>
+                <td><span class="report-tag rt-conf" style="margin:0;">政策驱动</span></td>
+                <td style="font-family:var(--mono);">12–24 个月</td>
+                <td>
+                  <div style="color:var(--green);font-size:11px;font-family:var(--mono);">79%</div>
+                  <div class="progress-bar-wrap" style="width:80px;"><div class="progress-bar" style="width:79%;background:var(--green);"></div></div>
+                </td>
+                <td><button class="btn-sm" onclick="sendPrompt('充换电桩主要上市公司分析，用研报Skill抓取最新研究')"><i class="ti ti-zoom-in" aria-hidden="true"></i></button></td>
+              </tr>
+              <tr>
+                <td class="td-name">智能座舱</td>
+                <td><span class="report-tag rt-source" style="margin:0;">技术渗透</span></td>
+                <td style="font-family:var(--mono);">18–36 个月</td>
+                <td>
+                  <div style="color:var(--amber);font-size:11px;font-family:var(--mono);">62%</div>
+                  <div class="progress-bar-wrap" style="width:80px;"><div class="progress-bar" style="width:62%;background:var(--amber);"></div></div>
+                </td>
+                <td><button class="btn-sm" onclick="sendPrompt('智能座舱赛道技术路线和主要芯片供应商竞争格局分析')"><i class="ti ti-zoom-in" aria-hidden="true"></i></button></td>
+              </tr>
+              <tr>
+                <td class="td-name">锂矿资源</td>
+                <td><span class="report-tag rt-risk" style="margin:0;">价格博弈</span></td>
+                <td style="font-family:var(--mono);">观望</td>
+                <td>
+                  <div style="color:var(--red);font-size:11px;font-family:var(--mono);">41%</div>
+                  <div class="progress-bar-wrap" style="width:80px;"><div class="progress-bar" style="width:41%;background:var(--red);"></div></div>
+                </td>
+                <td><button class="btn-sm" onclick="sendPrompt('碳酸锂价格现在处于什么位置，抄底时机如何判断？')"><i class="ti ti-zoom-in" aria-hidden="true"></i></button></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- 数据查询 -->
+        <div class="view-section" id="view-data">
+          <div class="panel-label" style="margin-bottom:10px;">选择 Skill 发起查询</div>
+          <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-bottom:16px;">
+            <div class="skill-card" onclick="sendPrompt('用Wind Skill查询新能源汽车行业龙头公司的最新财务数据和估值对比')">
+              <div style="font-size:12px; font-weight:500; color:var(--text1); margin-bottom:4px;"><span style="color:#a371f7;">●</span> Wind 行业数据</div>
+              <div style="font-size:10px; color:var(--text3); line-height:1.5;">行业/公司财务 · 估值 · 资金流向</div>
+            </div>
+            <div class="skill-card" onclick="sendPrompt('用研报Skill抓取过去30天关于新能源汽车的最新卖方研究报告摘要和主要观点')">
+              <div style="font-size:12px; font-weight:500; color:var(--text1); margin-bottom:4px;"><span style="color:#388bfd;">●</span> 研报抓取</div>
+              <div style="font-size:10px; color:var(--text3); line-height:1.5;">卖方研究 · 行业深度 · 观点聚合</div>
+            </div>
+            <div class="skill-card" onclick="sendPrompt('用财务分析Skill对比宁德时代、亿纬锂能、国轩高科的核心财务指标，包括毛利率、ROE、负债率')">
+              <div style="font-size:12px; font-weight:500; color:var(--text1); margin-bottom:4px;"><span style="color:#3fb950;">●</span> 财务分析</div>
+              <div style="font-size:10px; color:var(--text3); line-height:1.5;">多公司对比 · 杜邦分析 · 预测模型</div>
+            </div>
+            <div class="skill-card skill-card-off" onclick="sendPrompt('我想接入Bloomberg数据，应该如何配置这个Skill？')">
+              <div style="font-size:12px; font-weight:500; color:var(--text2); margin-bottom:4px;">+ Bloomberg</div>
+              <div style="font-size:10px; color:var(--text3);">点击配置接入</div>
+            </div>
+          </div>
+
+          <div class="section-divider">最近查询结果 — Wind · 龙头估值对比</div>
+          <div class="report-block">
+            <div style="display:flex; align-items:center; gap:6px; margin-bottom:10px;">
+              <span class="report-tag rt-source">Wind</span>
+              <span style="font-size:10px; color:var(--text3); font-family:var(--mono);">新能源汽车 · 估值对比 · 2025-06-20</span>
+            </div>
+            <div class="data-row"><span class="dk">宁德时代 PE(TTM)</span><span class="dv">28.4x</span></div>
+            <div class="data-row"><span class="dk">比亚迪 PE(TTM)</span><span class="dv">22.1x</span></div>
+            <div class="data-row"><span class="dk">亿纬锂能 PE(TTM)</span><span class="dv">19.6x</span></div>
+            <div class="data-row"><span class="dk">行业均值 PE</span><span class="dv up">31.2x</span></div>
+            <div class="data-row"><span class="dk">近30日资金净流入</span><span class="dv up">+¥48.3亿</span></div>
+            <div class="data-row"><span class="dk">机构持仓变化</span><span class="dv up">+2.1%</span></div>
+          </div>
+        </div>
+
+        <!-- 投资报告 -->
+        <div class="view-section" id="view-report">
+          <div class="report-block">
+            <h3><i class="ti ti-file-analytics" aria-hidden="true"></i> 投资研究报告 — 新能源汽车产业链</h3>
+            <div style="font-size:10px; color:var(--text3); margin-bottom:10px; font-family:var(--mono);">
+              生成时间: 2025-06-21 09:32 · 数据源: Wind · 研报 · 财务分析
+            </div>
+            <div style="margin-bottom:8px;"><span class="report-tag rt-source">Wind</span><span class="report-tag rt-conf">高确信度</span></div>
+            <p style="margin-bottom:8px;"><strong style="color:var(--text1);">核心判断：</strong>中游分化加剧，动力电池及智能化零部件具备阶段性配置价值。上游锂矿短期价格压力仍存，建议等待企稳信号后再介入。</p>
+            <p style="margin-bottom:8px;"><strong style="color:var(--text1);">机会优先级：</strong>正极材料（高）→ 充换电基础设施（高）→ 智能座舱芯片（中）→ 锂矿资源（观望）</p>
+            <p><strong style="color:var(--text1);">主要风险：</strong><span class="report-tag rt-risk">政策补贴退坡</span><span class="report-tag rt-risk">价格竞争加剧</span><span class="report-tag rt-risk">海外市场不确定性</span></p>
+          </div>
+
+          <div style="display:flex; gap:8px; margin-bottom:14px;">
+            <button class="btn-sm" onclick="sendPrompt('基于当前分析，生成完整投资备忘录，包括仓位建议和止损位设置')">
+              <i class="ti ti-sparkles" aria-hidden="true"></i> 生成完整投资备忘录 ↗
+            </button>
+            <button class="btn-sm" onclick="sendPrompt('帮我把这份报告整理成可以分享给团队的PDF格式')">
+              <i class="ti ti-download" aria-hidden="true"></i> 导出 PDF
+            </button>
+          </div>
+
+          <div class="section-divider">风险矩阵</div>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+            <div style="background:rgba(248,81,73,0.06); border:1px solid rgba(248,81,73,0.18); border-radius:6px; padding:10px;">
+              <div style="font-size:10px; color:var(--red); margin-bottom:6px; font-weight:500;">高风险因素</div>
+              <div style="font-size:11px; color:var(--text2); line-height:1.7;">· 国内价格战持续压缩毛利率<br>· 欧美关税壁垒上升<br>· 原材料价格剧烈波动</div>
+            </div>
+            <div style="background:rgba(63,185,80,0.06); border:1px solid rgba(63,185,80,0.18); border-radius:6px; padding:10px;">
+              <div style="font-size:10px; color:var(--green); margin-bottom:6px; font-weight:500;">正向催化剂</div>
+              <div style="font-size:11px; color:var(--text2); line-height:1.7;">· 以旧换新政策持续发力<br>· 固态电池量产时间表清晰<br>· 出海东南亚市场加速</div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+function switchTab(el, viewId) {
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  document.querySelectorAll('.view-section').forEach(v => v.classList.remove('active'));
+  const t = document.getElementById('view-' + viewId);
+  if (t) t.classList.add('active');
+}
+
+function toggleSkill(el) {
+  const badge = el.querySelector('.skill-badge');
+  if (el.classList.contains('active')) {
+    el.classList.remove('active');
+    badge.textContent = 'OFF';
+    badge.className = 'skill-badge badge-warn';
+  } else {
+    el.classList.add('active');
+    badge.textContent = 'ON';
+    badge.className = 'skill-badge badge-ok';
+  }
+}
+
+function runAnalysis() {
+  const val = document.getElementById('industryInput').value.trim() || '该产业';
+  sendPrompt('请对「' + val + '」产业进行完整的上下游机会分析：1) 识别上中下游各环节主要机会 2) 调用Wind Skill查询关键财务数据 3) 调用研报Skill抓取最新卖方观点 4) 生成投资机会优先级排序');
+}
+</script>
