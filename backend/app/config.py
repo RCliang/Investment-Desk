@@ -1,13 +1,26 @@
 import os
 from pathlib import Path
 
+from dotenv import load_dotenv
+
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+# Load .env from backend/ directory so local dev doesn't need system env vars.
+# Explicit path ensures it's found regardless of CWD (e.g. when uvicorn runs
+# from repo root). Production deployments should still use real env vars.
+load_dotenv(BASE_DIR / ".env")
+
 DB_PATH = BASE_DIR / "data" / "investlens.db"
 
-ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY", "")
+# DeepSeek API (OpenAI-compatible interface)
+# 申请：https://platform.deepseek.com/
+DEEPSEEK_API_KEY = os.getenv("DEEPSEEK_API_KEY", "")
+DEEPSEEK_BASE_URL = os.getenv("DEEPSEEK_BASE_URL", "https://api.deepseek.com")
+# 可选模型：deepseek-chat (V3 通用对话) / deepseek-reasoner (R1 推理增强)
+MODEL_NAME = os.getenv("MODEL_NAME", "deepseek-chat")
+
 TUSHARE_TOKEN = os.getenv("TUSHARE_TOKEN", "")
 
-LLM_MODEL = "claude-sonnet-4-20250514"
 LLM_MAX_TOKENS = 4096
 
 CACHE_TTL_MARKET = 300       # 行情缓存 5 分钟

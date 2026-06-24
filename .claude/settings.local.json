@@ -1,0 +1,21 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(findstr:*)",
+      "Bash(command -v:*)",
+      "Bash(command:*)",
+      "Bash(bash:*)",
+      "Bash(export PATH=\"$HOME/.local/bin:$PATH\")",
+      "Bash(iwencai-skillhub-cli:*)",
+      "Bash(echo:*)",
+      "Bash(for f in ~/.bash_profile ~/.bashrc ~/.profile ~/.zshrc ~/.zprofile)",
+      "Bash(do if [[ -f \"$f\" ]])",
+      "Bash(then echo \"EXISTS: $f\")",
+      "Bash(else echo \"missing: $f\")",
+      "Bash(fi)",
+      "Bash(done)",
+      "Bash(python:*)",
+      "Bash(timeout 30 python:*)"
+    ]
+  }
+}

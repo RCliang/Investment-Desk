@@ -3,5 +3,12 @@ dist/
 *.pyc
 __pycache__/
 backend/data/
-.DS_Store
+*.DS_Store
 *.db
+
+# Environment variables (keep .env.example tracked)
+.env
+.env.local
+.env.*.local
+
+tmpclaude*

@@ -1,8 +1,11 @@
 import json
-from anthropic import Anthropic
-from app.config import ANTHROPIC_API_KEY, LLM_MODEL, LLM_MAX_TOKENS
+from openai import OpenAI
+from app.config import DEEPSEEK_API_KEY, DEEPSEEK_BASE_URL, MODEL_NAME, LLM_MAX_TOKENS
 
-client = Anthropic(api_key=ANTHROPIC_API_KEY) if ANTHROPIC_API_KEY else None
+client = OpenAI(
+    api_key=DEEPSEEK_API_KEY,
+    base_url=DEEPSEEK_BASE_URL,
+) if DEEPSEEK_API_KEY else None
 
 CHAIN_ANALYSIS_PROMPT = """你是一个资深的产业分析师。请对「{industry}」产业进行产业链分析。
 
@@ -51,12 +54,12 @@ REPORT_GENERATION_PROMPT = """你是一个资深投资研究员。请基于以�
 def analyze_chain(industry: str) -> dict:
     if not client:
         return _mock_chain_analysis(industry)
-    response = client.messages.create(
-        model=LLM_MODEL,
+    response = client.chat.completions.create(
+        model=MODEL_NAME,
         max_tokens=LLM_MAX_TOKENS,
         messages=[{"role": "user", "content": CHAIN_ANALYSIS_PROMPT.format(industry=industry)}],
     )
-    text = response.content[0].text
+    text = response.choices[0].message.content
     if "```json" in text:
         text = text.split("```json")[1].split("```")[0]
     elif "```" in text:
@@ -69,13 +72,16 @@ def generate_report_stream(industry: str, chain_data: str):
         yield _mock_report(industry)
         return
     prompt = REPORT_GENERATION_PROMPT.format(industry=industry, chain_data=chain_data)
-    with client.messages.stream(
-        model=LLM_MODEL,
+    stream = client.chat.completions.create(
+        model=MODEL_NAME,
         max_tokens=LLM_MAX_TOKENS * 2,
         messages=[{"role": "user", "content": prompt}],
-    ) as stream:
-        for text in stream.text_stream:
-            yield text
+        stream=True,
+    )
+    for chunk in stream:
+        delta = chunk.choices[0].delta.content
+        if delta:
+            yield delta
 
 
 def _mock_chain_analysis(industry: str) -> dict:
