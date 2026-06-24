@@ -15,7 +15,12 @@
       "Bash(fi)",
       "Bash(done)",
       "Bash(python:*)",
-      "Bash(timeout 30 python:*)"
+      "Bash(timeout 30 python:*)",
+      "Skill(a-stock-data)",
+      "Bash(where:*)",
+      "Bash(curl:*)",
+      "Bash(pip install:*)",
+      "Bash(tee:*)"
     ]
   }
 }

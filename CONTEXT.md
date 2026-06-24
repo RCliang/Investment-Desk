@@ -26,7 +26,12 @@ _Avoid_: Tier, level, band, stage.
 
 **Sub-industry**:
 A node within a Layer that groups companies delivering similar products or
-services (e.g., "GPU design" within the chips layer).
+services (e.g., "GPU design" within the chips layer). The v1 seed (48
+Sub-industries × ~339 unique companies) is adopted verbatim from
+aichainmap.com's atlas; see
+[ADR-0007](./docs/adr/0007-aichainmap-canonical-layers.md). iwencai and
+East Money are backfill sources for market data, not classification
+authorities.
 _Avoid_: Category, segment, sector, vertical.
 
 **Company**:
