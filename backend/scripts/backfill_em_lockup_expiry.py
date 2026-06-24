@@ -185,25 +185,11 @@ def main():
                   f"err={len(errors)} upcoming_events={total_up} "
                   f"elapsed={elapsed:>5.1f}s eta={eta:>5.1f}s")
 
-    # ── Aggregate stats ─────────────────────────────────────────────────────
+    # ── Write JSON output FIRST (so data is safe even if aggregation fails) ─
     tickers_with_upcoming = [
         v for v in per_ticker.values() if v["upcoming_count"] > 0
     ]
     total_upcoming_events = sum(v["upcoming_count"] for v in tickers_with_upcoming)
-    total_upcoming_shares = sum(
-        sum(u["shares"] for u in v["upcoming"])
-        for v in tickers_with_upcoming
-    )
-
-    # Heaviest upcoming dilution (by ratio %)
-    all_upcoming_flattened = [
-        (v["ticker"], v["seed_name"], u)
-        for v in tickers_with_upcoming for u in v["upcoming"]
-    ]
-    heaviest_dilution = sorted(
-        all_upcoming_flattened,
-        key=lambda x: -(float(x[2].get("ratio_pct") or 0))
-    )[:10]
 
     # History distribution
     hist_counts = [v["history_count"] for v in per_ticker.values()]
@@ -231,17 +217,6 @@ def main():
         "rate_limit_seconds": EM_MIN_INTERVAL,
         "coverage_distribution": coverage_buckets,
         "errors": errors[:20],
-        "heaviest_upcoming_dilution_top10": [
-            {
-                "ticker": t,
-                "name": name,
-                "date": u["date"],
-                "type": u["type"],
-                "shares": u["shares"],
-                "ratio_pct": u["ratio_pct"],
-            }
-            for t, name, u in heaviest_dilution
-        ],
         "tickers": per_ticker,
     }
 
@@ -249,6 +224,22 @@ def main():
         json.dumps(output, ensure_ascii=False, indent=2),
         encoding="utf-8",
     )
+
+    # ── Aggregate stats (post-write; safe to fail without losing data) ──────
+    total_upcoming_shares = sum(
+        sum(u["shares_wan"] for u in v["upcoming"])
+        for v in tickers_with_upcoming
+    )
+
+    # Heaviest upcoming dilution (by ratio %)
+    all_upcoming_flattened = [
+        (v["ticker"], v["seed_name"], u)
+        for v in tickers_with_upcoming for u in v["upcoming"]
+    ]
+    heaviest_dilution = sorted(
+        all_upcoming_flattened,
+        key=lambda x: -(float(x[2].get("ratio_pct") or 0))
+    )[:10]
 
     # ── Summary ─────────────────────────────────────────────────────────────
     print()
