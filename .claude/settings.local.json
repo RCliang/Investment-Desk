@@ -20,7 +20,13 @@
       "Bash(where:*)",
       "Bash(curl:*)",
       "Bash(pip install:*)",
-      "Bash(tee:*)"
+      "Bash(tee:*)",
+      "Bash(tasklist:*)",
+      "Bash(uvicorn:*)",
+      "Bash(npx tsc:*)",
+      "Bash(npm run lint)",
+      "Bash(npm run build)",
+      "Bash(pkill:*)"
     ]
   }
 }

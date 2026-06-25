@@ -1,0 +1,893 @@
+/**
+ * chainkb.css — sketch-aesthetic styles for the chain knowledge base dashboard.
+ *
+ * Every rule is scoped under `.chainkb-root` so the hand-drawn theme does not
+ * bleed into DataPage / ReportPage / PlanPage (which use the dark Ant Design
+ * theme defined in App.tsx).
+ *
+ * Ported from wireframe.html; trimmed to the 3 in-scope tabs
+ * (00 总览, 01 产业链层级, 03 财务拆解).
+ */
+
+.chainkb-root {
+  /* palette */
+  --paper: #fbf9f4;
+  --paper-2: #f5f1e8;
+  --ink: #1a2b4a;
+  --ink-soft: #3d4f6e;
+  --pencil: #5a6a85;
+  --graph: rgba(26, 43, 74, 0.07);
+  --graph-major: rgba(26, 43, 74, 0.13);
+  --hi-yellow: #fff3a8;
+  --hi-yellow-edge: #e8c84a;
+  --hi-orange: #ffd9a8;
+  --marker-red: #e85a4f;
+  --marker-red-soft: rgba(232, 90, 79, 0.15);
+  --marker-green: #3a8a5a;
+  --sticky-yellow: #ffe97a;
+  --sticky-pink: #ffb8c5;
+  --sticky-green: #b8e0a8;
+  --tape: rgba(255, 243, 168, 0.6);
+
+  /* base */
+  background: var(--paper);
+  color: var(--ink);
+  font-family: 'Patrick Hand', 'Caveat', cursive;
+  line-height: 1.4;
+  -webkit-font-smoothing: antialiased;
+  min-height: 100%;
+  padding: 28px 24px 64px;
+
+  /* graph-paper background: minor 24px + major 96px grid */
+  background-image:
+    linear-gradient(var(--graph) 1px, transparent 1px),
+    linear-gradient(90deg, var(--graph) 1px, transparent 1px),
+    linear-gradient(var(--graph-major) 1px, transparent 1px),
+    linear-gradient(90deg, var(--graph-major) 1px, transparent 1px);
+  background-size: 24px 24px, 24px 24px, 96px 96px, 96px 96px;
+  background-position: 0 0, 0 0, 0 0, 0 0;
+}
+
+.chainkb-root * {
+  box-sizing: border-box;
+}
+
+.chainkb-root .wrap {
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+/* ====== Page header ====== */
+.chainkb-root .header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 22px;
+  transform: rotate(-0.3deg);
+}
+.chainkb-root .header-left {
+  display: flex;
+  align-items: flex-end;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.chainkb-root .header h1 {
+  font-family: 'Caveat', cursive;
+  font-weight: 700;
+  font-size: 44px;
+  line-height: 1;
+  color: var(--ink);
+  letter-spacing: 0.5px;
+  margin: 0;
+}
+.chainkb-root .version-tag {
+  display: inline-block;
+  border: 2px dashed var(--ink);
+  padding: 4px 12px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 1px;
+  background: var(--paper-2);
+  transform: rotate(2deg);
+  color: var(--ink);
+}
+.chainkb-root .dateline {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  color: var(--pencil);
+  text-align: right;
+  line-height: 1.6;
+  transform: rotate(0.4deg);
+}
+.chainkb-root .subtitle {
+  font-family: 'Caveat', cursive;
+  font-style: italic;
+  font-size: 20px;
+  color: var(--ink-soft);
+  margin-top: 4px;
+}
+
+/* ====== Tab strip ====== */
+.chainkb-root .tabs {
+  display: flex;
+  gap: 0;
+  margin-bottom: 22px;
+  border-bottom: 3px solid var(--ink);
+  flex-wrap: wrap;
+  transform: rotate(-0.2deg);
+}
+.chainkb-root .tab {
+  padding: 10px 18px;
+  font-family: 'Patrick Hand', cursive;
+  font-size: 15px;
+  color: var(--ink-soft);
+  cursor: pointer;
+  position: relative;
+  border: 2px solid transparent;
+  border-bottom: none;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: background 0.2s;
+}
+.chainkb-root .tab:hover {
+  background: rgba(26, 43, 74, 0.04);
+}
+.chainkb-root .tab-check {
+  width: 16px;
+  height: 16px;
+  border: 2px solid var(--pencil);
+  border-radius: 2px;
+  display: inline-block;
+  position: relative;
+  flex-shrink: 0;
+}
+.chainkb-root .tab-check.checked::after {
+  content: '✓';
+  position: absolute;
+  top: -6px;
+  left: 1px;
+  font-size: 16px;
+  color: var(--ink);
+  font-family: 'Patrick Hand', cursive;
+}
+.chainkb-root .tab.active {
+  color: var(--ink);
+  font-weight: bold;
+}
+.chainkb-root .tab.active .tab-check {
+  border-color: var(--ink);
+  background: var(--paper-2);
+}
+.chainkb-root .tab.active .tab-check.checked::after {
+  color: var(--marker-red);
+}
+.chainkb-root .tab-highlight {
+  position: absolute;
+  top: -2px;
+  left: -4px;
+  right: -4px;
+  bottom: -3px;
+  background: var(--hi-yellow);
+  z-index: -1;
+  transform: skewX(-3deg) rotate(-0.5deg);
+  border: 1px solid var(--hi-yellow-edge);
+  opacity: 0.85;
+}
+
+/* ====== Panels ====== */
+.chainkb-root .panel {
+  background: var(--paper);
+  border: 2.5px solid var(--ink);
+  border-radius: 6px;
+  padding: 18px 20px;
+  position: relative;
+  box-shadow: 3px 4px 0 rgba(26, 43, 74, 0.08);
+}
+.chainkb-root .panel-title {
+  font-family: 'Caveat', cursive;
+  font-weight: 700;
+  font-size: 24px;
+  color: var(--ink);
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.chainkb-root .panel-title-mono {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  font-weight: 400;
+  color: var(--pencil);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  margin-left: auto;
+}
+.chainkb-root .panel-rotate-l {
+  transform: rotate(-0.4deg);
+}
+.chainkb-root .panel-rotate-r {
+  transform: rotate(0.5deg);
+}
+
+/* ====== KPI tiles ====== */
+.chainkb-root .kpi-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+  margin-bottom: 20px;
+}
+.chainkb-root .kpi-row-7 {
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+}
+.chainkb-root .kpi {
+  background: var(--paper);
+  border: 2.5px solid var(--ink);
+  border-radius: 5px;
+  padding: 12px 14px;
+  position: relative;
+  box-shadow: 2px 3px 0 rgba(26, 43, 74, 0.08);
+}
+.chainkb-root .kpi:nth-child(1) {
+  transform: rotate(-0.5deg);
+}
+.chainkb-root .kpi:nth-child(2) {
+  transform: rotate(0.3deg);
+}
+.chainkb-root .kpi:nth-child(3) {
+  transform: rotate(-0.2deg);
+}
+.chainkb-root .kpi:nth-child(4) {
+  transform: rotate(0.6deg);
+}
+.chainkb-root .kpi:nth-child(5) {
+  transform: rotate(-0.4deg);
+}
+.chainkb-root .kpi:nth-child(6) {
+  transform: rotate(0.2deg);
+}
+.chainkb-root .kpi:nth-child(7) {
+  transform: rotate(-0.6deg);
+}
+.chainkb-root .kpi-label {
+  font-family: 'Patrick Hand', cursive;
+  font-size: 12px;
+  color: var(--ink-soft);
+  margin-bottom: 4px;
+  letter-spacing: 0.5px;
+}
+.chainkb-root .kpi-value {
+  font-family: 'Caveat', cursive;
+  font-weight: 700;
+  font-size: 30px;
+  color: var(--ink);
+  line-height: 1;
+}
+.chainkb-root .kpi-delta {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  margin-top: 6px;
+  display: inline-block;
+}
+.chainkb-root .kpi-delta.up {
+  color: var(--marker-green);
+}
+.chainkb-root .kpi-delta.down {
+  color: var(--marker-red);
+}
+.chainkb-root .kpi-delta.neutral {
+  color: var(--pencil);
+}
+.chainkb-root .kpi-stamp {
+  position: absolute;
+  top: 8px;
+  right: 10px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 8px;
+  color: var(--pencil);
+  border: 1px solid var(--pencil);
+  padding: 1px 5px;
+  border-radius: 2px;
+  letter-spacing: 1px;
+}
+
+/* ====== Content grids ====== */
+.chainkb-root .content-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 18px;
+  margin-bottom: 20px;
+}
+.chainkb-root .content-grid-3 {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 18px;
+  margin-bottom: 20px;
+}
+.chainkb-root .content-grid-equal {
+  grid-template-columns: 1fr 1fr;
+}
+
+/* ====== Chart boxes (topology / bars / etc.) ====== */
+.chainkb-root .chart-box {
+  background: var(--paper);
+  border: 2.5px solid var(--ink);
+  border-radius: 6px;
+  padding: 16px 18px;
+  box-shadow: 2px 3px 0 rgba(26, 43, 74, 0.08);
+  position: relative;
+}
+.chainkb-root .chart-canvas {
+  height: 200px;
+  position: relative;
+  margin: 8px 0;
+  background-image: linear-gradient(rgba(26, 43, 74, 0.04) 1px, transparent 1px);
+  background-size: 100% 25%;
+}
+.chainkb-root .chart-svg {
+  width: 100%;
+  height: 100%;
+}
+.chainkb-root .chart-caption {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: var(--pencil);
+  text-align: center;
+  margin-top: 6px;
+  letter-spacing: 0.5px;
+}
+
+/* ====== Hatched fills (used by bar charts) ====== */
+.chainkb-root .hatch-light {
+  background: repeating-linear-gradient(
+    45deg,
+    transparent,
+    transparent 5px,
+    rgba(26, 43, 74, 0.07) 5px,
+    rgba(26, 43, 74, 0.07) 6px
+  );
+}
+.chainkb-root .hatch-cross {
+  background:
+    repeating-linear-gradient(
+      45deg,
+      transparent,
+      transparent 5px,
+      rgba(26, 43, 74, 0.08) 5px,
+      rgba(26, 43, 74, 0.08) 6px
+    ),
+    repeating-linear-gradient(
+      -45deg,
+      transparent,
+      transparent 5px,
+      rgba(26, 43, 74, 0.08) 5px,
+      rgba(26, 43, 74, 0.08) 6px
+    );
+}
+.chainkb-root .hatch-red {
+  background: repeating-linear-gradient(
+    45deg,
+    transparent,
+    transparent 5px,
+    rgba(232, 90, 79, 0.18) 5px,
+    rgba(232, 90, 79, 0.18) 6px
+  );
+}
+
+/* ====== Sticky notes ====== */
+.chainkb-root .sticky {
+  position: absolute;
+  width: 170px;
+  padding: 12px 14px 16px;
+  font-family: 'Caveat', cursive;
+  font-size: 16px;
+  line-height: 1.35;
+  box-shadow: 3px 4px 6px rgba(0, 0, 0, 0.12);
+  z-index: 20;
+}
+.chainkb-root .sticky::before {
+  content: '';
+  position: absolute;
+  top: -8px;
+  left: 50%;
+  transform: translateX(-50%) rotate(-3deg);
+  width: 48px;
+  height: 18px;
+  background: var(--tape);
+  border: 1px solid rgba(232, 200, 74, 0.3);
+}
+.chainkb-root .sticky-yellow {
+  background: var(--sticky-yellow);
+  transform: rotate(2deg);
+}
+.chainkb-root .sticky-pink {
+  background: var(--sticky-pink);
+  transform: rotate(-1.8deg);
+}
+.chainkb-root .sticky-green {
+  background: var(--sticky-green);
+  transform: rotate(1.2deg);
+}
+.chainkb-root .sticky-title {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: rgba(0, 0, 0, 0.5);
+  margin-bottom: 4px;
+  display: block;
+}
+.chainkb-root .sticky-arrow {
+  font-size: 14px;
+  color: var(--marker-red);
+  font-family: 'Patrick Hand', cursive;
+  font-weight: bold;
+  margin-top: 4px;
+  display: block;
+}
+
+/* ====== Inline sticky variant (not absolutely positioned) ====== */
+.chainkb-root .sticky-inline {
+  position: relative;
+  margin: 12px 0;
+  width: auto;
+  max-width: 320px;
+}
+
+/* ====== Table sketch ====== */
+.chainkb-root .table-sketch {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-family: 'Patrick Hand', cursive;
+  font-size: 14px;
+}
+.chainkb-root .table-sketch th {
+  text-align: left;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--pencil);
+  padding: 8px 10px;
+  border-bottom: 2px solid var(--ink);
+  font-weight: 500;
+  white-space: nowrap;
+}
+.chainkb-root .table-sketch td {
+  padding: 10px;
+  border-bottom: 1.5px dashed var(--pencil);
+  color: var(--ink);
+}
+.chainkb-root .table-sketch td.num {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  text-align: right;
+}
+.chainkb-root .table-sketch td.num-left {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  text-align: left;
+}
+.chainkb-root .table-sketch tr.row-clickable {
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.chainkb-root .table-sketch tr.row-clickable:hover {
+  background: var(--hi-yellow);
+  opacity: 0.5;
+}
+.chainkb-root .row-highlight {
+  background: var(--hi-yellow);
+  opacity: 0.4;
+}
+
+/* ====== Value chain flow (LayerScreen) ====== */
+.chainkb-root .chain-flow {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 16px;
+  position: relative;
+}
+.chainkb-root .chain-col {
+  border: 2.5px solid var(--ink);
+  border-radius: 6px;
+  padding: 14px;
+  background: var(--paper);
+  min-height: 220px;
+}
+.chainkb-root .chain-col-title {
+  font-family: 'Caveat', cursive;
+  font-weight: 700;
+  font-size: 22px;
+  text-align: center;
+  margin-bottom: 4px;
+  color: var(--ink);
+}
+.chainkb-root .chain-col-sub {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  text-align: center;
+  color: var(--pencil);
+  margin-bottom: 12px;
+  letter-spacing: 1px;
+}
+
+/* ====== Sub-industry card (OverviewScreen + LayerScreen) ====== */
+.chainkb-root .sub-card {
+  border: 2px dashed var(--pencil);
+  border-radius: 5px;
+  padding: 10px 12px;
+  background: var(--paper);
+  cursor: pointer;
+  transition: all 0.18s;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-height: 76px;
+}
+.chainkb-root .sub-card:hover {
+  border-style: solid;
+  border-color: var(--ink);
+  transform: translateY(-2px) rotate(-0.5deg);
+  box-shadow: 2px 3px 0 rgba(26, 43, 74, 0.1);
+  background: var(--hi-yellow);
+}
+.chainkb-root .sub-card-name {
+  font-family: 'Patrick Hand', cursive;
+  font-size: 14px;
+  font-weight: bold;
+  color: var(--ink);
+  line-height: 1.25;
+}
+.chainkb-root .sub-card-meta {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: var(--pencil);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  letter-spacing: 0.5px;
+}
+.chainkb-root .sub-card-count {
+  font-family: 'Caveat', cursive;
+  font-size: 16px;
+  color: var(--ink);
+  font-weight: bold;
+}
+
+/* ====== Sub-industry grid layout ====== */
+.chainkb-root .sub-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 12px;
+}
+
+/* ====== Layer tabs (LayerScreen) ====== */
+.chainkb-root .layer-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 18px;
+  flex-wrap: wrap;
+}
+.chainkb-root .layer-tab {
+  border: 2.5px solid var(--ink);
+  border-radius: 5px;
+  padding: 10px 18px;
+  background: var(--paper);
+  cursor: pointer;
+  font-family: 'Patrick Hand', cursive;
+  font-size: 14px;
+  color: var(--ink-soft);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  transition: all 0.18s;
+  box-shadow: 2px 2px 0 rgba(26, 43, 74, 0.08);
+}
+.chainkb-root .layer-tab:hover {
+  background: var(--paper-2);
+  transform: translateY(-1px);
+}
+.chainkb-root .layer-tab.active {
+  background: var(--hi-yellow);
+  color: var(--ink);
+  font-weight: bold;
+  border-color: var(--ink);
+  box-shadow: 3px 3px 0 rgba(26, 43, 74, 0.15);
+}
+.chainkb-root .layer-tab-code {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--pencil);
+  border: 1px solid var(--pencil);
+  padding: 1px 6px;
+  border-radius: 2px;
+}
+.chainkb-root .layer-tab.active .layer-tab-code {
+  color: var(--ink);
+  border-color: var(--ink);
+}
+
+/* ====== Search input wrapper ====== */
+.chainkb-root .search-wrap {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 16px;
+}
+.chainkb-root .search-results {
+  border: 2px dashed var(--pencil);
+  border-radius: 5px;
+  background: var(--paper);
+  max-height: 280px;
+  overflow-y: auto;
+  margin-top: -8px;
+  margin-bottom: 16px;
+}
+.chainkb-root .search-result-row {
+  padding: 10px 14px;
+  border-bottom: 1.5px dashed var(--pencil);
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  transition: background 0.15s;
+}
+.chainkb-root .search-result-row:hover {
+  background: var(--hi-yellow);
+}
+.chainkb-root .search-result-row:last-child {
+  border-bottom: none;
+}
+.chainkb-root .search-result-ticker {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  color: var(--ink);
+  font-weight: 500;
+}
+.chainkb-root .search-result-name {
+  font-family: 'Patrick Hand', cursive;
+  font-size: 14px;
+  color: var(--ink);
+  flex: 1;
+  margin-left: 10px;
+}
+.chainkb-root .search-result-market {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: var(--pencil);
+  border: 1px solid var(--pencil);
+  padding: 1px 6px;
+  border-radius: 2px;
+}
+
+/* ====== Company header (FinanceScreen) ====== */
+.chainkb-root .company-header {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 2px dashed var(--pencil);
+}
+.chainkb-root .company-name {
+  font-family: 'Caveat', cursive;
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--ink);
+  line-height: 1;
+}
+.chainkb-root .company-ticker {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 14px;
+  color: var(--ink-soft);
+  border: 2px solid var(--ink);
+  padding: 2px 8px;
+  border-radius: 3px;
+  background: var(--paper-2);
+}
+.chainkb-root .company-pill {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: var(--pencil);
+  border: 1.5px dashed var(--pencil);
+  padding: 2px 8px;
+  border-radius: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* ====== Inner time-series tabs ====== */
+.chainkb-root .ts-tabs {
+  display: flex;
+  gap: 0;
+  margin-bottom: 14px;
+  border-bottom: 2px dashed var(--pencil);
+  flex-wrap: wrap;
+}
+.chainkb-root .ts-tab {
+  padding: 8px 14px;
+  font-family: 'Patrick Hand', cursive;
+  font-size: 13px;
+  color: var(--ink-soft);
+  cursor: pointer;
+  border: none;
+  background: transparent;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.15s;
+}
+.chainkb-root .ts-tab:hover {
+  color: var(--ink);
+}
+.chainkb-root .ts-tab.active {
+  color: var(--ink);
+  font-weight: bold;
+  border-bottom-color: var(--marker-red);
+}
+.chainkb-root .ts-tab-count {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  background: var(--paper-2);
+  border: 1px solid var(--pencil);
+  padding: 0 5px;
+  border-radius: 8px;
+  color: var(--pencil);
+}
+.chainkb-root .ts-tab.active .ts-tab-count {
+  background: var(--marker-red);
+  color: var(--paper);
+  border-color: var(--marker-red);
+}
+
+/* ====== Concepts cloud ====== */
+.chainkb-root .concepts-cloud {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+.chainkb-root .concept-tag {
+  font-family: 'Patrick Hand', cursive;
+  font-size: 12px;
+  padding: 4px 10px;
+  border-radius: 12px;
+  border: 1.5px dashed var(--pencil);
+  color: var(--ink-soft);
+  background: var(--paper);
+}
+.chainkb-root .concept-tag.industry {
+  background: rgba(255, 217, 168, 0.4);
+  border-color: var(--hi-orange);
+  color: var(--ink);
+}
+.chainkb-root .concept-tag.concept {
+  background: rgba(184, 224, 168, 0.4);
+  border-color: var(--sticky-green);
+  color: var(--ink);
+}
+.chainkb-root .concept-tag.region {
+  background: rgba(74, 122, 184, 0.18);
+  border-color: var(--marker-blue);
+  color: var(--ink);
+}
+.chainkb-root .concept-tag.index {
+  background: rgba(255, 233, 122, 0.4);
+  border-color: var(--sticky-yellow);
+  color: var(--ink);
+}
+
+/* ====== Loading / empty ====== */
+.chainkb-root .loading-pad {
+  padding: 40px 0;
+  text-align: center;
+}
+.chainkb-root .empty-pad {
+  padding: 32px 0;
+  text-align: center;
+  font-family: 'Caveat', cursive;
+  font-style: italic;
+  font-size: 18px;
+  color: var(--pencil);
+}
+
+/* ====== Bar chart row (used for industry distribution) ====== */
+.chainkb-root .bar-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+  padding: 0 10px;
+  height: 100%;
+}
+.chainkb-root .bar-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+.chainkb-root .bar-block {
+  width: 100%;
+  border: 2px solid var(--ink);
+  border-radius: 2px 2px 0 0;
+}
+.chainkb-root .bar-value {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: var(--ink);
+}
+.chainkb-root .bar-label {
+  font-family: 'Patrick Hand', cursive;
+  font-size: 11px;
+  color: var(--pencil);
+  transform: rotate(-12deg);
+  white-space: nowrap;
+}
+
+/* ====== Section spacing ====== */
+.chainkb-root .section {
+  margin-bottom: 22px;
+}
+
+/* ====== Footer note ====== */
+.chainkb-root .footer-note {
+  text-align: center;
+  font-family: 'Caveat', cursive;
+  font-style: italic;
+  font-size: 16px;
+  color: var(--pencil);
+  margin-top: 32px;
+  padding: 16px;
+  border-top: 2px dashed var(--pencil);
+}
+
+/* ====== Responsive ====== */
+@media (max-width: 1100px) {
+  .chainkb-root .kpi-row-7 {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+@media (max-width: 900px) {
+  .chainkb-root .kpi-row {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .chainkb-root .kpi-row-7 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .chainkb-root .content-grid,
+  .chainkb-root .content-grid-equal {
+    grid-template-columns: 1fr;
+  }
+  .chainkb-root .content-grid-3 {
+    grid-template-columns: 1fr;
+  }
+  .chainkb-root .chain-flow {
+    grid-template-columns: 1fr;
+  }
+  .chainkb-root .header h1 {
+    font-size: 32px;
+  }
+}
+@media (max-width: 560px) {
+  .chainkb-root .kpi-row,
+  .chainkb-root .kpi-row-7 {
+    grid-template-columns: 1fr;
+  }
+  .chainkb-root .sticky {
+    position: relative;
+    width: auto;
+    margin: 12px 0;
+  }
+}

@@ -11,17 +11,20 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-from app.routers import chain, data, report, plan
+from app.routers import chain, data, report, plan, chainkb
 app.include_router(chain.router)
 app.include_router(data.router)
 app.include_router(report.router)
 app.include_router(plan.router)
+app.include_router(chainkb.router)
 
 
 @app.on_event("startup")
 async def startup():
     from app.db import async_engine, Base
     from app.models.models import ChainAnalysis, DataCache, Report, InvestmentPlan
+    # v1 chain knowledge base tables (must be imported so create_all sees them)
+    from app.models import chain_models  # noqa: F401
     async with async_engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
 
