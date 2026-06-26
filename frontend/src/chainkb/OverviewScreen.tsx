@@ -132,6 +132,9 @@ function DistributionBars({ layers }: { layers: { code: string; name_zh: string;
               style={{
                 width: '100%',
                 height: heightPx,
+                border: '2px solid #1a2b4a',
+                borderRadius: '2px 2px 0 0',
+                boxSizing: 'border-box',
               }}
             />
             <span className="bar-value">{layer.count}</span>
