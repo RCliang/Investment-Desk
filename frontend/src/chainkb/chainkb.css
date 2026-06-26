@@ -1,9 +1,9 @@
 /**
  * chainkb.css — sketch-aesthetic styles for the chain knowledge base dashboard.
  *
- * Every rule is scoped under `.chainkb-root` so the hand-drawn theme does not
- * bleed into DataPage / ReportPage / PlanPage (which use the dark Ant Design
- * theme defined in App.tsx).
+ * Every rule is scoped under `.chainkb-root`. This is the only UI in the app
+ * today; the scoping is kept as future-proofing in case other routes are
+ * re-introduced later.
  *
  * Ported from wireframe.html; trimmed to the 3 in-scope tabs
  * (00 总览, 01 产业链层级, 03 财务拆解).
