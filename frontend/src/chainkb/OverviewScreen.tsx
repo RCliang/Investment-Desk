@@ -35,16 +35,16 @@ function deriveStats(tree: TreeResponse) {
 function TopologySvg({ layers }: { layers: { code: string; name_zh: string; count: number }[] }) {
   if (layers.length === 0) return null;
   const max = Math.max(...layers.map((l) => l.count), 1);
-  const width = 760;
-  const height = 200;
-  const pad = 40;
+  const width = 860;
+  const height = 220;
+  const pad = 80;
   const gap = (width - pad * 2) / (layers.length - 1 || 1);
   return (
     <svg className="chart-svg" viewBox={`0 0 ${width} ${height}`} preserveAspectRatio="xMidYMid meet">
       {layers.map((layer, i) => {
         const x = pad + gap * i;
         const y = height / 2;
-        const radius = 28 + (layer.count / max) * 16;
+        const radius = 44 + (layer.count / max) * 20;
         const isLast = i === layers.length - 1;
         return (
           <g key={layer.code}>
@@ -71,7 +71,7 @@ function TopologySvg({ layers }: { layers: { code: string; name_zh: string; coun
               cx={x}
               cy={y}
               rx={radius}
-              ry={radius * 0.7}
+              ry={radius * 0.72}
               fill={isLast ? 'rgba(232,90,79,0.08)' : 'rgba(26,43,74,0.04)'}
               stroke={isLast ? '#e85a4f' : '#1a2b4a'}
               strokeWidth="2.2"
