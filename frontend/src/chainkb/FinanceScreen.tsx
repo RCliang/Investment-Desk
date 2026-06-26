@@ -30,6 +30,11 @@ function fmtNum(v: number | null | undefined, suffix = ''): string {
   if (Math.abs(v) >= 10) return v.toFixed(1) + suffix;
   return v.toFixed(2) + suffix;
 }
+/** Stock prices never abbreviate — show full precision (e.g., 茅台 1700.00, not 1.7k). */
+function fmtPrice(v: number | null | undefined): string {
+  if (v == null || Number.isNaN(v)) return '—';
+  return v.toFixed(2);
+}
 function pct(v: number | null | undefined, digits = 2): string {
   if (v == null || Number.isNaN(v)) return '—';
   return v.toFixed(digits) + '%';
@@ -100,7 +105,7 @@ function HoldersTable({ rows }: { rows: HolderPeriod[] }) {
             <td className="num">{signedPct(r.change_ratio_pct)}</td>
             <td className="num">{fmtNum(r.avg_free_shares)}</td>
             <td className="num">{fmtNum(r.avg_hold_amt_yi, '亿')}</td>
-            <td className="num">{fmtNum(r.close_price)}</td>
+            <td className="num">{fmtPrice(r.close_price)}</td>
           </tr>
         ))}
       </tbody>
@@ -133,7 +138,7 @@ function MarginTable({ rows }: { rows: MarginDaily[] }) {
             <td className="num" style={{ color: (r.rzjme_yi ?? 0) >= 0 ? '#3a8a5a' : '#e85a4f' }}>
               {signedPct(r.rzjme_yi, 2)}
             </td>
-            <td className="num">{fmtNum(r.close_price)}</td>
+            <td className="num">{fmtPrice(r.close_price)}</td>
             <td className="num" style={{ color: (r.change_pct ?? 0) >= 0 ? '#3a8a5a' : '#e85a4f' }}>
               {signedPct(r.change_pct)}
             </td>
@@ -321,7 +326,7 @@ export default function FinanceScreen({ initialTicker, onResetTicker }: FinanceS
             <SketchKpi
               stamp="01"
               label="现价"
-              value={fmtNum(company.data.quote?.price)}
+              value={fmtPrice(company.data.quote?.price)}
               delta={signedPct(company.data.quote?.change_pct)}
               deltaTone={
                 (company.data.quote?.change_pct ?? 0) >= 0 ? 'up' : 'down'
