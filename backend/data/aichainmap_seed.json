@@ -1,0 +1,2765 @@
+{
+  "source": "https://aichainmap.com/atlas?L=1",
+  "fetched_at": "2026-06-24",
+  "site_update_claimed": "2026·06·17",
+  "note": "Visible companies are those rendered server-side in the atlas page text. hidden_count is the site's own '+ N' ellipsis. Sub-industry names are inferred (not present in the public dump); see docs/adr/0007-aichainmap-canonical-layers.md.",
+  "layers": [
+    {
+      "layer_order": 1,
+      "name_zh": "能源与电力",
+      "name_en": "Energy",
+      "sub_industries": [
+        {
+          "group_id": "I-U-1",
+          "stream": "Upstream",
+          "name_zh": "发电设备与新能源",
+          "visible_companies": [
+            {
+              "name": "东方电气",
+              "ticker": "600875",
+              "market": "CN"
+            },
+            {
+              "name": "国电电力",
+              "ticker": "600795",
+              "market": "CN"
+            },
+            {
+              "name": "金风科技",
+              "ticker": "002202",
+              "market": "CN"
+            },
+            {
+              "name": "隆基绿能",
+              "ticker": "601012",
+              "market": "CN"
+            },
+            {
+              "name": "上海电力",
+              "ticker": "600021",
+              "market": "CN"
+            },
+            {
+              "name": "上海电气",
+              "ticker": "601727",
+              "market": "CN"
+            },
+            {
+              "name": "通威股份",
+              "ticker": "600438",
+              "market": "CN"
+            },
+            {
+              "name": "长江电力",
+              "ticker": "600900",
+              "market": "CN"
+            },
+            {
+              "name": "阿里巴巴",
+              "ticker": "9988",
+              "market": "HK"
+            },
+            {
+              "name": "Energy",
+              "ticker": "BEE",
+              "market": "US"
+            },
+            {
+              "name": "EDF法国电力",
+              "ticker": "EDF",
+              "market": "US"
+            }
+          ],
+          "hidden_count": 16,
+          "estimated_total": 27
+        },
+        {
+          "group_id": "I-M-1",
+          "stream": "Midstream",
+          "name_zh": "能源工业基础材料",
+          "visible_companies": [
+            {
+              "name": "宝钢股份",
+              "ticker": "600019",
+              "market": "CN"
+            },
+            {
+              "name": "保变电气",
+              "ticker": "600550",
+              "market": "CN"
+            },
+            {
+              "name": "国电南瑞",
+              "ticker": "600406",
+              "market": "CN"
+            },
+            {
+              "name": "国网信通",
+              "ticker": "600131",
+              "market": "CN"
+            },
+            {
+              "name": "华明装备",
+              "ticker": "002270",
+              "market": "CN"
+            },
+            {
+              "name": "江西铜业",
+              "ticker": "600362",
+              "market": "CN"
+            },
+            {
+              "name": "金盘科技",
+              "ticker": "688676",
+              "market": "CN"
+            },
+            {
+              "name": "科华数据",
+              "ticker": "002335",
+              "market": "CN"
+            },
+            {
+              "name": "联想集团",
+              "ticker": "0992",
+              "market": "HK"
+            },
+            {
+              "name": "Eaton伊顿",
+              "ticker": "ETN",
+              "market": "US"
+            },
+            {
+              "name": "日本制铁",
+              "ticker": "5401",
+              "market": "HK"
+            }
+          ],
+          "hidden_count": 26,
+          "estimated_total": 37
+        },
+        {
+          "group_id": "I-M-2",
+          "stream": "Midstream",
+          "name_zh": "电网与能源数字化",
+          "visible_companies": [
+            {
+              "name": "国电南瑞",
+              "ticker": "600406",
+              "market": "CN"
+            },
+            {
+              "name": "国网信通",
+              "ticker": "600131",
+              "market": "CN"
+            },
+            {
+              "name": "金智科技",
+              "ticker": "002090",
+              "market": "CN"
+            },
+            {
+              "name": "朗新集团",
+              "ticker": "300682",
+              "market": "CN"
+            },
+            {
+              "name": "许继电气",
+              "ticker": "000400",
+              "market": "CN"
+            },
+            {
+              "name": "远光软件",
+              "ticker": "002063",
+              "market": "CN"
+            },
+            {
+              "name": "能链智电",
+              "ticker": "NAAS",
+              "market": "US"
+            }
+          ],
+          "hidden_count": 0,
+          "estimated_total": 7
+        },
+        {
+          "group_id": "I-D-1",
+          "stream": "Downstream",
+          "name_zh": "热管理与液冷",
+          "visible_companies": [
+            {
+              "name": "高澜股份",
+              "ticker": "300499",
+              "market": "CN"
+            },
+            {
+              "name": "佳力图",
+              "ticker": "603912",
+              "market": "CN"
+            },
+            {
+              "name": "巨化股份",
+              "ticker": "600160",
+              "market": "CN"
+            },
+            {
+              "name": "美的集团",
+              "ticker": "000333",
+              "market": "CN"
+            },
+            {
+              "name": "申菱环境",
+              "ticker": "301018",
+              "market": "CN"
+            },
+            {
+              "name": "曙光数创",
+              "ticker": "872541",
+              "market": "CN"
+            },
+            {
+              "name": "同飞股份",
+              "ticker": "300990",
+              "market": "CN"
+            },
+            {
+              "name": "依米康",
+              "ticker": "300249",
+              "market": "CN"
+            },
+            {
+              "name": "英维克",
+              "ticker": "002837",
+              "market": "CN"
+            },
+            {
+              "name": "京东集团",
+              "ticker": "9618",
+              "market": "HK"
+            }
+          ],
+          "hidden_count": 15,
+          "estimated_total": 25
+        },
+        {
+          "group_id": "I-D-2",
+          "stream": "Downstream",
+          "name_zh": "UPS·储能·电源管理",
+          "visible_companies": [
+            {
+              "name": "动力新科",
+              "ticker": "600841",
+              "market": "CN"
+            },
+            {
+              "name": "科华数据",
+              "ticker": "002335",
+              "market": "CN"
+            },
+            {
+              "name": "科士达",
+              "ticker": "002518",
+              "market": "CN"
+            },
+            {
+              "name": "科泰电源",
+              "ticker": "300153",
+              "market": "CN"
+            },
+            {
+              "name": "南都电源",
+              "ticker": "300068",
+              "market": "CN"
+            },
+            {
+              "name": "泰豪科技",
+              "ticker": "600590",
+              "market": "CN"
+            },
+            {
+              "name": "潍柴重机",
+              "ticker": "000880",
+              "market": "CN"
+            },
+            {
+              "name": "阳光电源",
+              "ticker": "300274",
+              "market": "CN"
+            },
+            {
+              "name": "百度集团",
+              "ticker": "9888",
+              "market": "HK"
+            },
+            {
+              "name": "维谛技术",
+              "ticker": "VRT",
+              "market": "US"
+            }
+          ],
+          "hidden_count": 25,
+          "estimated_total": 35
+        }
+      ]
+    },
+    {
+      "layer_order": 2,
+      "name_zh": "芯片系统",
+      "name_en": "Chip Systems",
+      "sub_industries": [
+        {
+          "group_id": "II-U-1",
+          "stream": "Upstream",
+          "name_zh": "半导体设备",
+          "visible_companies": [
+            {
+              "name": "安集科技",
+              "ticker": "688019",
+              "market": "CN"
+            },
+            {
+              "name": "北方华创",
+              "ticker": "002371",
+              "market": "CN"
+            },
+            {
+              "name": "鼎龙股份",
+              "ticker": "300054",
+              "market": "CN"
+            },
+            {
+              "name": "沪硅产业",
+              "ticker": "688126",
+              "market": "CN"
+            },
+            {
+              "name": "华海清科",
+              "ticker": "688120",
+              "market": "CN"
+            },
+            {
+              "name": "华润微",
+              "ticker": "688396",
+              "market": "CN"
+            },
+            {
+              "name": "华特气体",
+              "ticker": "688268",
+              "market": "CN"
+            },
+            {
+              "name": "江丰电子",
+              "ticker": "300666",
+              "market": "CN"
+            },
+            {
+              "name": "精测电子",
+              "ticker": "300567",
+              "market": "CN"
+            },
+            {
+              "name": "Products",
+              "ticker": "APD",
+              "market": "US"
+            },
+            {
+              "name": "东京电子",
+              "ticker": "8035",
+              "market": "HK"
+            }
+          ],
+          "hidden_count": 23,
+          "estimated_total": 34
+        },
+        {
+          "group_id": "II-U-2",
+          "stream": "Upstream",
+          "name_zh": "封装测试与PCB",
+          "visible_companies": [
+            {
+              "name": "德邦科技",
+              "ticker": "688035",
+              "market": "CN"
+            },
+            {
+              "name": "歌尔股份",
+              "ticker": "002241",
+              "market": "CN"
+            },
+            {
+              "name": "广立微",
+              "ticker": "301095",
+              "market": "CN"
+            },
+            {
+              "name": "华海诚科",
+              "ticker": "688535",
+              "market": "CN"
+            },
+            {
+              "name": "华天科技",
+              "ticker": "002185",
+              "market": "CN"
+            },
+            {
+              "name": "联瑞新材",
+              "ticker": "688300",
+              "market": "CN"
+            },
+            {
+              "name": "三环集团",
+              "ticker": "300408",
+              "market": "CN"
+            },
+            {
+              "name": "深南电路",
+              "ticker": "002916",
+              "market": "CN"
+            },
+            {
+              "name": "生益科技",
+              "ticker": "600183",
+              "market": "CN"
+            },
+            {
+              "name": "Amkor",
+              "ticker": "AMKR",
+              "market": "US"
+            },
+            {
+              "name": "华泰电子",
+              "ticker": "6121",
+              "market": "HK"
+            }
+          ],
+          "hidden_count": 15,
+          "estimated_total": 26
+        },
+        {
+          "group_id": "II-U-3",
+          "stream": "Upstream",
+          "name_zh": "铜箔与覆铜板",
+          "visible_companies": [
+            {
+              "name": "超华科技",
+              "ticker": "002288",
+              "market": "CN"
+            },
+            {
+              "name": "德福科技",
+              "ticker": "839693",
+              "market": "CN"
+            },
+            {
+              "name": "鼎泰高科",
+              "ticker": "301377",
+              "market": "CN"
+            },
+            {
+              "name": "东材科技",
+              "ticker": "601208",
+              "market": "CN"
+            },
+            {
+              "name": "东山精密",
+              "ticker": "002384",
+              "market": "CN"
+            },
+            {
+              "name": "沪电股份",
+              "ticker": "002463",
+              "market": "CN"
+            },
+            {
+              "name": "华正新材",
+              "ticker": "603186",
+              "market": "CN"
+            },
+            {
+              "name": "嘉元科技",
+              "ticker": "688388",
+              "market": "CN"
+            },
+            {
+              "name": "金安国纪",
+              "ticker": "002636",
+              "market": "CN"
+            },
+            {
+              "name": "建滔集团",
+              "ticker": "1888",
+              "market": "HK"
+            },
+            {
+              "name": "联茂电子",
+              "ticker": "6213",
+              "market": "HK"
+            }
+          ],
+          "hidden_count": 10,
+          "estimated_total": 21
+        },
+        {
+          "group_id": "II-U-4",
+          "stream": "Upstream",
+          "name_zh": "EDA工具",
+          "visible_companies": [
+            {
+              "name": "概伦电子",
+              "ticker": "688206",
+              "market": "CN"
+            },
+            {
+              "name": "华大九天",
+              "ticker": "301269",
+              "market": "CN"
+            },
+            {
+              "name": "Cadence",
+              "ticker": "CDNS",
+              "market": "US"
+            },
+            {
+              "name": "Synopsys",
+              "ticker": "SNPS",
+              "market": "US"
+            }
+          ],
+          "hidden_count": 3,
+          "estimated_total": 7
+        },
+        {
+          "group_id": "II-U-5",
+          "stream": "Upstream",
+          "name_zh": "半导体IP授权",
+          "visible_companies": [
+            {
+              "name": "苏州国芯",
+              "ticker": "688262",
+              "market": "CN"
+            },
+            {
+              "name": "芯原股份",
+              "ticker": "688521",
+              "market": "CN"
+            },
+            {
+              "name": "Holdings",
+              "ticker": "ARM",
+              "market": "US"
+            },
+            {
+              "name": "Arteris",
+              "ticker": "AIP",
+              "market": "US"
+            },
+            {
+              "name": "Synopsys",
+              "ticker": "SNPS",
+              "market": "US"
+            }
+          ],
+          "hidden_count": 8,
+          "estimated_total": 13
+        },
+        {
+          "group_id": "II-M-1",
+          "stream": "Midstream",
+          "name_zh": "算力芯片设计与制造",
+          "visible_companies": [
+            {
+              "name": "海光信息",
+              "ticker": "688041",
+              "market": "CN"
+            },
+            {
+              "name": "寒武纪",
+              "ticker": "688256",
+              "market": "CN"
+            },
+            {
+              "name": "摩尔线程",
+              "ticker": "688795",
+              "market": "CN"
+            },
+            {
+              "name": "沐曦集成",
+              "ticker": "688802",
+              "market": "CN"
+            },
+            {
+              "name": "瑞芯微",
+              "ticker": "603893",
+              "market": "CN"
+            },
+            {
+              "name": "盛科网络",
+              "ticker": "688702",
+              "market": "CN"
+            },
+            {
+              "name": "云天励飞",
+              "ticker": "688343",
+              "market": "CN"
+            },
+            {
+              "name": "中芯国际",
+              "ticker": "0981.HK",
+              "market": "HK"
+            },
+            {
+              "name": "比亚迪",
+              "ticker": "002594.SZ",
+              "market": "CN"
+            },
+            {
+              "name": "Amazon",
+              "ticker": "AMZN",
+              "market": "US"
+            },
+            {
+              "name": "创意电子",
+              "ticker": "3443",
+              "market": "HK"
+            }
+          ],
+          "hidden_count": 30,
+          "estimated_total": 41
+        },
+        {
+          "group_id": "II-M-2",
+          "stream": "Midstream",
+          "name_zh": "存储芯片",
+          "visible_companies": [
+            {
+              "name": "佰维存储",
+              "ticker": "688525",
+              "market": "CN"
+            },
+            {
+              "name": "北京君正",
+              "ticker": "300223",
+              "market": "CN"
+            },
+            {
+              "name": "德明利",
+              "ticker": "001309",
+              "market": "CN"
+            },
+            {
+              "name": "东芯股份",
+              "ticker": "688110",
+              "market": "CN"
+            },
+            {
+              "name": "江波龙",
+              "ticker": "301308",
+              "market": "CN"
+            },
+            {
+              "name": "聚辰股份",
+              "ticker": "688123",
+              "market": "CN"
+            },
+            {
+              "name": "澜起科技",
+              "ticker": "688008",
+              "market": "CN"
+            },
+            {
+              "name": "普冉半导体",
+              "ticker": "688766",
+              "market": "CN"
+            },
+            {
+              "name": "通富微电",
+              "ticker": "002156",
+              "market": "CN"
+            }
+          ],
+          "hidden_count": 8,
+          "estimated_total": 17
+        },
+        {
+          "group_id": "II-M-3",
+          "stream": "Midstream",
+          "name_zh": "FPGA",
+          "visible_companies": [
+            {
+              "name": "安路科技",
+              "ticker": "688107",
+              "market": "CN"
+            },
+            {
+              "name": "复旦微电",
+              "ticker": "688385",
+              "market": "CN"
+            },
+            {
+              "name": "紫光国微",
+              "ticker": "002049",
+              "market": "CN"
+            },
+            {
+              "name": "Intel",
+              "ticker": "INTC",
+              "market": "US"
+            },
+            {
+              "name": "Semiconductor",
+              "ticker": "LSCC",
+              "market": "US"
+            },
+            {
+              "name": "华为海思",
+              "ticker": "FPGA",
+              "market": "US"
+            }
+          ],
+          "hidden_count": 4,
+          "estimated_total": 10
+        },
+        {
+          "group_id": "II-M-4",
+          "stream": "Midstream",
+          "name_zh": "模拟与电源管理IC",
+          "visible_companies": [
+            {
+              "name": "必易微",
+              "ticker": "688045",
+              "market": "CN"
+            },
+            {
+              "name": "风华高科",
+              "ticker": "000636",
+              "market": "CN"
+            },
+            {
+              "name": "华润微",
+              "ticker": "688396",
+              "market": "CN"
+            },
+            {
+              "name": "杰华特",
+              "ticker": "688141",
+              "market": "CN"
+            },
+            {
+              "name": "晶丰明源",
+              "ticker": "688368",
+              "market": "CN"
+            },
+            {
+              "name": "麦格米特",
+              "ticker": "002851",
+              "market": "CN"
+            },
+            {
+              "name": "麦捷科技",
+              "ticker": "300319",
+              "market": "CN"
+            },
+            {
+              "name": "欧陆通",
+              "ticker": "300870",
+              "market": "CN"
+            },
+            {
+              "name": "三环集团",
+              "ticker": "300408",
+              "market": "CN"
+            },
+            {
+              "name": "圣邦股份",
+              "ticker": "300661",
+              "market": "CN"
+            },
+            {
+              "name": "村田制作所",
+              "ticker": "6981",
+              "market": "HK"
+            }
+          ],
+          "hidden_count": 12,
+          "estimated_total": 23
+        },
+        {
+          "group_id": "II-D-1",
+          "stream": "Downstream",
+          "name_zh": "服务器整机",
+          "visible_companies": [
+            {
+              "name": "工业富联",
+              "ticker": "601138",
+              "market": "CN"
+            },
+            {
+              "name": "浪潮信息",
+              "ticker": "000977",
+              "market": "CN"
+            },
+            {
+              "name": "中科曙光",
+              "ticker": "603019",
+              "market": "CN"
+            },
+            {
+              "name": "中兴通讯",
+              "ticker": "000063",
+              "market": "CN"
+            },
+            {
+              "name": "紫光股份",
+              "ticker": "000938",
+              "market": "CN"
+            },
+            {
+              "name": "联想集团",
+              "ticker": "0992",
+              "market": "HK"
+            },
+            {
+              "name": "Technologies",
+              "ticker": "DELL",
+              "market": "US"
+            },
+            {
+              "name": "Supermicro",
+              "ticker": "SMCI",
+              "market": "US"
+            },
+            {
+              "name": "广达",
+              "ticker": "2382",
+              "market": "HK"
+            },
+            {
+              "name": "鸿海精密",
+              "ticker": "2317",
+              "market": "HK"
+            }
+          ],
+          "hidden_count": 11,
+          "estimated_total": 21
+        },
+        {
+          "group_id": "II-D-2",
+          "stream": "Downstream",
+          "name_zh": "光通信与光模块",
+          "visible_companies": [
+            {
+              "name": "博创科技",
+              "ticker": "300548",
+              "market": "CN"
+            },
+            {
+              "name": "东山精密",
+              "ticker": "002384",
+              "market": "CN"
+            },
+            {
+              "name": "光迅科技",
+              "ticker": "002281",
+              "market": "CN"
+            },
+            {
+              "name": "华丰股份",
+              "ticker": "688629",
+              "market": "CN"
+            },
+            {
+              "name": "精达股份",
+              "ticker": "600577",
+              "market": "CN"
+            },
+            {
+              "name": "澜起科技",
+              "ticker": "688008",
+              "market": "CN"
+            },
+            {
+              "name": "立讯精密",
+              "ticker": "002475",
+              "market": "CN"
+            },
+            {
+              "name": "仕佳光子",
+              "ticker": "688313",
+              "market": "CN"
+            },
+            {
+              "name": "太辰光",
+              "ticker": "300570",
+              "market": "CN"
+            },
+            {
+              "name": "天孚通信",
+              "ticker": "300394",
+              "market": "CN"
+            },
+            {
+              "name": "Amphenol",
+              "ticker": "APH",
+              "market": "US"
+            }
+          ],
+          "hidden_count": 14,
+          "estimated_total": 25
+        },
+        {
+          "group_id": "II-D-3",
+          "stream": "Downstream",
+          "name_zh": "网络设备与芯片",
+          "visible_companies": [
+            {
+              "name": "国网信通",
+              "ticker": "600131",
+              "market": "CN"
+            },
+            {
+              "name": "华工科技",
+              "ticker": "000988",
+              "market": "CN"
+            },
+            {
+              "name": "锐捷网络",
+              "ticker": "301165",
+              "market": "CN"
+            },
+            {
+              "name": "盛科网络",
+              "ticker": "688702",
+              "market": "CN"
+            },
+            {
+              "name": "星网锐捷",
+              "ticker": "002396",
+              "market": "CN"
+            },
+            {
+              "name": "Networks",
+              "ticker": "ANET",
+              "market": "US"
+            },
+            {
+              "name": "Broadcom",
+              "ticker": "AVGO",
+              "market": "US"
+            },
+            {
+              "name": "Cisco",
+              "ticker": "CSCO",
+              "market": "US"
+            }
+          ],
+          "hidden_count": 5,
+          "estimated_total": 13
+        }
+      ]
+    },
+    {
+      "layer_order": 3,
+      "name_zh": "AI基础设施",
+      "name_en": "AI Infrastructure",
+      "sub_industries": [
+        {
+          "group_id": "III-U-1",
+          "stream": "Upstream",
+          "name_zh": "数据中心热管理",
+          "visible_companies": [
+            {
+              "name": "高澜股份",
+              "ticker": "300499",
+              "market": "CN"
+            },
+            {
+              "name": "科华数据",
+              "ticker": "002335",
+              "market": "CN"
+            },
+            {
+              "name": "科士达",
+              "ticker": "002518",
+              "market": "CN"
+            },
+            {
+              "name": "浪潮信息",
+              "ticker": "000977",
+              "market": "CN"
+            },
+            {
+              "name": "申菱环境",
+              "ticker": "301018",
+              "market": "CN"
+            },
+            {
+              "name": "曙光数创",
+              "ticker": "872541",
+              "market": "CN"
+            },
+            {
+              "name": "依米康",
+              "ticker": "300249",
+              "market": "CN"
+            },
+            {
+              "name": "易事特",
+              "ticker": "300376",
+              "market": "CN"
+            },
+            {
+              "name": "英维克",
+              "ticker": "002837",
+              "market": "CN"
+            },
+            {
+              "name": "维谛技术",
+              "ticker": "VRT",
+              "market": "US"
+            }
+          ],
+          "hidden_count": 11,
+          "estimated_total": 21
+        },
+        {
+          "group_id": "III-U-2",
+          "stream": "Upstream",
+          "name_zh": "IDC与数据中心地产",
+          "visible_companies": [
+            {
+              "name": "奥飞数据",
+              "ticker": "300738",
+              "market": "CN"
+            },
+            {
+              "name": "城地股份",
+              "ticker": "603887",
+              "market": "CN"
+            },
+            {
+              "name": "达实智能",
+              "ticker": "002421",
+              "market": "CN"
+            },
+            {
+              "name": "东阳光",
+              "ticker": "600673",
+              "market": "CN"
+            },
+            {
+              "name": "光环新网",
+              "ticker": "300383",
+              "market": "CN"
+            },
+            {
+              "name": "南兴股份",
+              "ticker": "002757",
+              "market": "CN"
+            },
+            {
+              "name": "润泽科技",
+              "ticker": "300442",
+              "market": "CN"
+            },
+            {
+              "name": "世纪华通",
+              "ticker": "002602",
+              "market": "CN"
+            },
+            {
+              "name": "中通服",
+              "ticker": "0552",
+              "market": "HK"
+            }
+          ],
+          "hidden_count": 22,
+          "estimated_total": 31
+        },
+        {
+          "group_id": "III-M-1",
+          "stream": "Midstream",
+          "name_zh": "数据中心机电系统",
+          "visible_companies": [
+            {
+              "name": "达实智能",
+              "ticker": "002421",
+              "market": "CN"
+            },
+            {
+              "name": "佳力图",
+              "ticker": "603912",
+              "market": "CN"
+            },
+            {
+              "name": "科华数据",
+              "ticker": "002335",
+              "market": "CN"
+            },
+            {
+              "name": "美的集团",
+              "ticker": "000333",
+              "market": "CN"
+            },
+            {
+              "name": "依米康",
+              "ticker": "300249",
+              "market": "CN"
+            },
+            {
+              "name": "英维克",
+              "ticker": "002837",
+              "market": "CN"
+            },
+            {
+              "name": "Carrier",
+              "ticker": "CARR",
+              "market": "US"
+            },
+            {
+              "name": "Controls",
+              "ticker": "JCI",
+              "market": "US"
+            }
+          ],
+          "hidden_count": 5,
+          "estimated_total": 13
+        },
+        {
+          "group_id": "III-M-2",
+          "stream": "Midstream",
+          "name_zh": "存储与内存接口",
+          "visible_companies": [
+            {
+              "name": "佰维存储",
+              "ticker": "688525",
+              "market": "CN"
+            },
+            {
+              "name": "大普微",
+              "ticker": "301666",
+              "market": "CN"
+            },
+            {
+              "name": "德明利",
+              "ticker": "001309",
+              "market": "CN"
+            },
+            {
+              "name": "帝科股份",
+              "ticker": "300842",
+              "market": "CN"
+            },
+            {
+              "name": "江波龙",
+              "ticker": "301308",
+              "market": "CN"
+            },
+            {
+              "name": "澜起科技",
+              "ticker": "688008",
+              "market": "CN"
+            },
+            {
+              "name": "朗科科技",
+              "ticker": "300042",
+              "market": "CN"
+            },
+            {
+              "name": "普冉半导体",
+              "ticker": "688766",
+              "market": "CN"
+            },
+            {
+              "name": "香农芯创",
+              "ticker": "300475",
+              "market": "CN"
+            }
+          ],
+          "hidden_count": 21,
+          "estimated_total": 30
+        },
+        {
+          "group_id": "III-M-3",
+          "stream": "Midstream",
+          "name_zh": "连接器与线缆",
+          "visible_companies": [
+            {
+              "name": "宝胜股份",
+              "ticker": "600973",
+              "market": "CN"
+            },
+            {
+              "name": "电连技术",
+              "ticker": "300679",
+              "market": "CN"
+            },
+            {
+              "name": "烽火通信",
+              "ticker": "600498",
+              "market": "CN"
+            },
+            {
+              "name": "亨通光电",
+              "ticker": "600487",
+              "market": "CN"
+            },
+            {
+              "name": "金信诺",
+              "ticker": "300252",
+              "market": "CN"
+            },
+            {
+              "name": "卡倍亿",
+              "ticker": "300863",
+              "market": "CN"
+            },
+            {
+              "name": "立讯精密",
+              "ticker": "002475",
+              "market": "CN"
+            },
+            {
+              "name": "迈普通信",
+              "ticker": "002766",
+              "market": "CN"
+            },
+            {
+              "name": "锐捷网络",
+              "ticker": "301165",
+              "market": "CN"
+            },
+            {
+              "name": "汇聚科技",
+              "ticker": "01729",
+              "market": "HK"
+            },
+            {
+              "name": "Amphenol",
+              "ticker": "APH",
+              "market": "US"
+            }
+          ],
+          "hidden_count": 18,
+          "estimated_total": 29
+        },
+        {
+          "group_id": "III-M-4",
+          "stream": "Midstream",
+          "name_zh": "CDN与边缘计算",
+          "visible_companies": [
+            {
+              "name": "网宿科技",
+              "ticker": "300017",
+              "market": "CN"
+            },
+            {
+              "name": "云工场科技",
+              "ticker": "2512",
+              "market": "HK"
+            },
+            {
+              "name": "迅雷",
+              "ticker": "XNET",
+              "market": "US"
+            },
+            {
+              "name": "Akamai",
+              "ticker": "AKAM",
+              "market": "US"
+            },
+            {
+              "name": "Cloudflare",
+              "ticker": "NET",
+              "market": "US"
+            },
+            {
+              "name": "Fastly",
+              "ticker": "FSLY",
+              "market": "US"
+            },
+            {
+              "name": "Lumen",
+              "ticker": "LUMN",
+              "market": "US"
+            }
+          ],
+          "hidden_count": 2,
+          "estimated_total": 9
+        },
+        {
+          "group_id": "III-M-5",
+          "stream": "Midstream",
+          "name_zh": "网络安全",
+          "visible_companies": [
+            {
+              "name": "安恒信息",
+              "ticker": "688023",
+              "market": "CN"
+            },
+            {
+              "name": "绿盟科技",
+              "ticker": "300369",
+              "market": "CN"
+            },
+            {
+              "name": "派拉软件",
+              "ticker": "688505",
+              "market": "CN"
+            },
+            {
+              "name": "启明星辰",
+              "ticker": "002439",
+              "market": "CN"
+            },
+            {
+              "name": "山石网科",
+              "ticker": "688030",
+              "market": "CN"
+            },
+            {
+              "name": "深信服",
+              "ticker": "300454",
+              "market": "CN"
+            },
+            {
+              "name": "天融信",
+              "ticker": "002212",
+              "market": "CN"
+            },
+            {
+              "name": "亚信安全",
+              "ticker": "688225",
+              "market": "CN"
+            },
+            {
+              "name": "CrowdStrike",
+              "ticker": "CRWD",
+              "market": "US"
+            },
+            {
+              "name": "CyberArk",
+              "ticker": "CYBR",
+              "market": "US"
+            },
+            {
+              "name": "Fortinet",
+              "ticker": "FTNT",
+              "market": "US"
+            }
+          ],
+          "hidden_count": 16,
+          "estimated_total": 27
+        },
+        {
+          "group_id": "III-D-1",
+          "stream": "Downstream",
+          "name_zh": "云服务与基础算力",
+          "visible_companies": [
+            {
+              "name": "品高股份",
+              "ticker": "688227",
+              "market": "CN"
+            },
+            {
+              "name": "青云科技",
+              "ticker": "688316",
+              "market": "CN"
+            },
+            {
+              "name": "首都在线",
+              "ticker": "300846",
+              "market": "CN"
+            },
+            {
+              "name": "星环科技",
+              "ticker": "688031",
+              "market": "CN"
+            },
+            {
+              "name": "优刻得",
+              "ticker": "688158",
+              "market": "CN"
+            },
+            {
+              "name": "中国电信",
+              "ticker": "601728",
+              "market": "CN"
+            },
+            {
+              "name": "中国联通",
+              "ticker": "600050",
+              "market": "CN"
+            },
+            {
+              "name": "中国移动",
+              "ticker": "600941",
+              "market": "CN"
+            },
+            {
+              "name": "阿里巴巴",
+              "ticker": "9988",
+              "market": "HK"
+            },
+            {
+              "name": "百度集团",
+              "ticker": "9888",
+              "market": "HK"
+            }
+          ],
+          "hidden_count": 32,
+          "estimated_total": 42
+        },
+        {
+          "group_id": "III-D-2",
+          "stream": "Downstream",
+          "name_zh": "智算中心与算力租赁",
+          "visible_companies": [
+            {
+              "name": "奥飞数据",
+              "ticker": "300738",
+              "market": "CN"
+            },
+            {
+              "name": "并行科技",
+              "ticker": "839493",
+              "market": "CN"
+            },
+            {
+              "name": "大位科技",
+              "ticker": "600589",
+              "market": "CN"
+            },
+            {
+              "name": "恒润股份",
+              "ticker": "603985",
+              "market": "CN"
+            },
+            {
+              "name": "朗科科技",
+              "ticker": "300042",
+              "market": "CN"
+            },
+            {
+              "name": "浪潮信息",
+              "ticker": "000977",
+              "market": "CN"
+            },
+            {
+              "name": "利通电子",
+              "ticker": "603629",
+              "market": "CN"
+            },
+            {
+              "name": "莲花控股",
+              "ticker": "600186",
+              "market": "CN"
+            },
+            {
+              "name": "南兴股份",
+              "ticker": "002757",
+              "market": "CN"
+            },
+            {
+              "name": "平治信息",
+              "ticker": "300571",
+              "market": "CN"
+            },
+            {
+              "name": "CoreWeave",
+              "ticker": "CRWV",
+              "market": "US"
+            }
+          ],
+          "hidden_count": 13,
+          "estimated_total": 24
+        },
+        {
+          "group_id": "III-D-3",
+          "stream": "Downstream",
+          "name_zh": "云原生与可观测性",
+          "visible_companies": [
+            {
+              "name": "并行科技",
+              "ticker": "839493",
+              "market": "CN"
+            },
+            {
+              "name": "青云科技",
+              "ticker": "688316",
+              "market": "CN"
+            },
+            {
+              "name": "星环科技",
+              "ticker": "688031",
+              "market": "CN"
+            },
+            {
+              "name": "优刻得",
+              "ticker": "688158",
+              "market": "CN"
+            },
+            {
+              "name": "中科曙光",
+              "ticker": "603019",
+              "market": "CN"
+            },
+            {
+              "name": "第四范式",
+              "ticker": "6682",
+              "market": "HK"
+            },
+            {
+              "name": "Datadog",
+              "ticker": "DDOG",
+              "market": "US"
+            }
+          ],
+          "hidden_count": 6,
+          "estimated_total": 13
+        }
+      ]
+    },
+    {
+      "layer_order": 4,
+      "name_zh": "AI基础模型",
+      "name_en": "Foundation Models",
+      "sub_industries": [
+        {
+          "group_id": "IV-U-1",
+          "stream": "Upstream",
+          "name_zh": "数据标注与训练数据",
+          "visible_companies": [
+            {
+              "name": "海天瑞声",
+              "ticker": "688787",
+              "market": "CN"
+            },
+            {
+              "name": "视觉中国",
+              "ticker": "000681",
+              "market": "CN"
+            },
+            {
+              "name": "拓尔思",
+              "ticker": "300229",
+              "market": "CN"
+            },
+            {
+              "name": "星环科技",
+              "ticker": "688031",
+              "market": "CN"
+            },
+            {
+              "name": "中文在线",
+              "ticker": "300364",
+              "market": "CN"
+            },
+            {
+              "name": "阿里巴巴",
+              "ticker": "9988",
+              "market": "HK"
+            },
+            {
+              "name": "百度集团",
+              "ticker": "9888",
+              "market": "HK"
+            },
+            {
+              "name": "腾讯控股",
+              "ticker": "0700",
+              "market": "HK"
+            },
+            {
+              "name": "阅文集团",
+              "ticker": "0772",
+              "market": "HK"
+            },
+            {
+              "name": "Appen",
+              "ticker": "APX",
+              "market": "US"
+            }
+          ],
+          "hidden_count": 32,
+          "estimated_total": 42
+        },
+        {
+          "group_id": "IV-M-1",
+          "stream": "Midstream",
+          "name_zh": "AI大模型平台",
+          "visible_companies": [
+            {
+              "name": "360集团",
+              "ticker": "601360",
+              "market": "CN"
+            },
+            {
+              "name": "安恒信息",
+              "ticker": "688023",
+              "market": "CN"
+            },
+            {
+              "name": "恒生电子",
+              "ticker": "600570",
+              "market": "CN"
+            },
+            {
+              "name": "金山办公",
+              "ticker": "688111",
+              "market": "CN"
+            },
+            {
+              "name": "科大讯飞",
+              "ticker": "002230",
+              "market": "CN"
+            },
+            {
+              "name": "昆仑万维",
+              "ticker": "300418",
+              "market": "CN"
+            },
+            {
+              "name": "奇安信",
+              "ticker": "688561",
+              "market": "CN"
+            },
+            {
+              "name": "卫宁健康",
+              "ticker": "300253",
+              "market": "CN"
+            },
+            {
+              "name": "云从科技",
+              "ticker": "688327",
+              "market": "CN"
+            },
+            {
+              "name": "阿里巴巴",
+              "ticker": "9988",
+              "market": "HK"
+            },
+            {
+              "name": "Amazon",
+              "ticker": "AMZN",
+              "market": "US"
+            }
+          ],
+          "hidden_count": 44,
+          "estimated_total": 55
+        },
+        {
+          "group_id": "IV-M-2",
+          "stream": "Midstream",
+          "name_zh": "云厂商AI平台",
+          "visible_companies": [
+            {
+              "name": "金山办公",
+              "ticker": "688111",
+              "market": "CN"
+            },
+            {
+              "name": "科大讯飞",
+              "ticker": "002230",
+              "market": "CN"
+            },
+            {
+              "name": "奇安信",
+              "ticker": "688561",
+              "market": "CN"
+            },
+            {
+              "name": "深信服",
+              "ticker": "300454",
+              "market": "CN"
+            },
+            {
+              "name": "百度集团",
+              "ticker": "9888",
+              "market": "HK"
+            },
+            {
+              "name": "腾讯控股",
+              "ticker": "0700",
+              "market": "HK"
+            },
+            {
+              "name": "Cisco",
+              "ticker": "CSCO",
+              "market": "US"
+            },
+            {
+              "name": "Cloudflare",
+              "ticker": "NET",
+              "market": "US"
+            },
+            {
+              "name": "Google",
+              "ticker": "GOOGL",
+              "market": "US"
+            }
+          ],
+          "hidden_count": 32,
+          "estimated_total": 41
+        },
+        {
+          "group_id": "IV-D-1",
+          "stream": "Downstream",
+          "name_zh": "AI引擎与中间件",
+          "visible_companies": [
+            {
+              "name": "科大讯飞",
+              "ticker": "002230",
+              "market": "CN"
+            },
+            {
+              "name": "浪潮信息",
+              "ticker": "000977",
+              "market": "CN"
+            },
+            {
+              "name": "摩尔线程",
+              "ticker": "688795",
+              "market": "CN"
+            },
+            {
+              "name": "瑞芯微",
+              "ticker": "603893",
+              "market": "CN"
+            },
+            {
+              "name": "星环科技",
+              "ticker": "688031",
+              "market": "CN"
+            },
+            {
+              "name": "中科创达",
+              "ticker": "300496",
+              "market": "CN"
+            },
+            {
+              "name": "地平线机器人",
+              "ticker": "9660",
+              "market": "HK"
+            },
+            {
+              "name": "第四范式",
+              "ticker": "6682",
+              "market": "HK"
+            },
+            {
+              "name": "美团",
+              "ticker": "3690",
+              "market": "HK"
+            },
+            {
+              "name": "Apple",
+              "ticker": "AAPL",
+              "market": "US"
+            },
+            {
+              "name": "联发科",
+              "ticker": "2454",
+              "market": "HK"
+            }
+          ],
+          "hidden_count": 21,
+          "estimated_total": 32
+        }
+      ]
+    },
+    {
+      "layer_order": 5,
+      "name_zh": "AI应用",
+      "name_en": "AI Applications",
+      "sub_industries": [
+        {
+          "group_id": "V-1",
+          "stream": null,
+          "name_zh": "智能驾驶",
+          "visible_companies": [
+            {
+              "name": "北斗星通",
+              "ticker": "002151",
+              "market": "CN"
+            },
+            {
+              "name": "伯特利",
+              "ticker": "603596",
+              "market": "CN"
+            },
+            {
+              "name": "德赛西威",
+              "ticker": "002920",
+              "market": "CN"
+            },
+            {
+              "name": "东软集团",
+              "ticker": "600718",
+              "market": "CN"
+            },
+            {
+              "name": "东田微",
+              "ticker": "301183",
+              "market": "CN"
+            },
+            {
+              "name": "福晶科技",
+              "ticker": "002222",
+              "market": "CN"
+            },
+            {
+              "name": "华测导航",
+              "ticker": "300627",
+              "market": "CN"
+            },
+            {
+              "name": "经纬恒润",
+              "ticker": "688326",
+              "market": "CN"
+            },
+            {
+              "name": "均胜电子",
+              "ticker": "600699",
+              "market": "CN"
+            },
+            {
+              "name": "比亚迪",
+              "ticker": "002594.SZ",
+              "market": "CN"
+            },
+            {
+              "name": "小马智行",
+              "ticker": "PONY",
+              "market": "US"
+            }
+          ],
+          "hidden_count": 29,
+          "estimated_total": 40
+        },
+        {
+          "group_id": "V-2",
+          "stream": null,
+          "name_zh": "人形机器人核心零部件",
+          "visible_companies": [
+            {
+              "name": "奥比中光",
+              "ticker": "688322",
+              "market": "CN"
+            },
+            {
+              "name": "锋龙股份",
+              "ticker": "002931",
+              "market": "CN"
+            },
+            {
+              "name": "禾川科技",
+              "ticker": "688320",
+              "market": "CN"
+            },
+            {
+              "name": "恒立液压",
+              "ticker": "601100",
+              "market": "CN"
+            },
+            {
+              "name": "汇川技术",
+              "ticker": "300124",
+              "market": "CN"
+            },
+            {
+              "name": "柯力传感",
+              "ticker": "603662",
+              "market": "CN"
+            },
+            {
+              "name": "绿的谐波",
+              "ticker": "688017",
+              "market": "CN"
+            },
+            {
+              "name": "鸣志电器",
+              "ticker": "603728",
+              "market": "CN"
+            },
+            {
+              "name": "比亚迪",
+              "ticker": "002594.SZ",
+              "market": "CN"
+            },
+            {
+              "name": "Tesla",
+              "ticker": "TSLA",
+              "market": "US"
+            },
+            {
+              "name": "本田",
+              "ticker": "7267",
+              "market": "HK"
+            }
+          ],
+          "hidden_count": 29,
+          "estimated_total": 40
+        },
+        {
+          "group_id": "V-3",
+          "stream": null,
+          "name_zh": "AI营销与AIGC",
+          "visible_companies": [
+            {
+              "name": "蓝色光标",
+              "ticker": "300058",
+              "market": "CN"
+            },
+            {
+              "name": "利欧股份",
+              "ticker": "002131",
+              "market": "CN"
+            },
+            {
+              "name": "省广集团",
+              "ticker": "002400",
+              "market": "CN"
+            },
+            {
+              "name": "视觉中国",
+              "ticker": "000681",
+              "market": "CN"
+            },
+            {
+              "name": "万兴科技",
+              "ticker": "300624",
+              "market": "CN"
+            },
+            {
+              "name": "出门问问",
+              "ticker": "2438",
+              "market": "HK"
+            },
+            {
+              "name": "快手",
+              "ticker": "1024",
+              "market": "HK"
+            },
+            {
+              "name": "美图公司",
+              "ticker": "1357",
+              "market": "HK"
+            },
+            {
+              "name": "MiniMax",
+              "ticker": "0100",
+              "market": "HK"
+            },
+            {
+              "name": "Adobe",
+              "ticker": "ADBE",
+              "market": "US"
+            },
+            {
+              "name": "Figma",
+              "ticker": "FIG",
+              "market": "US"
+            }
+          ],
+          "hidden_count": 17,
+          "estimated_total": 28
+        },
+        {
+          "group_id": "V-4",
+          "stream": null,
+          "name_zh": "AI医疗",
+          "visible_companies": [
+            {
+              "name": "创业慧康",
+              "ticker": "300451",
+              "market": "CN"
+            },
+            {
+              "name": "东软集团",
+              "ticker": "600718",
+              "market": "CN"
+            },
+            {
+              "name": "恒瑞医药",
+              "ticker": "600276",
+              "market": "CN"
+            },
+            {
+              "name": "华海药业",
+              "ticker": "600521",
+              "market": "CN"
+            },
+            {
+              "name": "康龙化成",
+              "ticker": "300759",
+              "market": "CN"
+            },
+            {
+              "name": "科大讯飞",
+              "ticker": "002230",
+              "market": "CN"
+            },
+            {
+              "name": "科伦药业",
+              "ticker": "002422",
+              "market": "CN"
+            },
+            {
+              "name": "联影医疗",
+              "ticker": "688271",
+              "market": "CN"
+            },
+            {
+              "name": "百济神州",
+              "ticker": "6160",
+              "market": "HK"
+            },
+            {
+              "name": "Healthcare",
+              "ticker": "GEHC",
+              "market": "US"
+            },
+            {
+              "name": "Healthineers",
+              "ticker": "SHL",
+              "market": "US"
+            }
+          ],
+          "hidden_count": 40,
+          "estimated_total": 51
+        },
+        {
+          "group_id": "V-5",
+          "stream": null,
+          "name_zh": "AI安防与智慧城市",
+          "visible_companies": [
+            {
+              "name": "超图软件",
+              "ticker": "300036",
+              "market": "CN"
+            },
+            {
+              "name": "大华股份",
+              "ticker": "002236",
+              "market": "CN"
+            },
+            {
+              "name": "歌尔股份",
+              "ticker": "002241",
+              "market": "CN"
+            },
+            {
+              "name": "格灵深瞳",
+              "ticker": "688207",
+              "market": "CN"
+            },
+            {
+              "name": "海康威视",
+              "ticker": "002415",
+              "market": "CN"
+            },
+            {
+              "name": "寒武纪",
+              "ticker": "688256",
+              "market": "CN"
+            },
+            {
+              "name": "佳都科技",
+              "ticker": "600728",
+              "market": "CN"
+            },
+            {
+              "name": "千方科技",
+              "ticker": "002373",
+              "market": "CN"
+            },
+            {
+              "name": "网宿科技",
+              "ticker": "300017",
+              "market": "CN"
+            },
+            {
+              "name": "阿里巴巴",
+              "ticker": "9988",
+              "market": "HK"
+            },
+            {
+              "name": "涂鸦智能",
+              "ticker": "TUYA",
+              "market": "US"
+            }
+          ],
+          "hidden_count": 33,
+          "estimated_total": 44
+        },
+        {
+          "group_id": "V-6",
+          "stream": null,
+          "name_zh": "企业服务SaaS",
+          "visible_companies": [
+            {
+              "name": "泛微网络",
+              "ticker": "603039",
+              "market": "CN"
+            },
+            {
+              "name": "金山办公",
+              "ticker": "688111",
+              "market": "CN"
+            },
+            {
+              "name": "科大讯飞",
+              "ticker": "002230",
+              "market": "CN"
+            },
+            {
+              "name": "用友网络",
+              "ticker": "600588",
+              "market": "CN"
+            },
+            {
+              "name": "致远互联",
+              "ticker": "688369",
+              "market": "CN"
+            },
+            {
+              "name": "阿里巴巴",
+              "ticker": "9988",
+              "market": "HK"
+            },
+            {
+              "name": "北森",
+              "ticker": "9669",
+              "market": "HK"
+            },
+            {
+              "name": "金蝶国际",
+              "ticker": "0268",
+              "market": "HK"
+            },
+            {
+              "name": "腾讯控股",
+              "ticker": "0700",
+              "market": "HK"
+            },
+            {
+              "name": "Google",
+              "ticker": "GOOGL",
+              "market": "US"
+            },
+            {
+              "name": "Microsoft",
+              "ticker": "MSFT",
+              "market": "US"
+            }
+          ],
+          "hidden_count": 13,
+          "estimated_total": 24
+        },
+        {
+          "group_id": "V-7",
+          "stream": null,
+          "name_zh": "AI金融",
+          "visible_companies": [
+            {
+              "name": "360集团",
+              "ticker": "601360",
+              "market": "CN"
+            },
+            {
+              "name": "东方财富",
+              "ticker": "300059",
+              "market": "CN"
+            },
+            {
+              "name": "华宇软件",
+              "ticker": "300271",
+              "market": "CN"
+            },
+            {
+              "name": "科大讯飞",
+              "ticker": "002230",
+              "market": "CN"
+            },
+            {
+              "name": "昆仑万维",
+              "ticker": "300418",
+              "market": "CN"
+            },
+            {
+              "name": "同花顺",
+              "ticker": "300033",
+              "market": "CN"
+            },
+            {
+              "name": "医渡科技",
+              "ticker": "2158",
+              "market": "HK"
+            },
+            {
+              "name": "Airdoc",
+              "ticker": "2251",
+              "market": "HK"
+            },
+            {
+              "name": "Amazon",
+              "ticker": "AMZN",
+              "market": "US"
+            }
+          ],
+          "hidden_count": 8,
+          "estimated_total": 17
+        },
+        {
+          "group_id": "V-8",
+          "stream": null,
+          "name_zh": "AI教育",
+          "visible_companies": [
+            {
+              "name": "鸿合科技",
+              "ticker": "002955",
+              "market": "CN"
+            },
+            {
+              "name": "佳发教育",
+              "ticker": "300559",
+              "market": "CN"
+            },
+            {
+              "name": "科大讯飞",
+              "ticker": "002230",
+              "market": "CN"
+            },
+            {
+              "name": "视源股份",
+              "ticker": "002841",
+              "market": "CN"
+            },
+            {
+              "name": "拓维信息",
+              "ticker": "002261",
+              "market": "CN"
+            },
+            {
+              "name": "好未来",
+              "ticker": "TAL",
+              "market": "US"
+            },
+            {
+              "name": "网易有道",
+              "ticker": "DAO",
+              "market": "US"
+            },
+            {
+              "name": "新东方",
+              "ticker": "EDU",
+              "market": "US"
+            },
+            {
+              "name": "Chegg",
+              "ticker": "CHGG",
+              "market": "US"
+            },
+            {
+              "name": "Coursera",
+              "ticker": "COUR",
+              "market": "US"
+            },
+            {
+              "name": "Duolingo",
+              "ticker": "DUOL",
+              "market": "US"
+            }
+          ],
+          "hidden_count": 8,
+          "estimated_total": 19
+        },
+        {
+          "group_id": "V-9",
+          "stream": null,
+          "name_zh": "金融科技与量化",
+          "visible_companies": [
+            {
+              "name": "大智慧",
+              "ticker": "601519",
+              "market": "CN"
+            },
+            {
+              "name": "顶点软件",
+              "ticker": "603383",
+              "market": "CN"
+            },
+            {
+              "name": "东方财富",
+              "ticker": "300059",
+              "market": "CN"
+            },
+            {
+              "name": "恒生电子",
+              "ticker": "600570",
+              "market": "CN"
+            },
+            {
+              "name": "金证股份",
+              "ticker": "600446",
+              "market": "CN"
+            },
+            {
+              "name": "同花顺",
+              "ticker": "300033",
+              "market": "CN"
+            },
+            {
+              "name": "宇信科技",
+              "ticker": "300674",
+              "market": "CN"
+            },
+            {
+              "name": "第四范式",
+              "ticker": "6682",
+              "market": "HK"
+            }
+          ],
+          "hidden_count": 3,
+          "estimated_total": 11
+        },
+        {
+          "group_id": "V-10",
+          "stream": null,
+          "name_zh": "AI法律与合规",
+          "visible_companies": [
+            {
+              "name": "华宇软件",
+              "ticker": "300271",
+              "market": "CN"
+            },
+            {
+              "name": "百度集团",
+              "ticker": "9888",
+              "market": "HK"
+            },
+            {
+              "name": "智谱AI",
+              "ticker": "2513",
+              "market": "HK"
+            },
+            {
+              "name": "Google",
+              "ticker": "GOOGL",
+              "market": "US"
+            },
+            {
+              "name": "Microsoft",
+              "ticker": "MSFT",
+              "market": "US"
+            },
+            {
+              "name": "Reuters",
+              "ticker": "TRI",
+              "market": "US"
+            }
+          ],
+          "hidden_count": 10,
+          "estimated_total": 16
+        },
+        {
+          "group_id": "V-11",
+          "stream": null,
+          "name_zh": "智能客服与CRM",
+          "visible_companies": [
+            {
+              "name": "科大讯飞",
+              "ticker": "002230",
+              "market": "CN"
+            },
+            {
+              "name": "宇信科技",
+              "ticker": "300674",
+              "market": "CN"
+            },
+            {
+              "name": "京东集团",
+              "ticker": "9618",
+              "market": "HK"
+            },
+            {
+              "name": "美团",
+              "ticker": "3690",
+              "market": "HK"
+            },
+            {
+              "name": "天润融通",
+              "ticker": "2167",
+              "market": "HK"
+            },
+            {
+              "name": "容联云",
+              "ticker": "RAAS",
+              "market": "US"
+            },
+            {
+              "name": "LivePerson",
+              "ticker": "LPSN",
+              "market": "US"
+            },
+            {
+              "name": "Salesforce",
+              "ticker": "CRM",
+              "market": "US"
+            }
+          ],
+          "hidden_count": 5,
+          "estimated_total": 13
+        },
+        {
+          "group_id": "V-12",
+          "stream": null,
+          "name_zh": "机器视觉与AOI检测",
+          "visible_companies": [
+            {
+              "name": "奥普特",
+              "ticker": "688686",
+              "market": "CN"
+            },
+            {
+              "name": "大华股份",
+              "ticker": "002236",
+              "market": "CN"
+            },
+            {
+              "name": "海康威视",
+              "ticker": "002415",
+              "market": "CN"
+            },
+            {
+              "name": "精测电子",
+              "ticker": "300567",
+              "market": "CN"
+            },
+            {
+              "name": "矩子科技",
+              "ticker": "300802",
+              "market": "CN"
+            },
+            {
+              "name": "凌云光",
+              "ticker": "688400",
+              "market": "CN"
+            },
+            {
+              "name": "赛腾股份",
+              "ticker": "603283",
+              "market": "CN"
+            },
+            {
+              "name": "天准科技",
+              "ticker": "688003",
+              "market": "CN"
+            },
+            {
+              "name": "创新奇智",
+              "ticker": "2121",
+              "market": "HK"
+            },
+            {
+              "name": "Cognex",
+              "ticker": "CGNX",
+              "market": "US"
+            },
+            {
+              "name": "Basler",
+              "ticker": "BSL",
+              "market": "US"
+            }
+          ],
+          "hidden_count": 11,
+          "estimated_total": 22
+        },
+        {
+          "group_id": "V-13",
+          "stream": null,
+          "name_zh": "AI游戏",
+          "visible_companies": [
+            {
+              "name": "吉比特",
+              "ticker": "603444",
+              "market": "CN"
+            },
+            {
+              "name": "巨人网络",
+              "ticker": "002558",
+              "market": "CN"
+            },
+            {
+              "name": "恺英网络",
+              "ticker": "002517",
+              "market": "CN"
+            },
+            {
+              "name": "昆仑万维",
+              "ticker": "300418",
+              "market": "CN"
+            },
+            {
+              "name": "三七互娱",
+              "ticker": "002555",
+              "market": "CN"
+            },
+            {
+              "name": "世纪华通",
+              "ticker": "002602",
+              "market": "CN"
+            },
+            {
+              "name": "汤姆猫",
+              "ticker": "300459",
+              "market": "CN"
+            },
+            {
+              "name": "完美世界",
+              "ticker": "002624",
+              "market": "CN"
+            },
+            {
+              "name": "网易游戏",
+              "ticker": "9999",
+              "market": "HK"
+            },
+            {
+              "name": "Roblox",
+              "ticker": "RBLX",
+              "market": "US"
+            },
+            {
+              "name": "任天堂",
+              "ticker": "7974",
+              "market": "HK"
+            }
+          ],
+          "hidden_count": 8,
+          "estimated_total": 19
+        },
+        {
+          "group_id": "V-14",
+          "stream": null,
+          "name_zh": "AI安全",
+          "visible_companies": [
+            {
+              "name": "360集团",
+              "ticker": "601360",
+              "market": "CN"
+            },
+            {
+              "name": "安恒信息",
+              "ticker": "688023",
+              "market": "CN"
+            },
+            {
+              "name": "大华股份",
+              "ticker": "002236",
+              "market": "CN"
+            },
+            {
+              "name": "海康威视",
+              "ticker": "002415",
+              "market": "CN"
+            },
+            {
+              "name": "科大讯飞",
+              "ticker": "002230",
+              "market": "CN"
+            },
+            {
+              "name": "奇安信",
+              "ticker": "688561",
+              "market": "CN"
+            },
+            {
+              "name": "启明星辰",
+              "ticker": "002439",
+              "market": "CN"
+            },
+            {
+              "name": "深信服",
+              "ticker": "300454",
+              "market": "CN"
+            },
+            {
+              "name": "天融信",
+              "ticker": "002212",
+              "market": "CN"
+            },
+            {
+              "name": "亚信安全",
+              "ticker": "688225",
+              "market": "CN"
+            }
+          ],
+          "hidden_count": 3,
+          "estimated_total": 13
+        },
+        {
+          "group_id": "V-15",
+          "stream": null,
+          "name_zh": "AI药物发现",
+          "visible_companies": [
+            {
+              "name": "晶泰科技",
+              "ticker": "2228",
+              "market": "HK"
+            },
+            {
+              "name": "英矽智能",
+              "ticker": "3696",
+              "market": "HK"
+            },
+            {
+              "name": "Pharmaceuticals",
+              "ticker": "RXRX",
+              "market": "US"
+            },
+            {
+              "name": "Schrödinger",
+              "ticker": "SDGR",
+              "market": "US"
+            }
+          ],
+          "hidden_count": 0,
+          "estimated_total": 4
+        },
+        {
+          "group_id": "V-16",
+          "stream": null,
+          "name_zh": "智慧物流与出行",
+          "visible_companies": [
+            {
+              "name": "德邦快运",
+              "ticker": "603056",
+              "market": "CN"
+            },
+            {
+              "name": "格灵深瞳",
+              "ticker": "688207",
+              "market": "CN"
+            },
+            {
+              "name": "航天宏图",
+              "ticker": "688066",
+              "market": "CN"
+            },
+            {
+              "name": "佳都科技",
+              "ticker": "600728",
+              "market": "CN"
+            },
+            {
+              "name": "经纬恒润",
+              "ticker": "688326",
+              "market": "CN"
+            },
+            {
+              "name": "千方科技",
+              "ticker": "002373",
+              "market": "CN"
+            },
+            {
+              "name": "顺丰控股",
+              "ticker": "002352",
+              "market": "CN"
+            },
+            {
+              "name": "四维图新",
+              "ticker": "002405",
+              "market": "CN"
+            },
+            {
+              "name": "易华录",
+              "ticker": "300212",
+              "market": "CN"
+            },
+            {
+              "name": "阿里巴巴",
+              "ticker": "9988",
+              "market": "HK"
+            },
+            {
+              "name": "小马智行",
+              "ticker": "PONY",
+              "market": "US"
+            }
+          ],
+          "hidden_count": 11,
+          "estimated_total": 22
+        },
+        {
+          "group_id": "V-17",
+          "stream": null,
+          "name_zh": "垂直行业AI应用",
+          "visible_companies": [
+            {
+              "name": "光云科技",
+              "ticker": "688365",
+              "market": "CN"
+            },
+            {
+              "name": "牧原股份",
+              "ticker": "002714",
+              "market": "CN"
+            },
+            {
+              "name": "托普云农",
+              "ticker": "301556",
+              "market": "CN"
+            },
+            {
+              "name": "中国平安",
+              "ticker": "601318",
+              "market": "CN"
+            },
+            {
+              "name": "北森",
+              "ticker": "9669",
+              "market": "HK"
+            },
+            {
+              "name": "猎聘",
+              "ticker": "6100",
+              "market": "HK"
+            },
+            {
+              "name": "微盟",
+              "ticker": "2013",
+              "market": "HK"
+            },
+            {
+              "name": "有赞",
+              "ticker": "8083",
+              "market": "HK"
+            },
+            {
+              "name": "众安在线",
+              "ticker": "6060",
+              "market": "HK"
+            },
+            {
+              "name": "拼多多",
+              "ticker": "PDD",
+              "market": "US"
+            },
+            {
+              "name": "声网",
+              "ticker": "API",
+              "market": "US"
+            }
+          ],
+          "hidden_count": 5,
+          "estimated_total": 16
+        }
+      ]
+    }
+  ],
+  "totals": {
+    "sub_industries": 48,
+    "visible_companies": 457,
+    "estimated_total_companies": 1190
+  }
+}
