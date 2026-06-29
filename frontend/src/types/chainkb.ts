@@ -195,3 +195,22 @@ export interface SearchResponse {
   q: string;
   results: SearchResult[];
 }
+
+// ── Freshness (data update timestamps) ──────────────────────────────────────
+export interface FreshnessEntry {
+  last_success_at: string | null;  // ISO datetime or null if never succeeded
+  status: 'succeeded' | 'never';
+  minutes_ago: number | null;      // integer minutes since last_success_at
+}
+
+export interface FreshnessResponse {
+  quotes: FreshnessEntry;
+  finance: FreshnessEntry;
+  reports: FreshnessEntry;
+  concepts: FreshnessEntry;
+  lockup: FreshnessEntry;
+  holders: FreshnessEntry;
+  margin: FreshnessEntry;
+  running: string[];                        // currently-running refresh types
+  failed_recent: Record<string, string>;    // type → ISO datetime of most recent failure (within 7d)
+}

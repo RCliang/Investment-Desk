@@ -5,6 +5,7 @@ import {
   getChainKbCompany,
   getChainKbTimeseries,
   searchChainKb,
+  getFreshness,
 } from '../../services/api';
 import type {
   TreeResponse,
@@ -12,6 +13,7 @@ import type {
   CompanyProfile,
   TimeSeriesResponse,
   SearchResponse,
+  FreshnessResponse,
 } from '../../types/chainkb';
 
 interface FetchState<T> {
@@ -184,4 +186,27 @@ export function useSearch(q: string, limit = 20, delay = 280) {
   }, [q, delay, fire]);
 
   return state;
+}
+
+// ── Freshness: polls /api/chainkb/freshness every 60s ───────────────────────
+export function useFreshness() {
+  const [data, setData] = useState<FreshnessResponse | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    const tick = async () => {
+      try {
+        const f = await getFreshness();
+        if (!cancelled) setData(f);
+      } catch {
+        // silent — backend may be down; UI shows last known state
+      }
+    };
+    tick();
+    const id = setInterval(tick, 60_000);
+    return () => {
+      cancelled = true;
+      clearInterval(id);
+    };
+  }, []);
+  return data;
 }

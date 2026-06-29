@@ -543,37 +543,63 @@ def main():
     print()
 
     with SessionLocal() as session:
-        # Structural first
+        # Structural first — commit immediately so time-series can reference companies
         s = load_seed_structural(session)
+        session.commit()
         print(f"  [seed] layers={s['layers']} sub_industries={s['sub_industries']} "
               f"companies_new={s['companies_new']} "
               f"companies_existing={s['companies_existing']} "
               f"links={s['links']}")
 
-        # Time-series
+        # Time-series — each type commits independently
         n_q = load_quotes(session)
+        session.commit()
         print(f"  [quotes] upserted={n_q}")
 
         n_f = load_finance(session)
+        session.commit()
         print(f"  [finance] upserted={n_f}")
 
-        c_new, c_exist, n_links = load_concept_blocks(session)
-        print(f"  [concepts] new={c_new} existing={c_exist} "
-              f"company_concept_links={n_links}")
+        try:
+            c_new, c_exist, n_links = load_concept_blocks(session)
+            session.commit()
+            print(f"  [concepts] new={c_new} existing={c_exist} "
+                  f"company_concept_links={n_links}")
+        except Exception as e:
+            session.rollback()
+            print(f"  [concepts] FAILED: {e}")
 
-        n_l = load_lockup(session)
-        print(f"  [lockup] upserted={n_l}")
+        try:
+            n_l = load_lockup(session)
+            session.commit()
+            print(f"  [lockup] upserted={n_l}")
+        except Exception as e:
+            session.rollback()
+            print(f"  [lockup] FAILED: {e}")
 
-        n_h = load_holder_num(session)
-        print(f"  [holder_num] upserted={n_h}")
+        try:
+            n_h = load_holder_num(session)
+            session.commit()
+            print(f"  [holder_num] upserted={n_h}")
+        except Exception as e:
+            session.rollback()
+            print(f"  [holder_num] FAILED: {e}")
 
-        n_m = load_margin(session)
-        print(f"  [margin] upserted={n_m}")
+        try:
+            n_m = load_margin(session)
+            session.commit()
+            print(f"  [margin] upserted={n_m}")
+        except Exception as e:
+            session.rollback()
+            print(f"  [margin] FAILED: {e}")
 
-        n_r = load_reports(session)
-        print(f"  [reports] upserted={n_r}")
-
-        session.commit()
+        try:
+            n_r = load_reports(session)
+            session.commit()
+            print(f"  [reports] upserted={n_r}")
+        except Exception as e:
+            session.rollback()
+            print(f"  [reports] FAILED: {e}")
 
     # Post-load table counts
     print()

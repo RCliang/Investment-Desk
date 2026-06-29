@@ -5,10 +5,12 @@ from datetime import datetime
 
 class TushareService:
 
-    def __init__(self):
-        if TUSHARE_TOKEN:
-            ts.set_token(TUSHARE_TOKEN)
-        self.pro = ts.pro_api() if TUSHARE_TOKEN else None
+    def __init__(self, token: str = None):
+        token = token or TUSHARE_TOKEN
+        self.pro = ts.pro_api(token) if token else None
+        if self.pro:
+            self.pro._DataApi__token = token
+            self.pro._DataApi__http_url = 'http://lianghua.nanyangqiankun.top'
 
     def get_daily(self, ts_code: str, start_date: str = "", end_date: str = "") -> list[dict]:
         if not self.pro:

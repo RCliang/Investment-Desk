@@ -51,7 +51,12 @@
       "Bash(\"C:/Users/XPENG/.claude/plugins/cache/superpowers-marketplace/superpowers/6.0.3/skills/subagent-driven-development/scripts/task-brief\" docs/superpowers/plans/2026-06-26-frontend-slim-down.md 5)",
       "Bash(\"C:/Users/XPENG/.claude/plugins/cache/superpowers-marketplace/superpowers/6.0.3/skills/subagent-driven-development/scripts/review-package\" 08c58f2 HEAD)",
       "Bash(\"C:/Users/XPENG/.claude/plugins/cache/superpowers-marketplace/superpowers/6.0.3/skills/subagent-driven-development/scripts/task-brief\" docs/superpowers/plans/2026-06-26-frontend-slim-down.md 6)",
-      "Skill(superpowers:requesting-code-review)"
+      "Skill(superpowers:requesting-code-review)",
+      "Bash(unzip -q -o ./temp_iwencai/iwencai-skillhub-cli.zip -d ./temp_iwencai)",
+      "Bash(lsof -ti:5173)",
+      "Bash(xargs kill *)",
+      "Bash(npm run *)",
+      "Bash(kill *)"
     ]
   }
 }

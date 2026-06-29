@@ -53,3 +53,11 @@ export async function searchChainKb(q: string, limit = 20): Promise<SearchRespon
   });
   return data;
 }
+
+// --- Freshness (data update timestamps) ---
+import type { FreshnessResponse } from '../types/chainkb';
+
+export async function getFreshness(): Promise<FreshnessResponse> {
+  const { data } = await api.get<FreshnessResponse>('/api/chainkb/freshness');
+  return data;
+}

@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "skills": {
+    "hithink-insresearch-query": {
+      "name": "hithink-insresearch-query",
+      "zip_url": "http://ms.10jqka.com.cn/gateway/market/api/v1/skills/square/download?name=hithink-insresearch-query",
+      "source": "skillhub",
+      "version": ""
+    }
+  }
+}

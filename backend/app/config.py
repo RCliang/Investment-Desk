@@ -26,3 +26,8 @@ LLM_MAX_TOKENS = 4096
 CACHE_TTL_MARKET = 300       # 行情缓存 5 分钟
 CACHE_TTL_FINANCIAL = 86400  # 财务缓存 1 天
 CACHE_TTL_CHAIN = 604800     # 产业链缓存 7 天
+
+# Refresh API token — required for POST /api/chainkb/refresh/* endpoints.
+# Generate with: python -c "import secrets; print(secrets.token_hex(16))"
+# If left empty, refresh endpoints return 503 (refuse to run unauthenticated).
+ADMIN_REFRESH_TOKEN = os.getenv("ADMIN_REFRESH_TOKEN", "")

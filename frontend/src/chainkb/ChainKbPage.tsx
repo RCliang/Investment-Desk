@@ -3,6 +3,8 @@ import './chainkb.css';
 import OverviewScreen from './OverviewScreen';
 import LayerScreen from './LayerScreen';
 import FinanceScreen from './FinanceScreen';
+import DataFreshness from './components/DataFreshness';
+import { useFreshness } from './hooks/useChainKb';
 
 type TabKey = 'overview' | 'layers' | 'finance';
 
@@ -20,14 +22,9 @@ const TABS: TabDef[] = [
   // 04 · 风险标记 — deferred (risk inference layer)
 ];
 
-function todayStr() {
-  const d = new Date();
-  const pad = (n: number) => String(n).padStart(2, '0');
-  return `${d.getFullYear()} / ${pad(d.getMonth() + 1)} / ${pad(d.getDate())}`;
-}
-
 export default function ChainKbPage() {
   const [activeTab, setActiveTab] = useState<TabKey>('overview');
+  const freshness = useFreshness();
 
   // Cross-tab drill-down state
   const [drilledGroupId, setDrilledGroupId] = useState<string | null>(null);
@@ -66,11 +63,7 @@ export default function ChainKbPage() {
             <div className="subtitle">投资研究 · 五层产业链拆解视图</div>
           </div>
           <div className="dateline">
-            {todayStr()}
-            <br />
-            InvestLens · CHAINKB
-            <br />
-            AI · 算力基础设施
+            <DataFreshness freshness={freshness} />
           </div>
         </header>
 

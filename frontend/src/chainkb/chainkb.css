@@ -891,3 +891,69 @@
     margin: 12px 0;
   }
 }
+
+/* ====== Header with freshness strip ====== */
+.chainkb-root .header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.chainkb-root .freshness-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+  justify-content: flex-end;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--pencil);
+  max-width: 560px;
+  line-height: 1.4;
+}
+.chainkb-root .freshness-strip.freshness-loading {
+  font-style: italic;
+  opacity: 0.6;
+}
+.chainkb-root .fresh-item {
+  display: inline-flex;
+  gap: 4px;
+  align-items: baseline;
+}
+.chainkb-root .fresh-label {
+  color: var(--ink);
+  opacity: 0.75;
+}
+.chainkb-root .fresh-value {
+  font-weight: 500;
+}
+.chainkb-root .fresh-item.fresh-running .fresh-value {
+  color: var(--ink);
+  border-bottom: 1px dotted var(--ink);
+  animation: fresh-pulse 1.5s ease-in-out infinite;
+}
+.chainkb-root .fresh-item.fresh-failed .fresh-value {
+  color: #e85a4f;
+  font-weight: 600;
+  cursor: help;
+}
+.chainkb-root .fresh-item.fresh-ok .fresh-value {
+  color: var(--pencil);
+}
+
+@keyframes fresh-pulse {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.5; }
+}
+
+@media (max-width: 768px) {
+  .chainkb-root .header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .chainkb-root .freshness-strip {
+    justify-content: flex-start;
+    max-width: none;
+  }
+}

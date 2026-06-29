@@ -326,6 +326,33 @@ class ResearchReport(Base):
     fetched_at = Column(DateTime, nullable=False, server_default=func.now())
 
 
+class ChainRefreshLog(Base):
+    """Audit trail for every data refresh run (manual, scheduled, or CLI).
+
+    One row per refresh attempt. Lifecycle: insert with status='running'
+    on start, update to 'succeeded' or 'failed' on completion.
+
+    The freshness endpoint reads the most recent 'succeeded' row per
+    refresh_type to compute last_success_at / minutes_ago.
+    """
+    __tablename__ = "chain_refresh_log"
+    __table_args__ = (
+        Index("ix_refresh_type_status", "refresh_type", "status"),
+    )
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    refresh_type = Column(String(16), nullable=False, index=True)
+    started_at = Column(DateTime, nullable=False,
+                        server_default=func.now(), index=True)
+    finished_at = Column(DateTime, nullable=True)
+    status = Column(String(16), nullable=False,
+                    default="running")  # running | succeeded | failed
+    rows_affected = Column(Integer, nullable=True)
+    error = Column(Text, nullable=True)
+    triggered_by = Column(String(16), nullable=False,
+                          default="manual")  # manual | scheduler | cli
+
+
 __all__ = [
     # Static entities
     "Layer", "SubIndustry", "Company", "Concept",
@@ -334,6 +361,8 @@ __all__ = [
     # Time-series
     "Quote", "FinanceSnapshot", "LockupEvent", "HolderPeriod",
     "MarginDaily", "ResearchReport",
+    # Refresh log
+    "ChainRefreshLog",
     # Constants
     "LIFECYCLE_CANONICAL", "LIFECYCLE_GENERATED", "LIFECYCLE_DEPRECATED",
 ]
