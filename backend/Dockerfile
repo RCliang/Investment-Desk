@@ -5,7 +5,7 @@ RUN apt-get update && apt-get install -y tzdata && \
     echo "Asia/Shanghai" > /etc/timezone && \
     rm -rf /var/lib/apt/lists/*
 COPY requirements.txt .
-RUN pip install --no-cache-dir -i https://mirrors.aliyun.com/pypi/simple/ -r requirements.txt -i 
+RUN pip install --no-cache-dir -i https://mirrors.aliyun.com/pypi/simple/ -r requirements.txt
 COPY . .
 RUN mkdir -p /app/data
 EXPOSE 8000
