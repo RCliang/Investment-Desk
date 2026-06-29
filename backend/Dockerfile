@@ -1,4 +1,4 @@
-FROM docker.1panel.live/python:3.11-slim
+FROM python:3.11-slim
 WORKDIR /app
 RUN apt-get update && apt-get install -y tzdata && \
     ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime && \
