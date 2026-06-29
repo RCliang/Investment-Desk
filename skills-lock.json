@@ -97,6 +97,18 @@
       "skillPath": "skills/engineering/triage/SKILL.md",
       "computedHash": "b77ea99c2e6e97815b373cc476ad4cc1835d3e736867b764602147be71f6c131"
     },
+    "web-design-engineer": {
+      "source": "ConardLi/garden-skills",
+      "sourceType": "github",
+      "skillPath": "skills/web-design-engineer/SKILL.md",
+      "computedHash": "598cc3ea9da6f3d7d4676edf53c320aaeccab1eefbb74d6a6b86358886ba578f"
+    },
+    "web-video-presentation": {
+      "source": "ConardLi/garden-skills",
+      "sourceType": "github",
+      "skillPath": "skills/web-video-presentation/SKILL.md",
+      "computedHash": "a760be4be109d4f259559760dbbfdcbef616b061cdc181472e5a45e330025773"
+    },
     "writing-great-skills": {
       "source": "mattpocock/skills",
       "sourceType": "github",

@@ -12,3 +12,5 @@ backend/data/
 .env.*.local
 nul
 tmpclaude*
+.claude/
+.agents/

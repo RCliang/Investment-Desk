@@ -1,0 +1,1205 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>InvestLens · 投资研究工作台 · 演讲幻灯片</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600;1,700&family=Source+Serif+4:ital,opsz,wght@0,8..60,300;0,8..60,400;0,8..60,500;0,8..60,600;0,8..60,700;1,8..60,400;1,8..60,500;1,8..60,600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    /* Stripe Press palette */
+    --ground:        #F1ECDE;
+    --surface:       #E6DCC4;
+    --ink:           #1A1A18;
+    --secondary:     #736D5A;
+    --teal:          #1B4B5A;   /* foil-stamp 1 */
+    --sienna:        #A04A2A;   /* foil-stamp 2 */
+    --hairline:      #C8BEA4;
+
+    /* Typography */
+    --serif-display: 'Cormorant Garamond', 'Source Serif 4', Georgia, serif;
+    --serif-body:    'Source Serif 4', Georgia, serif;
+    --sans-ui:       'Inter', -apple-system, system-ui, sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    height: 100%;
+    background: #0a0a0a;
+    font-family: var(--serif-body);
+    color: var(--ink);
+    overflow: hidden;
+  }
+
+  /* Stage — letterbox area */
+  #stage {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* 1920×1080 canvas — scaled to fit */
+  #canvas {
+    width: 1920px;
+    height: 1080px;
+    position: relative;
+    transform-origin: center center;
+    background: var(--ground);
+    overflow: hidden;
+    box-shadow: 0 40px 120px rgba(0,0,0,0.5);
+  }
+
+  /* Subtle textile texture */
+  #canvas::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image:
+      radial-gradient(circle at 25% 30%, rgba(160,74,42,0.025) 0, transparent 50%),
+      radial-gradient(circle at 75% 70%, rgba(27,75,90,0.025) 0, transparent 50%);
+    pointer-events: none;
+    z-index: 1;
+  }
+  #canvas::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2'/><feColorMatrix values='0 0 0 0 0.1 0 0 0 0 0.1 0 0 0 0 0.08 0 0 0 0.06 0'/></filter><rect width='200' height='200' filter='url(%23n)'/></svg>");
+    opacity: 0.4;
+    mix-blend-mode: multiply;
+    pointer-events: none;
+    z-index: 2;
+  }
+
+  /* Slides */
+  .slide {
+    position: absolute;
+    inset: 0;
+    padding: 96px 144px;
+    display: flex;
+    flex-direction: column;
+    z-index: 3;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 1.4s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .slide.active {
+    opacity: 1;
+    visibility: visible;
+  }
+
+  /* Slide chrome — header & footer */
+  .slide-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    font-family: var(--sans-ui);
+    font-size: 14px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--secondary);
+    padding-bottom: 24px;
+    border-bottom: 1px solid var(--hairline);
+    margin-bottom: 72px;
+  }
+  .slide-header .brand { font-weight: 600; color: var(--ink); }
+  .slide-header .chapter-mark { font-feature-settings: "tnum"; }
+
+  .slide-footer {
+    margin-top: auto;
+    padding-top: 32px;
+    border-top: 1px solid var(--hairline);
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    font-family: var(--sans-ui);
+    font-size: 13px;
+    color: var(--secondary);
+    letter-spacing: 0.12em;
+  }
+  .slide-footer .pager {
+    font-family: var(--serif-display);
+    font-style: italic;
+    font-size: 28px;
+    color: var(--ink);
+    letter-spacing: 0;
+  }
+
+  /* Typography */
+  .kicker {
+    font-family: var(--sans-ui);
+    font-size: 16px;
+    letter-spacing: 0.32em;
+    text-transform: uppercase;
+    color: var(--sienna);
+    margin-bottom: 48px;
+    font-weight: 500;
+  }
+  .kicker.teal { color: var(--teal); }
+
+  h1.display {
+    font-family: var(--serif-display);
+    font-weight: 500;
+    font-size: 132px;
+    line-height: 1.02;
+    letter-spacing: -0.022em;
+    color: var(--ink);
+    margin-bottom: 32px;
+  }
+  h1.display em {
+    font-style: italic;
+    font-weight: 400;
+    color: var(--teal);
+  }
+
+  h2.title {
+    font-family: var(--serif-display);
+    font-weight: 500;
+    font-size: 88px;
+    line-height: 1.05;
+    letter-spacing: -0.018em;
+    color: var(--ink);
+    margin-bottom: 48px;
+  }
+  h2.title em {
+    font-style: italic;
+    font-weight: 400;
+  }
+
+  .lede {
+    font-family: var(--serif-body);
+    font-size: 28px;
+    line-height: 1.55;
+    color: var(--ink);
+    max-width: 1100px;
+    font-weight: 400;
+  }
+  .lede em { font-style: italic; color: var(--sienna); }
+  .lede em.teal { color: var(--teal); }
+
+  .caption {
+    font-family: var(--sans-ui);
+    font-size: 14px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--secondary);
+  }
+
+  /* === Slide 1 — Cover === */
+  #slide-cover {
+    justify-content: center;
+    padding: 96px 144px;
+  }
+  #slide-cover .cover-inner {
+    max-width: 1400px;
+  }
+  #slide-cover .cover-eyebrow {
+    font-family: var(--sans-ui);
+    font-size: 15px;
+    letter-spacing: 0.42em;
+    text-transform: uppercase;
+    color: var(--secondary);
+    margin-bottom: 64px;
+    display: flex;
+    align-items: center;
+    gap: 24px;
+  }
+  #slide-cover .cover-eyebrow::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--hairline);
+    max-width: 280px;
+  }
+  #slide-cover h1.display {
+    font-size: 168px;
+    line-height: 0.96;
+    margin-bottom: 48px;
+  }
+  #slide-cover .subtitle {
+    font-family: var(--serif-display);
+    font-style: italic;
+    font-weight: 400;
+    font-size: 48px;
+    line-height: 1.3;
+    color: var(--secondary);
+    max-width: 980px;
+    margin-bottom: 80px;
+  }
+  #slide-cover .meta-row {
+    display: flex;
+    gap: 96px;
+    padding-top: 40px;
+    border-top: 1px solid var(--hairline);
+    max-width: 980px;
+  }
+  #slide-cover .meta-row > div { display: flex; flex-direction: column; gap: 8px; }
+  #slide-cover .meta-row .label {
+    font-family: var(--sans-ui);
+    font-size: 12px;
+    letter-spacing: 0.24em;
+    text-transform: uppercase;
+    color: var(--secondary);
+  }
+  #slide-cover .meta-row .value {
+    font-family: var(--serif-display);
+    font-style: italic;
+    font-size: 24px;
+    color: var(--ink);
+  }
+
+  /* === Slide 2 — Four Functions === */
+  #slide-functions .functions-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0;
+    margin-top: 24px;
+    flex: 1;
+  }
+  .func-col {
+    padding: 0 40px 0 0;
+    border-right: 1px solid var(--hairline);
+    display: flex;
+    flex-direction: column;
+  }
+  .func-col:last-child { border-right: none; padding-right: 0; }
+  .func-col:not(:first-child) { padding-left: 40px; }
+
+  .func-num {
+    font-family: var(--serif-display);
+    font-style: italic;
+    font-weight: 400;
+    font-size: 80px;
+    line-height: 1;
+    color: var(--sienna);
+    margin-bottom: 32px;
+    font-feature-settings: "tnum";
+  }
+  .func-title {
+    font-family: var(--serif-display);
+    font-weight: 500;
+    font-size: 38px;
+    line-height: 1.15;
+    color: var(--ink);
+    margin-bottom: 24px;
+    min-height: 88px;
+  }
+  .func-body {
+    font-family: var(--serif-body);
+    font-size: 18px;
+    line-height: 1.6;
+    color: var(--ink);
+    margin-bottom: 24px;
+  }
+  .func-tag {
+    margin-top: auto;
+    font-family: var(--sans-ui);
+    font-size: 12px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--secondary);
+    padding-top: 24px;
+    border-top: 1px solid var(--hairline);
+  }
+
+  /* === Slide 3 — Data Sources === */
+  #slide-data .data-layout {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 96px;
+    flex: 1;
+    align-items: start;
+  }
+  #slide-data .data-left h2.title { font-size: 76px; }
+  #slide-data .data-left .lede { font-size: 24px; margin-top: 24px; }
+
+  .source-table {
+    display: flex;
+    flex-direction: column;
+  }
+  .source-row {
+    display: grid;
+    grid-template-columns: 80px 1fr 200px;
+    gap: 24px;
+    padding: 20px 0;
+    border-bottom: 1px solid var(--hairline);
+    align-items: baseline;
+  }
+  .source-row:first-child { border-top: 1px solid var(--hairline); }
+  .source-row .src-num {
+    font-family: var(--serif-display);
+    font-style: italic;
+    font-size: 28px;
+    color: var(--sienna);
+    font-feature-settings: "tnum";
+  }
+  .source-row .src-name {
+    font-family: var(--serif-display);
+    font-size: 30px;
+    font-weight: 500;
+    color: var(--ink);
+    line-height: 1.2;
+  }
+  .source-row .src-name span {
+    display: block;
+    font-family: var(--serif-body);
+    font-size: 16px;
+    color: var(--secondary);
+    font-style: italic;
+    margin-top: 4px;
+    line-height: 1.4;
+  }
+  .source-row .src-token {
+    font-family: var(--sans-ui);
+    font-size: 12px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--secondary);
+    text-align: right;
+  }
+  .source-row .src-token.required { color: var(--sienna); }
+
+  .ttl-card {
+    margin-top: 48px;
+    padding: 32px 40px;
+    background: var(--surface);
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 32px;
+  }
+  .ttl-item .ttl-label {
+    font-family: var(--sans-ui);
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--secondary);
+    margin-bottom: 8px;
+  }
+  .ttl-item .ttl-value {
+    font-family: var(--serif-display);
+    font-style: italic;
+    font-size: 36px;
+    color: var(--ink);
+    line-height: 1;
+    font-feature-settings: "tnum";
+  }
+  .ttl-item .ttl-note {
+    font-family: var(--serif-body);
+    font-size: 14px;
+    color: var(--secondary);
+    margin-top: 6px;
+    font-style: italic;
+  }
+
+  /* === Slide 4 — Chain (Hero) === */
+  #slide-chain-hero .chain-layout {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 96px;
+    flex: 1;
+    align-items: center;
+  }
+  #slide-chain-hero .chain-num {
+    font-family: var(--serif-display);
+    font-style: italic;
+    font-size: 240px;
+    line-height: 0.9;
+    color: var(--teal);
+    margin-bottom: 32px;
+    font-feature-settings: "tnum";
+  }
+  #slide-chain-hero .chain-pull {
+    font-family: var(--serif-display);
+    font-style: italic;
+    font-weight: 400;
+    font-size: 56px;
+    line-height: 1.25;
+    color: var(--ink);
+    max-width: 760px;
+    border-left: 2px solid var(--teal);
+    padding-left: 40px;
+  }
+
+  .stack-diagram {
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+    position: relative;
+  }
+  .stack-layer {
+    background: var(--surface);
+    padding: 36px 40px;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .stack-layer .layer-num {
+    font-family: var(--serif-display);
+    font-style: italic;
+    font-size: 28px;
+    color: var(--teal);
+    line-height: 1;
+    font-feature-settings: "tnum";
+  }
+  .stack-layer .layer-title {
+    font-family: var(--serif-display);
+    font-weight: 500;
+    font-size: 32px;
+    color: var(--ink);
+    line-height: 1.15;
+  }
+  .stack-layer .layer-meta {
+    font-family: var(--serif-body);
+    font-style: italic;
+    font-size: 17px;
+    color: var(--secondary);
+    margin-top: 8px;
+    line-height: 1.5;
+  }
+
+  /* === Slide 5 — Chain Detail (5-layer tree) === */
+  #slide-chain-detail .tree-wrap {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    margin-top: -32px;
+  }
+  .tree-row {
+    display: grid;
+    grid-template-columns: 120px 280px 1fr;
+    gap: 48px;
+    padding: 32px 0;
+    border-bottom: 1px solid var(--hairline);
+    align-items: baseline;
+  }
+  .tree-row:first-of-type { border-top: 1px solid var(--hairline); }
+  .tree-roman {
+    font-family: var(--serif-display);
+    font-style: italic;
+    font-size: 56px;
+    color: var(--teal);
+    line-height: 1;
+    font-feature-settings: "tnum";
+  }
+  .tree-name {
+    font-family: var(--serif-display);
+    font-weight: 500;
+    font-size: 36px;
+    color: var(--ink);
+    line-height: 1.15;
+  }
+  .tree-name span {
+    display: block;
+    font-family: var(--sans-ui);
+    font-size: 12px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--secondary);
+    margin-top: 6px;
+    font-weight: 500;
+  }
+  .tree-desc {
+    font-family: var(--serif-body);
+    font-size: 19px;
+    line-height: 1.55;
+    color: var(--ink);
+    font-style: italic;
+  }
+  .tree-desc strong {
+    font-family: var(--serif-display);
+    font-style: normal;
+    font-weight: 600;
+    color: var(--sienna);
+    font-size: 22px;
+    margin-right: 12px;
+  }
+
+  .seed-stats {
+    display: flex;
+    gap: 64px;
+    margin-top: 48px;
+    padding-top: 32px;
+    border-top: 1px solid var(--hairline);
+  }
+  .seed-stat .num {
+    font-family: var(--serif-display);
+    font-style: italic;
+    font-size: 64px;
+    color: var(--teal);
+    line-height: 1;
+    font-feature-settings: "tnum";
+  }
+  .seed-stat .lbl {
+    font-family: var(--sans-ui);
+    font-size: 12px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--secondary);
+    margin-top: 8px;
+  }
+
+  /* === Slide 6 — Quote / Transition === */
+  #slide-quote {
+    justify-content: center;
+    align-items: flex-start;
+  }
+  #slide-quote .quote-mark {
+    font-family: var(--serif-display);
+    font-style: italic;
+    font-size: 280px;
+    line-height: 0.7;
+    color: var(--sienna);
+    margin-bottom: 32px;
+  }
+  #slide-quote blockquote {
+    font-family: var(--serif-display);
+    font-style: italic;
+    font-weight: 400;
+    font-size: 88px;
+    line-height: 1.18;
+    color: var(--ink);
+    max-width: 1400px;
+    letter-spacing: -0.012em;
+  }
+  #slide-quote blockquote em {
+    color: var(--teal);
+    font-style: italic;
+  }
+  #slide-quote .attribution {
+    margin-top: 64px;
+    font-family: var(--sans-ui);
+    font-size: 14px;
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+    color: var(--secondary);
+  }
+
+  /* === Slide 7 — Closing / Start === */
+  #slide-close .close-layout {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 96px;
+    flex: 1;
+    align-items: center;
+  }
+  #slide-close h2.title { font-size: 96px; margin-bottom: 64px; }
+  #slide-close .close-lede {
+    font-family: var(--serif-body);
+    font-size: 24px;
+    line-height: 1.6;
+    color: var(--ink);
+    margin-bottom: 56px;
+  }
+  #slide-close .close-lede em { font-style: italic; color: var(--teal); }
+
+  .start-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+  .start-item {
+    display: grid;
+    grid-template-columns: 72px 1fr;
+    gap: 32px;
+    padding: 28px 0;
+    border-bottom: 1px solid var(--hairline);
+    align-items: baseline;
+  }
+  .start-item:first-child { border-top: 1px solid var(--hairline); }
+  .start-num {
+    font-family: var(--serif-display);
+    font-style: italic;
+    font-size: 40px;
+    color: var(--teal);
+    line-height: 1;
+    font-feature-settings: "tnum";
+  }
+  .start-body .start-title {
+    font-family: var(--serif-display);
+    font-weight: 500;
+    font-size: 28px;
+    color: var(--ink);
+    line-height: 1.2;
+    margin-bottom: 6px;
+  }
+  .start-body .start-desc {
+    font-family: var(--serif-body);
+    font-style: italic;
+    font-size: 17px;
+    color: var(--secondary);
+    line-height: 1.5;
+  }
+  .start-body code {
+    font-family: 'SF Mono', 'Menlo', monospace;
+    font-size: 14px;
+    background: var(--surface);
+    padding: 2px 8px;
+    color: var(--sienna);
+    font-style: normal;
+  }
+
+  .closing-mark {
+    margin-top: 56px;
+    padding-top: 32px;
+    border-top: 1px solid var(--hairline);
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+  }
+  .closing-mark .signature {
+    font-family: var(--serif-display);
+    font-style: italic;
+    font-size: 32px;
+    color: var(--ink);
+  }
+  .closing-mark .signature em { color: var(--teal); }
+  .closing-mark .url {
+    font-family: var(--sans-ui);
+    font-size: 13px;
+    letter-spacing: 0.16em;
+    color: var(--secondary);
+  }
+
+  /* === Controls (outside canvas) === */
+  #controls {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    z-index: 100;
+    background: rgba(20,20,20,0.85);
+    backdrop-filter: blur(12px);
+    padding: 10px 16px;
+    border-radius: 999px;
+    border: 1px solid rgba(255,255,255,0.08);
+  }
+  #controls button {
+    background: transparent;
+    border: none;
+    color: rgba(255,255,255,0.85);
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-family: var(--sans-ui);
+    font-size: 14px;
+    transition: background 0.2s;
+  }
+  #controls button:hover { background: rgba(255,255,255,0.12); }
+  #controls .progress {
+    color: rgba(255,255,255,0.7);
+    font-family: var(--serif-display);
+    font-style: italic;
+    font-size: 18px;
+    min-width: 100px;
+    text-align: center;
+  }
+  #controls .progress .current { color: white; font-size: 22px; }
+
+  /* Narration toggle */
+  #narration-toggle {
+    position: fixed;
+    top: 24px;
+    right: 24px;
+    z-index: 100;
+    background: rgba(20,20,20,0.85);
+    backdrop-filter: blur(12px);
+    color: rgba(255,255,255,0.85);
+    border: 1px solid rgba(255,255,255,0.08);
+    padding: 10px 18px;
+    border-radius: 999px;
+    cursor: pointer;
+    font-family: var(--sans-ui);
+    font-size: 13px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+  }
+  #narration-toggle:hover { background: rgba(40,40,40,0.9); }
+
+  /* Narration overlay */
+  #narration {
+    position: fixed;
+    bottom: 90px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: min(900px, 80vw);
+    background: rgba(20,20,20,0.92);
+    backdrop-filter: blur(16px);
+    color: #F1ECDE;
+    padding: 28px 36px;
+    border: 1px solid rgba(255,255,255,0.1);
+    font-family: var(--serif-body);
+    font-size: 17px;
+    line-height: 1.7;
+    z-index: 99;
+    display: none;
+  }
+  #narration.visible { display: block; }
+  #narration .narration-label {
+    font-family: var(--sans-ui);
+    font-size: 11px;
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+    color: #C8BEA4;
+    margin-bottom: 12px;
+  }
+  #narration .narration-text em {
+    font-style: italic;
+    color: #E6DCC4;
+  }
+
+  /* Progressive entrance for slide elements */
+  .slide.active .anim {
+    animation: rise 1.2s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  }
+  .slide.active .anim:nth-child(1) { animation-delay: 0.15s; }
+  .slide.active .anim:nth-child(2) { animation-delay: 0.30s; }
+  .slide.active .anim:nth-child(3) { animation-delay: 0.45s; }
+  .slide.active .anim:nth-child(4) { animation-delay: 0.60s; }
+  .slide.active .anim:nth-child(5) { animation-delay: 0.75s; }
+
+  @keyframes rise {
+    from { opacity: 0; transform: translateY(24px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Reduced motion */
+  @media (prefers-reduced-motion: reduce) {
+    .slide { transition: opacity 0.3s; }
+    .slide.active .anim { animation: none; }
+  }
+</style>
+</head>
+<body>
+
+<div id="stage">
+  <div id="canvas">
+
+    <!-- ============ SLIDE 1 · COVER ============ -->
+    <section class="slide active" id="slide-cover" data-screen-label="01 Cover">
+      <div class="cover-inner anim">
+        <div class="cover-eyebrow">Investment Research Workbench · 2026</div>
+        <h1 class="display">Invest<em>Lens</em></h1>
+        <p class="subtitle">把<em>看赛道、选个股、写复盘、管计划</em>串成一条线的<br/>个人 A 股投资研究工作台。</p>
+        <div class="meta-row">
+          <div>
+            <span class="label">Stack</span>
+            <span class="value">FastAPI · React · DeepSeek</span>
+          </div>
+          <div>
+            <span class="label">Data Sources</span>
+            <span class="value">AkShare · Tushare · 通达信</span>
+          </div>
+          <div>
+            <span class="label">Coverage</span>
+            <span class="value">5 层 · 48 行业 · 234 公司</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ SLIDE 2 · FOUR FUNCTIONS ============ -->
+    <section class="slide" id="slide-functions" data-screen-label="02 Four Functions">
+      <header class="slide-header anim">
+        <span class="brand">InvestLens</span>
+        <span class="chapter-mark">Chapter I — What it does</span>
+      </header>
+
+      <div class="anim">
+        <div class="kicker">Four Pillars</div>
+        <h2 class="title">把投资研究的<em>四件事</em>，<br/>装进一个工作台。</h2>
+      </div>
+
+      <div class="functions-grid anim">
+        <div class="func-col">
+          <div class="func-num">01</div>
+          <div class="func-title">产业链<br/>知识库</div>
+          <p class="func-body">五层产业链大图 — 能源、材料、制造、交通、消费。每个细分行业都挂载真实的 A 股公司，可层层钻取。</p>
+          <div class="func-tag">Browse · Drill · Search</div>
+        </div>
+        <div class="func-col">
+          <div class="func-num">02</div>
+          <div class="func-title">多源<br/>数据查询</div>
+          <p class="func-body">同一只股票，从行情、财务、研报、资金流、概念板块、解禁、股东户数七个维度交叉看，不再切 App。</p>
+          <div class="func-tag">7 Dimensions · 1 Ticker</div>
+        </div>
+        <div class="func-col">
+          <div class="func-num">03</div>
+          <div class="func-title">AI<br/>报告生成</div>
+          <p class="func-body">基于产业链分析，DeepSeek 流式输出结构化报告 — 核心判断、机会排序、风险矩阵、标的推荐。</p>
+          <div class="func-tag">SSE Streaming</div>
+        </div>
+        <div class="func-col">
+          <div class="func-num">04</div>
+          <div class="func-title">投资<br/>计划管理</div>
+          <p class="func-body">买卖方向、仓位、目标价、止损价、理由、状态全部入库。复盘的不是结果，而是当时的决策。</p>
+          <div class="func-tag">Decisions · Not Outcomes</div>
+        </div>
+      </div>
+
+      <footer class="slide-footer anim">
+        <span>investlens · 投资研究工作台</span>
+        <span class="pager">02</span>
+      </footer>
+    </section>
+
+    <!-- ============ SLIDE 3 · DATA SOURCES ============ -->
+    <section class="slide" id="slide-data" data-screen-label="03 Data Sources">
+      <header class="slide-header anim">
+        <span class="brand">InvestLens</span>
+        <span class="chapter-mark">Chapter II — Where the data comes from</span>
+      </header>
+
+      <div class="data-layout">
+        <div class="data-left">
+          <div class="kicker anim">Seven Sources · One Ticker</div>
+          <h2 class="title anim">不自己造数据。<br/>把<em>公开数据源</em>整合到<br/>一个统一接口。</h2>
+          <p class="lede anim">InvestLens 的数据策略很克制 — 不做数据生产者，只做<em>整合者与缓存者</em>。每个数据源按它的特性配置独立的 TTL 与刷新调度，行情 5 分钟、财务 1 天、产业链分析 7 天。</p>
+
+          <div class="ttl-card anim">
+            <div class="ttl-item">
+              <div class="ttl-label">Market TTL</div>
+              <div class="ttl-value">5<span style="font-size:18px;">min</span></div>
+              <div class="ttl-note">实时性优先</div>
+            </div>
+            <div class="ttl-item">
+              <div class="ttl-label">Financial TTL</div>
+              <div class="ttl-value">1<span style="font-size:18px;">day</span></div>
+              <div class="ttl-note">日级足够</div>
+            </div>
+            <div class="ttl-item">
+              <div class="ttl-label">AI Analysis TTL</div>
+              <div class="ttl-value">7<span style="font-size:18px;">day</span></div>
+              <div class="ttl-note">省 LLM 调用</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="data-right anim">
+          <div class="source-table">
+            <div class="source-row">
+              <div class="src-num">01</div>
+              <div class="src-name">DeepSeek<span>产业链 AI 分析 · 报告生成</span></div>
+              <div class="src-token required">Token Required</div>
+            </div>
+            <div class="source-row">
+              <div class="src-num">02</div>
+              <div class="src-name">AkShare<span>行情 · 财务 · 行业成分 · 资金流</span></div>
+              <div class="src-token">Open Source</div>
+            </div>
+            <div class="source-row">
+              <div class="src-num">03</div>
+              <div class="src-name">Tushare Pro<span>专业财务指标 · PE/PB/ROE</span></div>
+              <div class="src-token required">Token Required</div>
+            </div>
+            <div class="source-row">
+              <div class="src-num">04</div>
+              <div class="src-name">腾讯财经<span>实时行情主源 · 速度快不封 IP</span></div>
+              <div class="src-token">Public</div>
+            </div>
+            <div class="source-row">
+              <div class="src-num">05</div>
+              <div class="src-name">东方财富<span>研报 · 概念 · 资金流 · 解禁</span></div>
+              <div class="src-token">Public</div>
+            </div>
+            <div class="source-row">
+              <div class="src-num">06</div>
+              <div class="src-name">通达信 mootdx<span>财务三表 · F10 · 稳定主源</span></div>
+              <div class="src-token">Public</div>
+            </div>
+            <div class="source-row">
+              <div class="src-num">07</div>
+              <div class="src-name">iWencai<span>同花顺研报搜索（可选）</span></div>
+              <div class="src-token">Optional</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <footer class="slide-footer anim">
+        <span>investlens · 投资研究工作台</span>
+        <span class="pager">03</span>
+      </footer>
+    </section>
+
+    <!-- ============ SLIDE 4 · CHAIN — HERO ============ -->
+    <section class="slide" id="slide-chain-hero" data-screen-label="04 Chain · Three Layers">
+      <header class="slide-header anim">
+        <span class="brand">InvestLens</span>
+        <span class="chapter-mark">Chapter III — How the chain is wired</span>
+      </header>
+
+      <div class="chain-layout">
+        <div class="chain-left anim">
+          <div class="chain-num">III</div>
+          <p class="chain-pull">产业链不是 AI 凭空生成，<br/>也不是手工录入 —<br/>它是<em>三层结构</em>的<br/>双层组合。</p>
+        </div>
+
+        <div class="stack-diagram anim">
+          <div class="stack-layer">
+            <div class="layer-num">I.</div>
+            <div class="layer-title">静态骨架</div>
+            <div class="layer-meta">aichainmap 种子数据 · 5 层 / 48 行业 / 234 公司<br/>可钻取、可枚举的结构化挂载</div>
+          </div>
+          <div class="stack-layer">
+            <div class="layer-num">II.</div>
+            <div class="layer-title">动态市场数据</div>
+            <div class="layer-meta">7 类 backfill 脚本定时抓取入库<br/>行情 · 财务 · 研报 · 概念 · 解禁 · 股东 · 融资融券</div>
+          </div>
+          <div class="stack-layer">
+            <div class="layer-num">III.</div>
+            <div class="layer-title">AI 按需分析</div>
+            <div class="layer-meta">DeepSeek 结构化输出 · 7 天缓存<br/>上中下游机会评级 · 不写入骨架</div>
+          </div>
+        </div>
+      </div>
+
+      <footer class="slide-footer anim">
+        <span>investlens · 投资研究工作台</span>
+        <span class="pager">04</span>
+      </footer>
+    </section>
+
+    <!-- ============ SLIDE 5 · CHAIN — DETAIL ============ -->
+    <section class="slide" id="slide-chain-detail" data-screen-label="05 Chain · The Map">
+      <header class="slide-header anim">
+        <span class="brand">InvestLens</span>
+        <span class="chapter-mark">Chapter III — The map itself</span>
+      </header>
+
+      <div class="anim">
+        <div class="kicker teal">The Five Layers</div>
+        <h2 class="title">从<em>能源</em>到<em>消费</em>，<br/>一张可钻取的产业链大图。</h2>
+      </div>
+
+      <div class="tree-wrap anim">
+        <div class="tree-row">
+          <div class="tree-roman">I</div>
+          <div class="tree-name">能源与电力<span>Energy</span></div>
+          <div class="tree-desc"><strong>上游根基</strong>风电、光伏、水电、核电、储能、电网 — 一切产业的最上游。</div>
+        </div>
+        <div class="tree-row">
+          <div class="tree-roman">II</div>
+          <div class="tree-name">原材料<span>Materials</span></div>
+          <div class="tree-desc"><strong>中游血肉</strong>有色、钢铁、化工、建材、锂电材料 — 制造业的物质前提。</div>
+        </div>
+        <div class="tree-row">
+          <div class="tree-roman">III</div>
+          <div class="tree-name">制造业<span>Manufacturing</span></div>
+          <div class="tree-desc"><strong>价值放大器</strong>半导体、新能源车、机械、家电、消费电子 — 把材料变成产品。</div>
+        </div>
+        <div class="tree-row">
+          <div class="tree-roman">IV</div>
+          <div class="tree-name">交通与物流<span>Transport</span></div>
+          <div class="tree-desc"><strong>流通血脉</strong>航空、航运、港口、公路、快递 — 让产品到达需求侧。</div>
+        </div>
+        <div class="tree-row">
+          <div class="tree-roman">V</div>
+          <div class="tree-name">消费与服务<span>Consumption</span></div>
+          <div class="tree-desc"><strong>需求终点</strong>食品饮料、医药、零售、金融、传媒 — 价值的最终兑现。</div>
+        </div>
+      </div>
+
+      <div class="seed-stats anim">
+        <div class="seed-stat">
+          <div class="num">5</div>
+          <div class="lbl">Layers · 层级</div>
+        </div>
+        <div class="seed-stat">
+          <div class="num">48</div>
+          <div class="lbl">Sub-industries · 细分行业</div>
+        </div>
+        <div class="seed-stat">
+          <div class="num">234</div>
+          <div class="lbl">A-share Companies · A 股公司</div>
+        </div>
+        <div class="seed-stat">
+          <div class="num">30+</div>
+          <div class="lbl">Reference · 港/美参考公司</div>
+        </div>
+      </div>
+
+      <footer class="slide-footer anim">
+        <span>investlens · 投资研究工作台</span>
+        <span class="pager">05</span>
+      </footer>
+    </section>
+
+    <!-- ============ SLIDE 6 · QUOTE ============ -->
+    <section class="slide" id="slide-quote" data-screen-label="06 Pull Quote">
+      <div class="anim" style="max-width:1500px;">
+        <div class="quote-mark">"</div>
+        <blockquote>
+          A 股研究最难的不是<em>找数据</em>，<br/>
+          而是把<em>赛道、个股、决策</em><br/>
+          放进<em>同一个上下文</em>里。
+        </blockquote>
+        <div class="attribution">— InvestLens · Design Rationale</div>
+      </div>
+    </section>
+
+    <!-- ============ SLIDE 7 · CLOSING / START ============ -->
+    <section class="slide" id="slide-close" data-screen-label="07 Start Here">
+      <header class="slide-header anim">
+        <span class="brand">InvestLens</span>
+        <span class="chapter-mark">Coda — How to begin</span>
+      </header>
+
+      <div class="close-layout">
+        <div class="close-left anim">
+          <div class="kicker">Start in three commands</div>
+          <h2 class="title">从零到<br/><em>第一份报告</em>。</h2>
+          <p class="close-lede">本地或 Docker 都可。必填的只有<em>一个 token</em> — 数据刷新接口的 admin token。其余 LLM、Tushare 缺失时会优雅降级。</p>
+
+          <div class="closing-mark">
+            <span class="signature">Invest<em>Lens</em></span>
+            <span class="url">github.com / RCliang / Investment-Desk</span>
+          </div>
+        </div>
+
+        <div class="close-right anim">
+          <div class="start-list">
+            <div class="start-item">
+              <div class="start-num">i.</div>
+              <div class="start-body">
+                <div class="start-title">起后端</div>
+                <div class="start-desc"><code>uvicorn app.main:app --reload</code><br/>SQLite 自动建表，<code>.env</code> 填 admin token</div>
+              </div>
+            </div>
+            <div class="start-item">
+              <div class="start-num">ii.</div>
+              <div class="start-body">
+                <div class="start-title">灌首批数据</div>
+                <div class="start-desc"><code>python -m app.services.refresh_cli all</code><br/>7 类 backfill 顺序执行，几分钟到十几分钟</div>
+              </div>
+            </div>
+            <div class="start-item">
+              <div class="start-num">iii.</div>
+              <div class="start-body">
+                <div class="start-title">起前端 · 出报告</div>
+                <div class="start-desc"><code>npm run dev</code> → 浏览产业链 → AI 分析 → 生成报告<br/>SSE 流式渲染，DeepSeek 未配则回退 mock</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <footer class="slide-footer anim">
+        <span>investlens · 投资研究工作台</span>
+        <span class="pager">07</span>
+      </footer>
+    </section>
+
+  </div>
+</div>
+
+<!-- Narration overlay -->
+<div id="narration">
+  <div class="narration-label">Narration · 口播稿</div>
+  <div class="narration-text"></div>
+</div>
+
+<button id="narration-toggle">Show Narration</button>
+
+<!-- Controls -->
+<div id="controls">
+  <button id="prev" title="Previous (←)">‹</button>
+  <div class="progress"><span class="current">1</span> <span style="opacity:0.5;">/ 7</span></div>
+  <button id="next" title="Next (→ / Space)">›</button>
+</div>
+
+<script>
+  const slides = document.querySelectorAll('.slide');
+  const total = slides.length;
+  let current = 0;
+
+  const narrationTexts = [
+    // 01 Cover
+    `大家好。今天介绍 <em>InvestLens</em> — 一个我做给个人投资者的 A 股研究工作台。它的目标很简单：把<em>看赛道、选个股、写复盘、管计划</em>这四件原本要切四五个 App 才能完成的事，串成一条线。`,
+    // 02 Four Functions
+    `工作台有四个支柱。<em>第一</em>是产业链知识库 — 一张五层结构的产业链大图，每个细分行业都挂载真实 A 股公司，可以层层钻取。<em>第二</em>是多源数据查询 — 同一只股票，从行情、财务、研报到解禁、融资融券，七个维度交叉看。<em>第三</em>是 AI 报告生成，DeepSeek 流式输出结构化报告。<em>第四</em>是投资计划管理 — 复盘的不是结果，而是<em>当时的决策</em>。`,
+    // 03 Data Sources
+    `先讲数据。InvestLens 不自己造数据，只做<em>整合者与缓存者</em>。一共接了七个数据源 — DeepSeek 做 AI、AkShare 做通用市场数据、Tushare 做专业财务指标、腾讯财经做实时行情主源、东方财富做研报和解禁这类需求数据、通达信做财务三表、iWencai 是可选的研报补充。每个源按特性配独立 TTL — 行情 5 分钟、财务 1 天、AI 分析 7 天，平衡实时性和成本。`,
+    // 04 Chain Hero
+    `产业链是项目最该讲清楚的地方。它<em>不是 AI 凭空生成</em>，也不是手工录入，而是三层结构的组合。<em>第一层</em>是静态骨架 — aichainmap 种子数据，五层四十八个行业两百多家公司，结构化挂载。<em>第二层</em>是动态市场数据 — 七类 backfill 脚本定时抓取，挂在每家公司下面。<em>第三层</em>是 AI 按需分析 — 用户想看投资逻辑时，DeepSeek 才上场，结果缓存七天，<em>不写入骨架</em>。`,
+    // 05 Chain Detail
+    `这是产业链的完整地图。<em>第一层能源与电力</em>，是所有产业的上游根基；<em>第二层原材料</em>，是制造业的物质前提；<em>第三层制造业</em>，把材料变成产品，是价值放大器；<em>第四层交通与物流</em>，让产品到达需求侧；<em>第五层消费与服务</em>，是价值的最终兑现。整张图 — 5 层、48 个细分行业、234 家 A 股公司，外加 30 多家港美参考公司比如英伟达、台积电。`,
+    // 06 Quote
+    `做这个项目的过程中，我越来越确信一件事 — A 股研究最难的不是<em>找数据</em>，数据到处都是。难的是把<em>赛道、个股、决策</em>放进同一个上下文里，让它们互相印证。这是 InvestLens 设计的出发点。`,
+    // 07 Closing
+    `最后，怎么开始。三步。<em>第一步</em>起后端，一条命令，SQLite 自动建表。<em>第二步</em>灌首批数据，跑一次全量 backfill，几分钟到十几分钟。<em>第三步</em>起前端，浏览产业链、AI 分析、生成报告。必填的 token 只有一个 — 数据刷新接口的 admin token；LLM 和 Tushare 缺失时会优雅降级。谢谢大家。`
+  ];
+
+  // Scale canvas to fit viewport
+  function scaleCanvas() {
+    const canvas = document.getElementById('canvas');
+    const sw = window.innerWidth / 1920;
+    const sh = window.innerHeight / 1080;
+    const s = Math.min(sw, sh) * 0.92;
+    canvas.style.transform = `scale(${s})`;
+  }
+  scaleCanvas();
+  window.addEventListener('resize', scaleCanvas);
+
+  // Restore position
+  const saved = parseInt(localStorage.getItem('investlens-slide') || '0', 10);
+  if (!isNaN(saved) && saved >= 0 && saved < total) current = saved;
+
+  function go(n) {
+    if (n < 0) n = 0;
+    if (n > total - 1) n = total - 1;
+    slides.forEach((s, i) => s.classList.toggle('active', i === n));
+    current = n;
+    document.querySelector('#controls .current').textContent = (n + 1);
+    document.querySelector('#narration .narration-text').innerHTML = narrationTexts[n] || '';
+    localStorage.setItem('investlens-slide', String(n));
+  }
+
+  document.getElementById('next').addEventListener('click', () => go(current + 1));
+  document.getElementById('prev').addEventListener('click', () => go(current - 1));
+
+  window.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') {
+      e.preventDefault();
+      go(current + 1);
+    } else if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
+      e.preventDefault();
+      go(current - 1);
+    } else if (e.key === 'Home') {
+      go(0);
+    } else if (e.key === 'End') {
+      go(total - 1);
+    } else if (e.key.toLowerCase() === 'n') {
+      const nar = document.getElementById('narration');
+      const toggle = document.getElementById('narration-toggle');
+      nar.classList.toggle('visible');
+      const visible = nar.classList.contains('visible');
+      toggle.textContent = visible ? 'Hide Narration' : 'Show Narration';
+    }
+  });
+
+  // Narration toggle
+  document.getElementById('narration-toggle').addEventListener('click', () => {
+    const nar = document.getElementById('narration');
+    const toggle = document.getElementById('narration-toggle');
+    nar.classList.toggle('visible');
+    const visible = nar.classList.contains('visible');
+    toggle.textContent = visible ? 'Hide Narration' : 'Show Narration';
+  });
+
+  // Initial render
+  go(current);
+</script>
+
+</body>
+</html>
