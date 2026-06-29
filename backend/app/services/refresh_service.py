@@ -21,6 +21,7 @@ existing scripts runnable as standalone tools and to isolate failures.
 from __future__ import annotations
 
 import logging
+import os
 import subprocess
 import sys
 from datetime import datetime, timedelta
@@ -182,11 +183,22 @@ def _run_one(session: Session, refresh_type: str, trigger: Trigger) -> ChainRefr
     try:
         # Step 1: run backfill script (writes JSON to backend/data/)
         log.info("refresh '%s': running %s ...", refresh_type, script_name)
+        # Run the backfill script with UTF-8 stdio. On Windows, `text=True`
+        # without an explicit encoding falls back to the system locale (cp936/
+        # GBK), which fails to decode non-ASCII bytes printed by the scripts
+        # (e.g. Chinese research-report titles from East Money) and raises
+        # UnicodeDecodeError in subprocess's internal _readerthread.
+        # PYTHONUTF8=1 puts the child Python in UTF-8 mode so its print()
+        # writes UTF-8 too; encoding/errors below decode the parent side.
+        env = {**os.environ, "PYTHONUTF8": "1", "PYTHONIOENCODING": "utf-8"}
         result = subprocess.run(
             [sys.executable, str(script_path)],
             cwd=str(BACKEND_DIR),
             capture_output=True,
             text=True,
+            encoding="utf-8",
+            errors="replace",
+            env=env,
             timeout=_TIMEOUTS[refresh_type],
         )
         if result.returncode != 0:
