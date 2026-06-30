@@ -56,7 +56,11 @@
       "Bash(lsof -ti:5173)",
       "Bash(xargs kill *)",
       "Bash(npm run *)",
-      "Bash(kill *)"
+      "Bash(kill *)",
+      "Bash(git pull:*)",
+      "Bash(git stash:*)",
+      "Bash(git push:*)",
+      "Bash(git remote set-url:*)"
     ]
   }
 }
