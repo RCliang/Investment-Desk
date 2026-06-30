@@ -7,6 +7,7 @@ Research service — 研报搜索数据源封装。
 
 import json
 import logging
+import re
 import secrets
 import time
 import random
@@ -14,6 +15,7 @@ import random
 import requests
 
 from app.config import IWENCAI_API_KEY, IWENCAI_BASE_URL
+from app.services import oss_service
 
 logger = logging.getLogger(__name__)
 
@@ -187,3 +189,99 @@ def _dedup_articles(articles: list[dict]) -> list[dict]:
         if uid not in best or score > float(best[uid].get("score", 0)):
             best[uid] = a
     return sorted(best.values(), key=lambda x: x.get("publish_date", ""), reverse=True)
+
+
+# ═══════════════════════════════════════════════════════════════════
+# 下载 PDF + 上传 OSS
+# ═══════════════════════════════════════════════════════════════════
+
+def _sanitize_filename(title: str) -> str:
+    """清理标题用于文件名：替换非法字符，截断 80 字符"""
+    return re.sub(r'[\\/:*?"<>|]', '_', title)[:80]
+
+
+def download_and_upload_reports(reports: list[dict], code: str) -> list[dict]:
+    """
+    逐个下载 PDF → 上传 OSS。
+    reports: [{"info_code", "publish_date", "org_name", "title"}, ...]
+    code: 股票代码，用于 OSS 路径 reports/{code}/
+    返回: [{"info_code", "filename", "oss_url", "status", "error?"}, ...]
+    """
+    results = []
+
+    for report in reports:
+        info_code = report.get("info_code", "")
+        publish_date = report.get("publish_date", "")
+        org_name = report.get("org_name", "")
+        title = report.get("title", "")
+
+        # 构造文件名
+        title_clean = _sanitize_filename(title)
+        if publish_date and org_name and title_clean:
+            filename = f"{publish_date}_{org_name}_{title_clean}.pdf"
+        else:
+            filename = f"{info_code}.pdf"
+
+        object_key = f"reports/{code}/{filename}"
+
+        # 检查 OSS 是否已存在
+        if oss_service.object_exists(object_key):
+            results.append({
+                "info_code": info_code,
+                "filename": filename,
+                "oss_url": oss_service.get_public_url(object_key),
+                "status": "exists",
+            })
+            continue
+
+        # 下载 PDF
+        pdf_url = PDF_TPL.format(info_code=info_code)
+        try:
+            r = _em_get(pdf_url,
+                        headers={"Referer": "https://data.eastmoney.com/"},
+                        timeout=60)
+        except requests.exceptions.Timeout:
+            results.append({
+                "info_code": info_code, "filename": "", "oss_url": "",
+                "status": "failed", "error": "pdf_download_timeout",
+            })
+            continue
+        except Exception as e:
+            logger.warning("PDF download failed for %s: %s", info_code, e)
+            results.append({
+                "info_code": info_code, "filename": "", "oss_url": "",
+                "status": "failed", "error": "pdf_download_error",
+            })
+            continue
+
+        if r.status_code == 403:
+            results.append({
+                "info_code": info_code, "filename": "", "oss_url": "",
+                "status": "failed", "error": "pdf_download_403",
+            })
+            continue
+
+        if r.status_code != 200 or len(r.content) < 1024:
+            results.append({
+                "info_code": info_code, "filename": "", "oss_url": "",
+                "status": "failed", "error": "pdf_invalid",
+            })
+            continue
+
+        # 上传 OSS
+        try:
+            oss_url = oss_service.upload_bytes(r.content, object_key)
+            results.append({
+                "info_code": info_code,
+                "filename": filename,
+                "oss_url": oss_url,
+                "status": "ok",
+            })
+        except Exception as e:
+            logger.warning("OSS upload failed for %s: %s", info_code, e)
+            results.append({
+                "info_code": info_code, "filename": filename, "oss_url": "",
+                "status": "failed", "error": "oss_upload_error",
+            })
+
+    return results

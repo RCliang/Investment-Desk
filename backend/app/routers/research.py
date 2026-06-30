@@ -1,7 +1,8 @@
 """
-Research router — 研报搜索接口。
-GET /api/research/reports  — 按股票代码（东财 reportapi）
-GET /api/research/search   — 按关键词语义搜索（iwencai）
+Research router — 研报搜索 + 下载接口。
+GET  /api/research/reports   — 按股票代码（东财 reportapi）
+GET  /api/research/search    — 按关键词语义搜索（iwencai）
+POST /api/research/download  — 批量下载 PDF 上传 OSS
 """
 
 import hashlib
@@ -10,12 +11,15 @@ import logging
 from datetime import datetime, timedelta
 
 from fastapi import APIRouter, Depends, HTTPException, Query
+from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
 from app.config import CACHE_TTL_RESEARCH, IWENCAI_API_KEY
 from app.db import get_db
 from app.models.models import DataCache
+from app.services import oss_service
 from app.services.research_service import (
+    download_and_upload_reports,
     fetch_reports_by_code,
     search_reports_by_keyword,
 )
@@ -107,3 +111,39 @@ async def search_reports(
     result = {"keyword": keyword, "total": len(reports), "reports": reports}
     _cache_set(db, cache_key, result, CACHE_TTL_RESEARCH)
     return result
+
+
+# ═══════════════════════════════════════════════════════════════════
+# POST /api/research/download
+# ═══════════════════════════════════════════════════════════════════
+
+class ReportItem(BaseModel):
+    info_code: str = Field(..., min_length=1)
+    publish_date: str = ""
+    org_name: str = ""
+    title: str = ""
+
+
+class DownloadRequest(BaseModel):
+    code: str = Field(..., min_length=6, max_length=6, pattern=r"^\d{6}$")
+    reports: list[ReportItem] = Field(..., min_length=1)
+
+
+@router.post("/download")
+async def download_reports(req: DownloadRequest):
+    """批量下载研报 PDF 并上传到阿里云 OSS"""
+    if not oss_service.is_configured():
+        raise HTTPException(503, detail="OSS not configured")
+
+    reports_dicts = [r.model_dump() for r in req.reports]
+    results = download_and_upload_reports(reports_dicts, req.code)
+
+    success = sum(1 for r in results if r["status"] in ("ok", "exists"))
+    failed = sum(1 for r in results if r["status"] == "failed")
+
+    return {
+        "total": len(results),
+        "success": success,
+        "failed": failed,
+        "results": results,
+    }

@@ -32,6 +32,12 @@ CACHE_TTL_RESEARCH = 604800  # 研报缓存 7 天
 IWENCAI_API_KEY = os.getenv("IWENCAI_API_KEY", "")
 IWENCAI_BASE_URL = os.getenv("IWENCAI_BASE_URL", "https://openapi.iwencai.com")
 
+# 阿里云 OSS — 研报 PDF 存储
+OSS_ACCESS_KEY_ID = os.getenv("OSS_ACCESS_KEY_ID", "")
+OSS_ACCESS_KEY_SECRET = os.getenv("OSS_ACCESS_KEY_SECRET", "")
+OSS_ENDPOINT = os.getenv("OSS_ENDPOINT", "")
+OSS_BUCKET = os.getenv("OSS_BUCKET", "")
+
 # Refresh API token — required for POST /api/chainkb/refresh/* endpoints.
 # Generate with: python -c "import secrets; print(secrets.token_hex(16))"
 # If left empty, refresh endpoints return 503 (refuse to run unauthenticated).
