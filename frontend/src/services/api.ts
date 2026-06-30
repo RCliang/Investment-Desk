@@ -1,6 +1,10 @@
 import axios from 'axios';
 
-const api = axios.create({ baseURL: 'http://localhost:8000' });
+// 生产环境使用相对路径（通过nginx代理），开发环境使用localhost:8000
+const isDev = import.meta.env.DEV;
+const api = axios.create({
+  baseURL: isDev ? 'http://localhost:8000' : '/api'
+});
 
 // --- Chain Knowledge Base (v1) ---
 import type {
