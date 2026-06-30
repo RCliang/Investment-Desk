@@ -4,11 +4,14 @@ services:
     build: ./backend
     ports:
       - "8000:8000"
+    env_file:
+      - ./backend/.env
     environment:
       - DEEPSEEK_API_KEY=${DEEPSEEK_API_KEY}
       - MODEL_NAME=${MODEL_NAME:-deepseek-chat}
       - TUSHARE_TOKEN=${TUSHARE_TOKEN}
       - ADMIN_REFRESH_TOKEN=${ADMIN_REFRESH_TOKEN}
+      - CORS_ORIGINS=${CORS_ORIGINS:-}
     volumes:
       - backend-data:/app/data
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 1

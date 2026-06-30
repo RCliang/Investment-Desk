@@ -1,11 +1,22 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.config import CORS_ORIGINS
+
 app = FastAPI(title="InvestLens API", version="0.1.0")
+
+# Parse CORS origins from environment variable
+# If CORS_ORIGINS is empty or not set, allow all origins (development)
+# Otherwise, parse comma-separated list
+if CORS_ORIGINS:
+    allowed_origins = [origin.strip() for origin in CORS_ORIGINS.split(",")]
+else:
+    # Allow all origins if not configured (for development)
+    allowed_origins = ["*"]
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://localhost:3000"],
+    allow_origins=allowed_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

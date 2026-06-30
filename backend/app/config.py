@@ -31,3 +31,8 @@ CACHE_TTL_CHAIN = 604800     # 产业链缓存 7 天
 # Generate with: python -c "import secrets; print(secrets.token_hex(16))"
 # If left empty, refresh endpoints return 503 (refuse to run unauthenticated).
 ADMIN_REFRESH_TOKEN = os.getenv("ADMIN_REFRESH_TOKEN", "")
+
+# CORS allowed origins (comma-separated)
+# Example: "http://localhost:5173,http://localhost:3000,http://47.116.178.209:3000"
+# If empty, allows all origins (not recommended for production)
+CORS_ORIGINS = os.getenv("CORS_ORIGINS", "")
