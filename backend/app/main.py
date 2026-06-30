@@ -22,13 +22,14 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-from app.routers import chain, data, report, plan, chainkb, refresh
+from app.routers import chain, data, report, plan, chainkb, refresh, research
 app.include_router(chain.router)
 app.include_router(data.router)
 app.include_router(report.router)
 app.include_router(plan.router)
 app.include_router(chainkb.router)
 app.include_router(refresh.router)
+app.include_router(research.router)
 
 
 @app.on_event("startup")

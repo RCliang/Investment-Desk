@@ -26,6 +26,11 @@ LLM_MAX_TOKENS = 4096
 CACHE_TTL_MARKET = 300       # 行情缓存 5 分钟
 CACHE_TTL_FINANCIAL = 86400  # 财务缓存 1 天
 CACHE_TTL_CHAIN = 604800     # 产业链缓存 7 天
+CACHE_TTL_RESEARCH = 604800  # 研报缓存 7 天
+
+# iwencai (同花顺 SkillHub) — 研报语义搜索
+IWENCAI_API_KEY = os.getenv("IWENCAI_API_KEY", "")
+IWENCAI_BASE_URL = os.getenv("IWENCAI_BASE_URL", "https://openapi.iwencai.com")
 
 # Refresh API token — required for POST /api/chainkb/refresh/* endpoints.
 # Generate with: python -c "import secrets; print(secrets.token_hex(16))"
