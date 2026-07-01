@@ -1,0 +1,304 @@
+/* DeepAnalysisPage 样式 — GitHub-inspired 暗色 */
+
+.da-root {
+  --da-bg: #0d1117;
+  --da-surface: #161b22;
+  --da-border: #30363d;
+  --da-text: #e6edf3;
+  --da-text-soft: #8b949e;
+  --da-accent: #58a6ff;
+  --da-success: #3fb950;
+  --da-warn: #d29922;
+  --da-error: #f85149;
+
+  min-height: calc(100vh - 49px); /* 减去 app-nav 高度 */
+  padding: 32px 48px 64px;
+  background: var(--da-bg);
+  color: var(--da-text);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+    "Microsoft YaHei", sans-serif;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.da-header h1 {
+  margin: 0 0 4px;
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--da-text);
+}
+
+.da-subtitle {
+  margin: 0 0 24px;
+  color: var(--da-text-soft);
+  font-size: 13px;
+}
+
+/* ── Stepper ───────────────────────────────────────────── */
+.da-stepper {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 32px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.da-step {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.da-step-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: transparent;
+  border: 1px solid var(--da-border);
+  color: var(--da-text-soft);
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  transition: all 0.15s ease;
+}
+
+.da-step-btn:hover:not(:disabled) {
+  background: var(--da-surface);
+  color: var(--da-text);
+}
+
+.da-step-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.da-step.current .da-step-btn {
+  color: var(--da-text);
+  background: var(--da-surface);
+  border-color: var(--da-accent);
+}
+
+.da-step.done .da-step-btn {
+  color: var(--da-success);
+  border-color: var(--da-success);
+}
+
+.da-step-num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 1px solid currentColor;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.da-step-arrow {
+  color: var(--da-text-soft);
+  font-size: 12px;
+}
+
+/* ── Content container ────────────────────────────────── */
+.da-content {
+  background: var(--da-surface);
+  border: 1px solid var(--da-border);
+  border-radius: 8px;
+  padding: 24px;
+}
+
+/* ── Form / input ─────────────────────────────────────── */
+.da-input,
+.da-search-input {
+  background: var(--da-bg);
+  border: 1px solid var(--da-border);
+  color: var(--da-text);
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 13px;
+  outline: none;
+}
+
+.da-input:focus,
+.da-search-input:focus {
+  border-color: var(--da-accent);
+}
+
+.da-btn {
+  background: var(--da-accent);
+  color: #fff;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: opacity 0.15s ease;
+}
+
+.da-btn:hover {
+  opacity: 0.9;
+}
+
+.da-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.da-btn-ghost {
+  background: transparent;
+  color: var(--da-text-soft);
+  border: 1px solid var(--da-border);
+}
+
+.da-btn-ghost:hover {
+  background: var(--da-bg);
+  color: var(--da-text);
+  opacity: 1;
+}
+
+/* ── 表格（Step1 研报列表） ──────────────────────────── */
+.da-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 16px;
+  font-size: 13px;
+}
+
+.da-table th {
+  text-align: left;
+  padding: 8px 12px;
+  color: var(--da-text-soft);
+  font-weight: 500;
+  border-bottom: 1px solid var(--da-border);
+  background: var(--da-bg);
+}
+
+.da-table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--da-border);
+  vertical-align: top;
+}
+
+.da-table tr:hover td {
+  background: rgba(88, 166, 255, 0.04);
+}
+
+.da-title-cell {
+  max-width: 480px;
+  color: var(--da-text);
+}
+
+.da-meta-cell {
+  color: var(--da-text-soft);
+  white-space: nowrap;
+}
+
+/* ── 状态行（Step2/3 进度） ──────────────────────────── */
+.da-status-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--da-border);
+  font-size: 13px;
+}
+
+.da-status-row:last-child {
+  border-bottom: none;
+}
+
+.da-status-icon {
+  display: inline-block;
+  width: 16px;
+  margin-right: 8px;
+  text-align: center;
+}
+
+.da-status-icon.ok { color: var(--da-success); }
+.da-status-icon.fail { color: var(--da-error); }
+.da-status-icon.pending { color: var(--da-warn); }
+
+.da-status-text {
+  flex: 1;
+  color: var(--da-text);
+}
+
+.da-status-meta {
+  color: var(--da-text-soft);
+  font-size: 12px;
+  margin-left: 16px;
+}
+
+/* ── Analysis 输出（Step4） ──────────────────────────── */
+.da-analysis-output {
+  background: var(--da-bg);
+  border: 1px solid var(--da-border);
+  border-radius: 6px;
+  padding: 20px 24px;
+  min-height: 400px;
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+.da-cursor::after {
+  content: '▊';
+  color: var(--da-accent);
+  animation: da-blink 1s infinite;
+  margin-left: 2px;
+}
+
+@keyframes da-blink {
+  0%, 50% { opacity: 1; }
+  51%, 100% { opacity: 0; }
+}
+
+/* ── 通用 helpers ─────────────────────────────────────── */
+.da-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.da-row-between {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.da-error {
+  color: var(--da-error);
+  font-size: 12px;
+  margin-top: 8px;
+}
+
+.da-empty {
+  color: var(--da-text-soft);
+  padding: 32px;
+  text-align: center;
+  font-size: 13px;
+}
+
+.da-history-list {
+  margin-top: 12px;
+  border-top: 1px solid var(--da-border);
+  padding-top: 12px;
+}
+
+.da-history-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.da-history-item:hover {
+  background: var(--da-bg);
+}
