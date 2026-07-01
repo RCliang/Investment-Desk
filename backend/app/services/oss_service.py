@@ -56,3 +56,14 @@ def upload_bytes(data: bytes, object_key: str) -> str:
     headers = {"x-oss-storage-class": "Standard"}
     bucket.put_object(object_key, data, headers=headers)
     return get_public_url(object_key)
+
+
+def sign_url(object_key: str, expires: int = 3600) -> str:
+    """
+    生成临时签名 GET URL（用于私有 bucket 的外部读取，如 MinerU 拉取 PDF）。
+
+    Args:
+        object_key: OSS 对象路径
+        expires: 过期秒数，默认 1 小时
+    """
+    return _get_bucket().sign_url("GET", object_key, expires)

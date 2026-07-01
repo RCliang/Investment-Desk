@@ -38,6 +38,10 @@ OSS_ACCESS_KEY_SECRET = os.getenv("OSS_ACCESS_KEY_SECRET", "")
 OSS_ENDPOINT = os.getenv("OSS_ENDPOINT", "")
 OSS_BUCKET = os.getenv("OSS_BUCKET", "")
 
+# MinerU 云端 API — PDF 转 Markdown
+MINERU_API_URL = os.getenv("MINERU_API_URL", "https://mineru.dottore.com/api/v1")
+MINERU_API_KEY = os.getenv("MINERU_API_KEY", "")
+
 # Refresh API token — required for POST /api/chainkb/refresh/* endpoints.
 # Generate with: python -c "import secrets; print(secrets.token_hex(16))"
 # If left empty, refresh endpoints return 503 (refuse to run unauthenticated).

@@ -1,0 +1,134 @@
+"""
+Deep analysis router — 个股深度分析 pipeline 的 HTTP 端点。
+
+Endpoints:
+- POST /api/deep-analysis/parse           提交 PDF 解析（MinerU）
+- GET  /api/deep-analysis/parse-status    轮询解析进度
+- GET  /api/deep-analysis/analyze         SSE 流式 AI 分析
+- GET  /api/deep-analysis/history         历史分析列表
+- GET  /api/deep-analysis/records/{id}    拉取单条历史分析
+"""
+
+from __future__ import annotations
+
+import json
+
+from fastapi import APIRouter, Depends, HTTPException, Query
+from pydantic import BaseModel, Field
+from sqlalchemy.orm import Session
+from sse_starlette.sse import EventSourceResponse
+
+from app.db import get_db
+from app.services import deep_analysis_service as svc
+from app.services import mineru_service
+
+router = APIRouter(prefix="/api/deep-analysis", tags=["deep-analysis"])
+
+
+# ═══════════════════════════════════════════════════════════════════
+# POST /parse
+# ═══════════════════════════════════════════════════════════════════
+
+class ParseRequest(BaseModel):
+    code: str = Field(..., min_length=6, max_length=6, pattern=r"^\d{6}$")
+    oss_keys: list[str] = Field(..., min_length=1)
+
+
+@router.post("/parse")
+async def parse(req: ParseRequest, db: Session = Depends(get_db)):
+    """提交 PDF 给 MinerU 解析。已有缓存的自动跳过。"""
+    # MinerU 未配置时仍允许（走 mock 模式），但显式告知调用方
+    mineru_configured = mineru_service.is_configured()
+
+    try:
+        result = svc.parse_reports(req.code, req.oss_keys, db)
+    except Exception as e:
+        raise HTTPException(500, f"parse_error: {e}")
+
+    return {
+        **result,
+        "mineru_mode": "live" if mineru_configured else "mock",
+    }
+
+
+# ═══════════════════════════════════════════════════════════════════
+# GET /parse-status
+# ═══════════════════════════════════════════════════════════════════
+
+@router.get("/parse-status")
+async def parse_status(
+    code: str = Query(..., min_length=6, max_length=6, pattern=r"^\d{6}$"),
+    db: Session = Depends(get_db),
+):
+    """轮询该股票所有未完成的解析任务。"""
+    return svc.parse_status(code, db)
+
+
+# ═══════════════════════════════════════════════════════════════════
+# GET /analyze (SSE)
+# ═══════════════════════════════════════════════════════════════════
+
+@router.get("/analyze")
+async def analyze(
+    code: str = Query(..., min_length=6, max_length=6, pattern=r"^\d{6}$"),
+    oss_keys: str = Query(..., description="逗号分隔的 oss_key 列表"),
+    force_refresh: bool = Query(False, description="为 true 时跳过缓存"),
+    db: Session = Depends(get_db),
+):
+    """SSE 流式 AI 分析。先查缓存，未命中则调 LLM。"""
+    keys = [k.strip() for k in oss_keys.split(",") if k.strip()]
+    if not keys:
+        raise HTTPException(422, "oss_keys 不能为空")
+
+    # 缓存命中（非强制刷新）
+    if not force_refresh:
+        cached = svc.get_cached_analysis(code, keys, db)
+        if cached:
+            async def cached_stream():
+                yield {"event": "cached", "data": json.dumps(cached, ensure_ascii=False)}
+                yield {"event": "done", "data": json.dumps({"cache_hit": True})}
+            return EventSourceResponse(cached_stream())
+
+    # 真正流式分析
+    async def event_stream():
+        try:
+            full = ""
+            for chunk in svc.analyze_stream(code, keys, db):
+                full += chunk
+                yield {"event": "chunk", "data": json.dumps({"content": chunk}, ensure_ascii=False)}
+            yield {
+                "event": "done",
+                "data": json.dumps({"cache_hit": False, "length": len(full)}, ensure_ascii=False),
+            }
+        except RuntimeError as e:
+            yield {"event": "error", "data": json.dumps({"error": str(e)}, ensure_ascii=False)}
+        except Exception as e:
+            yield {"event": "error", "data": json.dumps({"error": f"unexpected: {e}"}, ensure_ascii=False)}
+
+    return EventSourceResponse(event_stream())
+
+
+# ═══════════════════════════════════════════════════════════════════
+# GET /history
+# ═══════════════════════════════════════════════════════════════════
+
+@router.get("/history")
+async def history(
+    code: str = Query(..., min_length=6, max_length=6, pattern=r"^\d{6}$"),
+    db: Session = Depends(get_db),
+):
+    """返回该股票的历史分析列表。"""
+    return svc.list_history(code, db)
+
+
+# ═══════════════════════════════════════════════════════════════════
+# GET /records/{analysis_id}
+# ═══════════════════════════════════════════════════════════════════
+
+@router.get("/records/{analysis_id}")
+async def get_record(analysis_id: int, db: Session = Depends(get_db)):
+    """按 id 拉取单条历史分析全文。"""
+    record = svc.get_analysis_by_id(analysis_id, db)
+    if not record:
+        raise HTTPException(404, "analysis_not_found")
+    return record
