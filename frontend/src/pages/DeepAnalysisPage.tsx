@@ -1,5 +1,7 @@
 import { useCallback, useMemo, useState } from 'react';
 import type {
+  CompanyType,
+  AnalysisDoc,
   ResearchReport,
   DownloadResult,
 } from '../types/deepAnalysis';
@@ -24,7 +26,7 @@ const STEPS: { key: Step; label: string }[] = [
  * - code, selectedReports（Step1 → Step2）
  * - downloadResults（Step2 → Step3）
  * - ossKeys（Step3 → Step4）
- * - analysisText（Step4 内部）
+ * - companyType, analysisDoc（Step4 v2 结构化）
  */
 export default function DeepAnalysisPage() {
   const [step, setStep] = useState<Step>(1);
@@ -33,7 +35,8 @@ export default function DeepAnalysisPage() {
   const [code, setCode] = useState<string>('');
   const [selectedReports, setSelectedReports] = useState<ResearchReport[]>([]);
   const [downloadResults, setDownloadResults] = useState<DownloadResult[]>([]);
-  const [analysisText, setAnalysisText] = useState<string>('');
+  const [companyType, setCompanyType] = useState<CompanyType>('general');
+  const [analysisDoc, setAnalysisDoc] = useState<AnalysisDoc | null>(null);
 
   // ── 衍生：从下载结果反推 oss_keys ──────────────────────
   const ossKeys = useMemo(() => {
@@ -47,7 +50,7 @@ export default function DeepAnalysisPage() {
   const goToStep = useCallback((target: Step) => {
     // 仅允许跳到已完成或当前步
     setStep(target);
-    setAnalysisText(''); // 切步时清空分析文本，避免展示过期内容
+    setAnalysisDoc(null); // 切步时清空分析结果，避免展示过期内容
   }, []);
 
   const handleSearchComplete = useCallback(
@@ -55,7 +58,7 @@ export default function DeepAnalysisPage() {
       setCode(newCode);
       setSelectedReports(selected);
       setDownloadResults([]);
-      setAnalysisText('');
+      setAnalysisDoc(null);
       setStep(2);
     },
     [],
@@ -70,8 +73,8 @@ export default function DeepAnalysisPage() {
     setStep(4);
   }, []);
 
-  const handleAnalysisUpdate = useCallback((text: string) => {
-    setAnalysisText(text);
+  const handleAnalysisDocChange = useCallback((doc: AnalysisDoc | null) => {
+    setAnalysisDoc(doc);
   }, []);
 
   // ── 渲染 ───────────────────────────────────────────────
@@ -114,6 +117,8 @@ export default function DeepAnalysisPage() {
           <ReportSearchStep
             initialCode={code}
             initialSelected={selectedReports}
+            companyType={companyType}
+            onCompanyTypeChange={setCompanyType}
             onComplete={handleSearchComplete}
           />
         )}
@@ -139,8 +144,9 @@ export default function DeepAnalysisPage() {
           <AnalysisResultStep
             code={code}
             ossKeys={ossKeys}
-            analysisText={analysisText}
-            onAnalysisUpdate={handleAnalysisUpdate}
+            companyType={companyType}
+            analysisDoc={analysisDoc}
+            onAnalysisDocChange={handleAnalysisDocChange}
             onBack={() => setStep(3)}
           />
         )}

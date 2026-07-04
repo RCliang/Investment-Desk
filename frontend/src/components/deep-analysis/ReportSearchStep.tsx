@@ -1,10 +1,13 @@
 import { useState } from 'react';
-import type { ResearchReport } from '../../types/deepAnalysis';
+import type { CompanyType, ResearchReport } from '../../types/deepAnalysis';
 import { searchReportsByCode } from '../../services/api';
+import CompanyTypeSelector from './CompanyTypeSelector';
 
 interface Props {
   initialCode: string;
   initialSelected: ResearchReport[];
+  companyType: CompanyType;
+  onCompanyTypeChange: (v: CompanyType) => void;
   onComplete: (code: string, selected: ResearchReport[]) => void;
 }
 
@@ -12,7 +15,9 @@ interface Props {
  * Step 1: 按股票代码搜索研报，用户勾选后进入下一步。
  * 点击「下一步」时不立即下载，下载在 Step2 触发。
  */
-export default function ReportSearchStep({ initialCode, initialSelected, onComplete }: Props) {
+export default function ReportSearchStep({
+  initialCode, initialSelected, companyType, onCompanyTypeChange, onComplete,
+}: Props) {
   const [code, setCode] = useState(initialCode || '');
   const [reports, setReports] = useState<ResearchReport[]>([]);
   const [selected, setSelected] = useState<Set<string>>(new Set(initialSelected.map((r) => r.info_code)));
@@ -65,6 +70,7 @@ export default function ReportSearchStep({ initialCode, initialSelected, onCompl
 
   return (
     <div>
+      <CompanyTypeSelector value={companyType} onChange={onCompanyTypeChange} />
       <div className="da-row">
         <input
           className="da-search-input"
