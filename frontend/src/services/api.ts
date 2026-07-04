@@ -76,6 +76,10 @@ import type {
   ParseStatusResponse,
   HistoryResponse,
   AnalysisRecord,
+  CompanyType,
+  BucketId,
+  BucketResult,
+  AnalysisDoc,
 } from '../types/deepAnalysis';
 export type {
   ResearchReport,
@@ -86,6 +90,10 @@ export type {
   ParseStatusResponse,
   HistoryResponse,
   AnalysisRecord,
+  CompanyType,
+  BucketId,
+  BucketResult,
+  AnalysisDoc,
 };
 
 /** 按股票代码搜索研报（东财） */
@@ -128,23 +136,21 @@ export async function getParseStatus(code: string): Promise<ParseStatusResponse>
   return data;
 }
 
-/** SSE 流式分析的回调接口 */
+/** SSE 流式分析的回调接口(v2 结构化版本) */
 export interface AnalyzeStreamCallbacks {
-  onChunk: (content: string) => void;
-  onCached?: (payload: { analysis_text: string; created_at: string; model_name: string }) => void;
-  onDone?: (info: { cache_hit: boolean; length?: number }) => void;
+  onStart?: (payload: { version: 'v2'; company_type: CompanyType; buckets: BucketId[] }) => void;
+  onBucketStart?: (bucketId: BucketId) => void;
+  onBucketDone?: (bucketId: BucketId, result: BucketResult) => void;
+  onBucketError?: (bucketId: BucketId, error: string) => void;
+  onCached?: (doc: AnalysisDoc) => void;
+  onDone?: (info: { version: 'v2'; analysis_id: number; ok_count: number; error_count: number; total: number }) => void;
   onError?: (err: string) => void;
 }
 
-/**
- * SSE 流式调用 AI 分析。
- * 用 fetch + ReadableStream（非 EventSource）以便传 query params 且 GET。
- *
- * dev 环境需绕过 axios baseURL，直接走 vite proxy 的 /api 前缀。
- */
 export async function streamAnalyze(
   code: string,
   ossKeys: string[],
+  companyType: CompanyType,
   callbacks: AnalyzeStreamCallbacks,
   options: { forceRefresh?: boolean } = {},
 ): Promise<void> {
@@ -153,6 +159,7 @@ export async function streamAnalyze(
   const params = new URLSearchParams({
     code,
     oss_keys: ossKeys.join(','),
+    company_type: companyType,
   });
   if (options.forceRefresh) params.append('force_refresh', 'true');
 
@@ -188,10 +195,15 @@ export async function streamAnalyze(
         const payload = line.slice(5).trim();
         try {
           const parsed = JSON.parse(payload);
-          if (currentEvent === 'chunk') callbacks.onChunk(parsed.content || '');
-          else if (currentEvent === 'cached' && callbacks.onCached) callbacks.onCached(parsed);
-          else if (currentEvent === 'done' && callbacks.onDone) callbacks.onDone(parsed);
-          else if (currentEvent === 'error' && callbacks.onError) callbacks.onError(parsed.error || 'unknown');
+          switch (currentEvent) {
+            case 'start':         callbacks.onStart?.(parsed); break;
+            case 'bucket_start':  callbacks.onBucketStart?.(parsed.bucket_id); break;
+            case 'bucket_done':   callbacks.onBucketDone?.(parsed.bucket_id, parsed.result); break;
+            case 'bucket_error':  callbacks.onBucketError?.(parsed.bucket_id, parsed.error); break;
+            case 'cached':        callbacks.onCached?.(parsed); break;
+            case 'done':          callbacks.onDone?.(parsed); break;
+            case 'error':         callbacks.onError?.(parsed.error || parsed.reason || 'unknown'); break;
+          }
         } catch {
           // 忽略解析失败的非 JSON 数据行
         }
