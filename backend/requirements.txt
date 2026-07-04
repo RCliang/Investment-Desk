@@ -11,3 +11,4 @@ python-dotenv>=1.0.0
 sse-starlette>=2.0.0
 apscheduler>=3.10
 oss2>=2.18.0
+pytest-mock>=3.10
