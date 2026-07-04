@@ -106,60 +106,72 @@ def test_parse_status_with_db_records(client, test_db):
 # /analyze — cache hit path (no LLM call)
 # ─────────────────────────────────────────────────────────────────────
 
-def test_analyze_cache_hit(client, test_db):
-    """预填 deep_analyses → /analyze 直接返回 cached 事件"""
-    oss_keys = ["reports/301095/a.pdf", "reports/301095/b.pdf"]
-    cache_key = _compute_key_for_test("301095", oss_keys)
-
-    rec = DeepAnalysis(
-        stock_code="301095",
-        oss_keys_json=json.dumps(oss_keys),
-        cache_key=cache_key,
-        analysis_text="# 已有分析\n这是缓存内容。",
-        model_name="deepseek-chat",
-        created_at=datetime.now(),
+def test_analyze_invalid_company_type_returns_422(client):
+    r = client.get(
+        "/api/deep-analysis/analyze",
+        params={"code": "301095", "oss_keys": "a.pdf", "company_type": "bogus"},
     )
-    test_db.add(rec)
-    test_db.commit()
+    assert r.status_code == 422
+
+
+def test_analyze_cache_hit_v2(client, test_db):
+    """预填 v2 结构化记录 → /analyze 返回 cached 事件。"""
+    from app.services.deep_analysis.schemas import AnalysisDoc
+    from app.services.deep_analysis import storage
+
+    oss_keys = ["reports/301095/a.pdf"]
+    doc = AnalysisDoc(
+        company_type="general", stock_code="301095",
+        buckets=[], analyzed_at="2026-07-04T10:00:00Z",
+        model_name="deepseek-chat",
+    )
+    storage.save_structured(test_db, "301095", oss_keys, "general", doc)
 
     with client.stream(
         "GET", "/api/deep-analysis/analyze",
-        params={"code": "301095", "oss_keys": ",".join(oss_keys)},
+        params={"code": "301095", "oss_keys": ",".join(oss_keys), "company_type": "general"},
     ) as resp:
         assert resp.status_code == 200
         events = _collect_sse_events(resp)
 
     event_types = [e["event"] for e in events]
     assert "cached" in event_types
-    assert "done" in event_types
-    # 不应有 chunk（缓存命中不流式）
-    assert "chunk" not in event_types
-
-    cached_event = next(e for e in events if e["event"] == "cached")
-    payload = json.loads(cached_event["data"])
-    assert "已有分析" in payload["analysis_text"]
+    # cached 单事件,不应有 start/bucket_*
+    assert "start" not in event_types
+    assert "bucket_done" not in event_types
 
 
-def test_analyze_force_refresh_skips_cache(client, test_db, monkeypatch):
-    """force_refresh=true 时跳过缓存，进入流式分支。
-    Mock analyze_stream 返回 chunk，避免真实 LLM 调用。"""
+def test_analyze_force_refresh_emits_start_and_done(client, test_db, monkeypatch):
+    """force_refresh=true 时跳过缓存,进入 orchestrate。
+    Mock run_single_bucket,验证 start + bucket_done + done 事件序列。"""
+    import asyncio
     oss_keys = ["reports/301095/a.pdf"]
 
-    # 预填缓存（应被绕开）
-    cache_key = _compute_key_for_test("301095", oss_keys)
-    test_db.add(DeepAnalysis(
-        stock_code="301095", oss_keys_json=json.dumps(oss_keys),
-        cache_key=cache_key, analysis_text="cached",
-        model_name="deepseek-chat", created_at=datetime.now(),
+    # 预填 v2 缓存(应被绕开)
+    from app.services.deep_analysis.schemas import AnalysisDoc
+    from app.services.deep_analysis import storage
+    doc = AnalysisDoc(
+        company_type="general", stock_code="301095",
+        buckets=[], analyzed_at="2026-07-04T10:00:00Z",
+    )
+    storage.save_structured(test_db, "301095", oss_keys, "general", doc)
+
+    # 预填 markdown(orchestrate 需要至少 200 字)
+    from app.models.models import ReportContent
+    from datetime import datetime
+    test_db.add(ReportContent(
+        oss_key=oss_keys[0], stock_code="301095", title="R",
+        markdown_text="研报正文内容 " * 50,
+        token_count=10, parsed_at=datetime.now(),
     ))
     test_db.commit()
 
-    # Mock LLM 流：返回两个 chunk
-    def fake_stream(code, keys, db):
-        yield "MOCK_CHUNK_1"
-        yield "MOCK_CHUNK_2"
+    # Mock LLM:每个桶直接返回空 BucketResult
+    from app.services.deep_analysis.schemas import BucketResult
+    async def fake_run(bucket_id, md):
+        return BucketResult(bucket_id=bucket_id, fields={})
     monkeypatch.setattr(
-        "app.routers.deep_analysis.svc.analyze_stream", fake_stream,
+        "app.services.deep_analysis.runner.run_single_bucket", fake_run,
     )
 
     with client.stream(
@@ -167,6 +179,7 @@ def test_analyze_force_refresh_skips_cache(client, test_db, monkeypatch):
         params={
             "code": "301095",
             "oss_keys": ",".join(oss_keys),
+            "company_type": "general",
             "force_refresh": "true",
         },
     ) as resp:
@@ -175,12 +188,9 @@ def test_analyze_force_refresh_skips_cache(client, test_db, monkeypatch):
 
     event_types = [e["event"] for e in events]
     assert "cached" not in event_types
-    assert "chunk" in event_types
-    assert "done" in event_types
-
-    chunks = [e for e in events if e["event"] == "chunk"]
-    joined = "".join(json.loads(c["data"])["content"] for c in chunks)
-    assert joined == "MOCK_CHUNK_1MOCK_CHUNK_2"
+    assert event_types[0] == "start"
+    assert "bucket_done" in event_types
+    assert event_types[-1] == "done"
 
 
 # ─────────────────────────────────────────────────────────────────────
@@ -276,14 +286,6 @@ def test_analyze_rejects_empty_oss_keys(client):
 # ─────────────────────────────────────────────────────────────────────
 # Helpers
 # ─────────────────────────────────────────────────────────────────────
-
-def _compute_key_for_test(code: str, oss_keys: list[str]) -> str:
-    """与 deep_analysis_service.compute_cache_key 保持一致的测试 helper"""
-    import hashlib
-    sorted_keys = sorted(oss_keys)
-    raw = f"{code}|{'|'.join(sorted_keys)}"
-    return hashlib.sha256(raw.encode("utf-8")).hexdigest()[:64]
-
 
 def _collect_sse_events(resp) -> list[dict]:
     """从 TestClient stream response 收集 SSE 事件"""

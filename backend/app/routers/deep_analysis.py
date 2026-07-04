@@ -21,6 +21,8 @@ from sse_starlette.sse import EventSourceResponse
 from app.db import get_db
 from app.services import deep_analysis_service as svc
 from app.services import mineru_service
+from app.services.deep_analysis import orchestrate as _orchestrate
+from app.services.deep_analysis.templates import COMPANY_TYPES
 
 router = APIRouter(prefix="/api/deep-analysis", tags=["deep-analysis"])
 
@@ -72,36 +74,21 @@ async def parse_status(
 async def analyze(
     code: str = Query(..., min_length=6, max_length=6, pattern=r"^\d{6}$"),
     oss_keys: str = Query(..., description="逗号分隔的 oss_key 列表"),
+    company_type: str = Query("general", description="企业类型"),
     force_refresh: bool = Query(False, description="为 true 时跳过缓存"),
     db: Session = Depends(get_db),
 ):
-    """SSE 流式 AI 分析。先查缓存，未命中则调 LLM。"""
+    """SSE 流式结构化分析。"""
     keys = [k.strip() for k in oss_keys.split(",") if k.strip()]
     if not keys:
         raise HTTPException(422, "oss_keys 不能为空")
+    if company_type not in COMPANY_TYPES:
+        raise HTTPException(422, f"invalid company_type: {company_type}")
 
-    # 缓存命中（非强制刷新）
-    if not force_refresh:
-        cached = svc.get_cached_analysis(code, keys, db)
-        if cached:
-            async def cached_stream():
-                yield {"event": "cached", "data": json.dumps(cached, ensure_ascii=False)}
-                yield {"event": "done", "data": json.dumps({"cache_hit": True})}
-            return EventSourceResponse(cached_stream())
-
-    # 真正流式分析
     async def event_stream():
         try:
-            full = ""
-            for chunk in svc.analyze_stream(code, keys, db):
-                full += chunk
-                yield {"event": "chunk", "data": json.dumps({"content": chunk}, ensure_ascii=False)}
-            yield {
-                "event": "done",
-                "data": json.dumps({"cache_hit": False, "length": len(full)}, ensure_ascii=False),
-            }
-        except RuntimeError as e:
-            yield {"event": "error", "data": json.dumps({"error": str(e)}, ensure_ascii=False)}
+            async for evt in _orchestrate(db, code, keys, company_type, force_refresh):
+                yield evt
         except Exception as e:
             yield {"event": "error", "data": json.dumps({"error": f"unexpected: {e}"}, ensure_ascii=False)}
 
