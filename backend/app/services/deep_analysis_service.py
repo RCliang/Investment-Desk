@@ -1,12 +1,13 @@
 """
-Deep analysis service — 编排 MinerU 解析 + LLM 多维度分析。
+Deep analysis service — facade.
 
-对外暴露：
-- parse_reports / parse_status：解析 PDF 到 markdown（结果缓存到 report_contents 表）
-- get_cached_markdown：读取已缓存的 markdown
-- analyze_stream：SSE 流式 AI 多维度分析
-- get_cached_analysis / compute_cache_key：分析结果缓存
-- list_history：历史分析列表
+历史职责:
+- Step 1/2 PDF 解析编排(parse_reports / parse_status / get_cached_markdown)→ 保留
+- Step 4 结构化分析(orchestrate / load_history / load_cached)→ 委托给 deep_analysis 子包
+
+Legacy 兼容(Task 9 将在 router 迁移完成后清理):
+- analyze_stream / _persist_analysis / get_cached_analysis / compute_cache_key
+- _truncate_reports / _build_prompt / _mock_analysis / MAX_INPUT_TOKENS / ANALYSIS_PROMPT_TEMPLATE
 """
 
 from __future__ import annotations
@@ -24,6 +25,13 @@ from app.models.models import ReportContent, DeepAnalysis
 from app.services import mineru_service, oss_service
 from app.services.llm_service import client as llm_client
 from app.config import LLM_MAX_TOKENS
+
+# 子包 re-export(供老调用方逐步迁移)
+from app.services.deep_analysis import (
+    orchestrate,  # noqa: F401  SSE async generator(替代老 analyze_stream)
+    load_history as _load_history_v2,
+    load_cached as _load_cached_v2,  # noqa: F401
+)
 
 logger = logging.getLogger(__name__)
 
@@ -396,31 +404,13 @@ def get_cached_analysis(
 
 
 def list_history(code: str, db: Session, limit: int = 20) -> dict:
-    """该股票的历史分析列表。"""
-    records = (
-        db.query(DeepAnalysis)
-        .filter(DeepAnalysis.stock_code == code)
-        .order_by(DeepAnalysis.created_at.desc())
-        .limit(limit)
-        .all()
-    )
-    return {
-        "code": code,
-        "analyses": [
-            {
-                "id": r.id,
-                "created_at": r.created_at.isoformat() if r.created_at else "",
-                "model_name": r.model_name or "",
-                "report_count": len(json.loads(r.oss_keys_json or "[]")),
-                "preview": (r.analysis_text or "")[:200],
-            }
-            for r in records
-        ],
-    }
+    """历史列表(支持 v1/v2 混合)。委托给子包 + 包装为 {code, analyses}。"""
+    items = _load_history_v2(db, code, limit)
+    return {"code": code, "analyses": items}
 
 
 def get_analysis_by_id(analysis_id: int, db: Session) -> dict | None:
-    """按 id 拉取单条历史分析全文。"""
+    """按 id 拉取单条历史分析全文(包含 v1/v2 字段)。"""
     r = db.query(DeepAnalysis).filter(DeepAnalysis.id == analysis_id).first()
     if not r:
         return None
@@ -428,7 +418,10 @@ def get_analysis_by_id(analysis_id: int, db: Session) -> dict | None:
         "id": r.id,
         "stock_code": r.stock_code,
         "oss_keys": json.loads(r.oss_keys_json or "[]"),
-        "analysis_text": r.analysis_text,
+        "analysis_text": r.analysis_text or "",
+        "analysis_struct": json.loads(r.analysis_struct_json) if r.analysis_struct_json else None,
+        "analysis_version": r.analysis_version or "v1",
+        "company_type": r.company_type or "",
         "created_at": r.created_at.isoformat() if r.created_at else "",
         "model_name": r.model_name or "",
     }
