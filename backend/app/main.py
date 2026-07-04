@@ -33,6 +33,22 @@ app.include_router(research.router)
 app.include_router(deep_analysis.router)
 
 
+def _run_migrations(conn):
+    """SQLite-friendly: create_all 后,补齐 deep_analyses 的新列(老库)。"""
+    from sqlalchemy import text  # noqa: F401  (保留与 plan 一致;实际用 exec_driver_sql)
+    from app.db import Base  # 局部导入避免循环依赖
+    Base.metadata.create_all(conn)
+    cols = [r[1] for r in conn.exec_driver_sql("PRAGMA table_info(deep_analyses)")]
+    if "analysis_struct_json" not in cols:
+        conn.exec_driver_sql("ALTER TABLE deep_analyses ADD COLUMN analysis_struct_json TEXT")
+    if "analysis_version" not in cols:
+        conn.exec_driver_sql(
+            "ALTER TABLE deep_analyses ADD COLUMN analysis_version VARCHAR DEFAULT 'v1'"
+        )
+    if "company_type" not in cols:
+        conn.exec_driver_sql("ALTER TABLE deep_analyses ADD COLUMN company_type VARCHAR")
+
+
 @app.on_event("startup")
 async def startup():
     from app.db import async_engine, Base
@@ -43,7 +59,7 @@ async def startup():
     # v1 chain knowledge base tables (must be imported so create_all sees them)
     from app.models import chain_models  # noqa: F401
     async with async_engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
+        await conn.run_sync(_run_migrations)
 
 
 @app.get("/api/health")
