@@ -1,0 +1,51 @@
+/**
+ * tokens.css — global paper-ink design tokens.
+ *
+ * The 16 palette variables mirror `.chainkb-root` declarations in
+ * chainkb.css. They are re-declared here on :root so that non-chainkb
+ * surfaces (nav bar, DeepAnalysis page, future routes) can reference
+ * the same palette without poking holes in chainkb.css scoping.
+ *
+ * The --da-* aliases are a TEMPORARY migration bridge. They map the old
+ * GitHub-dark semantic names onto the paper palette so that TSX inline
+ * styles using var(--da-text), var(--da-success), etc. keep working
+ * during the migration. They will be removed in the final cleanup commit.
+ */
+
+:root {
+  /* === Paper-ink palette (mirror of .chainkb-root) === */
+  --paper: #fbf9f4;
+  --paper-2: #f5f1e8;
+  --ink: #1a2b4a;
+  --ink-soft: #3d4f6e;
+  --pencil: #5a6a85;
+  --graph: rgba(26, 43, 74, 0.07);
+  --graph-major: rgba(26, 43, 74, 0.13);
+  --hi-yellow: #fff3a8;
+  --hi-yellow-edge: #e8c84a;
+  --hi-orange: #ffd9a8;
+  --marker-red: #e85a4f;
+  --marker-red-soft: rgba(232, 90, 79, 0.15);
+  --marker-green: #3a8a5a;
+  --sticky-yellow: #ffe97a;
+  --sticky-pink: #ffb8c5;
+  --sticky-green: #b8e0a8;
+  --tape: rgba(255, 243, 168, 0.6);
+
+  /* === Temporary --da-* aliases (paper-mapped) ===
+   * These exist ONLY to keep legacy var(--da-*) references working
+   * during the multi-commit migration. Remove once all consumers
+   * are updated to use paper-ink names directly.
+   */
+  --da-bg:        var(--paper);       /* page background */
+  --da-surface:   var(--paper);       /* card background */
+  --da-surface-2: var(--paper-2);     /* nested inset */
+  --da-border:        var(--ink);     /* primary border (rendered at 2-2.5px) */
+  --da-border-soft:   var(--pencil);  /* dashed secondary */
+  --da-text:      var(--ink);         /* primary text */
+  --da-text-soft: var(--ink-soft);    /* secondary text */
+  --da-accent:    var(--marker-red);  /* CTA / active marker */
+  --da-success:   var(--marker-green);
+  --da-warn:      var(--hi-yellow-edge);
+  --da-error:     var(--marker-red);
+}
