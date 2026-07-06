@@ -56,10 +56,22 @@ def parse_reports(code: str, oss_keys: list[str], db: Session) -> dict:
         db.query(ReportContent).filter(ReportContent.stock_code == code).all()
     }
 
+    # 查进程内已提交但未完成的任务(防止重复 /parse 造成同一 oss_key 多任务并发)
+    in_flight = {
+        m.get("oss_key")
+        for tid in mineru_service.list_pending()
+        if (m := mineru_service.get_task_meta(tid)) and m.get("stock_code") == code
+    }
+
     for oss_key in oss_keys:
         if oss_key in existing:
             results.append({"oss_key": oss_key, "status": "cached"})
             cached_count += 1
+            continue
+
+        if oss_key in in_flight:
+            # 已有任务在跑,不要重复提交(否则会导致 parse_status UNIQUE 冲突)
+            results.append({"oss_key": oss_key, "status": "parsing"})
             continue
 
         # 检查 OSS 中是否存在该对象
@@ -155,16 +167,26 @@ def parse_status(code: str, db: Session) -> dict:
             pending_count += 1
             details.append({"oss_key": oss_key, "status": "parsing"})
         else:
-            # 完成 → 写入 DB
-            rc = ReportContent(
-                oss_key=oss_key,
-                stock_code=code,
-                title=meta.get("title", ""),
-                markdown_text=result["markdown"],
-                token_count=result["token_count"],
-                parsed_at=datetime.now(),
+            # 完成 → upsert 到 DB(防御并发请求 / 重解析 / 孤儿任务,
+            # oss_key 已存在则更新 markdown,避免 UNIQUE constraint 崩溃)
+            existing_rc = (
+                db.query(ReportContent)
+                .filter(ReportContent.oss_key == oss_key)
+                .first()
             )
-            db.add(rc)
+            if existing_rc:
+                existing_rc.markdown_text = result["markdown"]
+                existing_rc.token_count = result["token_count"]
+                existing_rc.parsed_at = datetime.now()
+            else:
+                db.add(ReportContent(
+                    oss_key=oss_key,
+                    stock_code=code,
+                    title=meta.get("title", ""),
+                    markdown_text=result["markdown"],
+                    token_count=result["token_count"],
+                    parsed_at=datetime.now(),
+                ))
             db.commit()
             done_count += 1
             details.append({
