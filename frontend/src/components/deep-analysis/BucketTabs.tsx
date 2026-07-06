@@ -51,7 +51,7 @@ export default function BucketTabs({
 
       <div className="tab-body">
         {defaultActive && bucketState[defaultActive] === 'done' && bucketResults[defaultActive] && (
-          <div className="field-grid">
+          <div className="field-list">
             {Object.entries(bucketResults[defaultActive]!.fields).map(([name, field]) => (
               <BucketFieldCard key={name} name={name} field={field} />
             ))}
