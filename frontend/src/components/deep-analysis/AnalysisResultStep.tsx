@@ -127,39 +127,39 @@ export default function AnalysisResultStep({
 
   return (
     <div>
-      <div className="da-row-between">
+      <div className="row-between">
         <div>
-          <div style={{ fontSize: 16, color: 'var(--da-text)', fontWeight: 600 }}>
+          <div style={{ fontSize: 16, color: 'var(--ink)', fontWeight: 600 }}>
             AI 结构化分析
             {phase === 'cached' && (
-              <span style={{ marginLeft: 12, color: 'var(--da-success)', fontSize: 12 }}>
+              <span style={{ marginLeft: 12, color: 'var(--marker-green)', fontSize: 12 }}>
                 ✓ 缓存命中
               </span>
             )}
             {phase === 'running' && (
-              <span style={{ marginLeft: 12, color: 'var(--da-accent)', fontSize: 12 }}>
+              <span style={{ marginLeft: 12, color: 'var(--marker-red)', fontSize: 12 }}>
                 ● 流式中 ({okCount}/{bucketOrder.length})
               </span>
             )}
             {phase === 'done' && (
-              <span style={{ marginLeft: 12, color: 'var(--da-success)', fontSize: 12 }}>
+              <span style={{ marginLeft: 12, color: 'var(--marker-green)', fontSize: 12 }}>
                 ✓ 完成 {okCount} 桶成功{errCount > 0 && ` / ${errCount} 桶失败`}
               </span>
             )}
           </div>
-          <div style={{ fontSize: 12, color: 'var(--da-text-soft)', marginTop: 4 }}>
+          <div style={{ fontSize: 12, color: 'var(--ink-soft)', marginTop: 4 }}>
             基于 {ossKeys.length} 篇研报 · 股票代码 {code} · 类型 {companyType}
           </div>
         </div>
-        <div className="da-row">
-          <button className="da-btn da-btn-ghost" onClick={onBack} disabled={phase === 'running'}>
+        <div className="row">
+          <button className="btn btn-ghost" onClick={onBack} disabled={phase === 'running'}>
             ← 返回
           </button>
-          <button className="da-btn da-btn-ghost" onClick={toggleHistory}>
+          <button className="btn btn-ghost" onClick={toggleHistory}>
             {showHistory ? '隐藏历史' : '查看历史'}
           </button>
           <button
-            className="da-btn"
+            className="btn"
             onClick={() => runAnalyze(true)}
             disabled={phase === 'running' || ossKeys.length === 0}
           >
@@ -168,20 +168,20 @@ export default function AnalysisResultStep({
         </div>
       </div>
 
-      {error && <div className="da-error">{error}</div>}
+      {error && <div className="error-text">{error}</div>}
 
       {showHistory && (
-        <div className="da-history-list">
-          <div style={{ fontSize: 12, color: 'var(--da-text-soft)', marginBottom: 8 }}>
+        <div className="history-list">
+          <div style={{ fontSize: 12, color: 'var(--ink-soft)', marginBottom: 8 }}>
             历史分析（{history.length} 条）
           </div>
           {history.length === 0 ? (
-            <div className="da-empty">暂无历史</div>
+            <div className="empty-pad">暂无历史</div>
           ) : (
             history.map((h) => (
-              <div key={h.id} className="da-history-item">
+              <div key={h.id} className="history-item">
                 <span>#{h.id} · {h.created_at.slice(0, 16).replace('T', ' ')}</span>
-                <span style={{ color: 'var(--da-text-soft)' }}>
+                <span style={{ color: 'var(--ink-soft)' }}>
                   {(h as any).analysis_version === 'v2' ? '[v2] ' : '[v1] '}
                   {(h as any).company_type && `${(h as any).company_type} · `}
                   {h.report_count} 篇 · {(h.preview || '').slice(0, 50)}
@@ -201,7 +201,7 @@ export default function AnalysisResultStep({
             bucketErrors={bucketErrors}
           />
         ) : (
-          <div className="da-empty">
+          <div className="empty-pad">
             {phase === 'running' ? '正在初始化...' : '点击「重新分析」开始'}
           </div>
         )}

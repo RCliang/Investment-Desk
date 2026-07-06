@@ -83,24 +83,24 @@ export default function ReportParseStep({ code, ossKeys, onComplete, onBack }: P
 
   return (
     <div>
-      <div className="da-row-between">
+      <div className="row-between">
         <div>
-          <div style={{ fontSize: 15, color: 'var(--da-text)' }}>
+          <div style={{ fontSize: 15, color: 'var(--ink)' }}>
             MinerU 解析进度：{doneCount} done / {pendingCount} parsing / {failedCount} failed
             {total > 0 && ` / ${total}`}
           </div>
           {mineruMode && (
-            <div style={{ fontSize: 12, color: 'var(--da-text-soft)', marginTop: 4 }}>
+            <div style={{ fontSize: 12, color: 'var(--ink-soft)', marginTop: 4 }}>
               模式：{mineruMode === 'mock' ? 'mock（未配置 MINERU_API_KEY）' : 'live'}
             </div>
           )}
         </div>
-        <div className="da-row">
-          <button className="da-btn da-btn-ghost" onClick={onBack} disabled={submitting}>
+        <div className="row">
+          <button className="btn btn-ghost" onClick={onBack} disabled={submitting}>
             ← 返回
           </button>
           <button
-            className="da-btn"
+            className="btn"
             onClick={onComplete}
             disabled={!canProceed}
           >
@@ -109,18 +109,18 @@ export default function ReportParseStep({ code, ossKeys, onComplete, onBack }: P
         </div>
       </div>
 
-      {error && <div className="da-error">{error}</div>}
+      {error && <div className="error-text">{error}</div>}
 
       <div style={{ marginTop: 16 }}>
         {details.length === 0 && (
-          <div className="da-empty">
+          <div className="empty-pad">
             {submitting ? '正在提交解析请求...' : '等待解析'}
           </div>
         )}
         {details.map((d) => (
-          <div key={d.oss_key} className="da-status-row">
-            <div className="da-status-text">
-              <span className={`da-status-icon ${
+          <div key={d.oss_key} className="status-row">
+            <div className="status-text">
+              <span className={`status-icon ${
                 d.status === 'done' ? 'ok' :
                 d.status === 'failed' ? 'fail' : 'pending'
               }`}>
@@ -129,10 +129,10 @@ export default function ReportParseStep({ code, ossKeys, onComplete, onBack }: P
               </span>
               {_shortenKey(d.oss_key)}
               {d.status === 'done' && d.token_count && (
-                <span className="da-status-meta">{d.token_count} tokens</span>
+                <span className="status-meta">{d.token_count} tokens</span>
               )}
               {d.status === 'failed' && (
-                <span className="da-status-meta">失败：{d.error || 'unknown'}</span>
+                <span className="status-meta">失败：{d.error || 'unknown'}</span>
               )}
             </div>
           </div>
@@ -140,7 +140,7 @@ export default function ReportParseStep({ code, ossKeys, onComplete, onBack }: P
       </div>
 
       {allSettled && failedCount > 0 && (
-        <div style={{ marginTop: 16, fontSize: 12, color: 'var(--da-warn)' }}>
+        <div style={{ marginTop: 16, fontSize: 12, color: 'var(--hi-yellow-edge)' }}>
           ⚠ 有 {failedCount} 篇解析失败，可继续用已成功的部分进行 AI 分析
         </div>
       )}

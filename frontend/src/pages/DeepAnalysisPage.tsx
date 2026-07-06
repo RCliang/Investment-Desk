@@ -87,32 +87,32 @@ export default function DeepAnalysisPage() {
         </p>
       </header>
 
-      <ol className="da-stepper">
+      <ol className="stepper">
         {STEPS.map((s, idx) => {
           const isCurrent = step === s.key;
           const isDone = step > s.key;
           return (
             <li
               key={s.key}
-              className={`da-step ${isCurrent ? 'current' : ''} ${isDone ? 'done' : ''}`}
+              className={`step ${isCurrent ? 'current' : ''} ${isDone ? 'done' : ''}`}
             >
               <button
-                className="da-step-btn"
+                className="step-btn"
                 onClick={() => goToStep(s.key)}
                 disabled={s.key > step && s.key > 1 && !_canJumpTo(s.key, step)}
               >
-                <span className="da-step-num">
+                <span className="step-num">
                   {isDone ? '✓' : s.key}
                 </span>
-                <span className="da-step-label">{s.label}</span>
+                <span className="step-label">{s.label}</span>
               </button>
-              {idx < STEPS.length - 1 && <span className="da-step-arrow">→</span>}
+              {idx < STEPS.length - 1 && <span className="step-arrow">→</span>}
             </li>
           );
         })}
       </ol>
 
-      <section className="da-content">
+      <section className="panel">
         {step === 1 && (
           <ReportSearchStep
             initialCode={code}

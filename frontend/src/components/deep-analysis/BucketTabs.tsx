@@ -25,8 +25,8 @@ export default function BucketTabs({
     active ?? bucketOrder.find((b) => bucketState[b] === 'done') ?? bucketOrder[0] ?? null;
 
   return (
-    <div className="da-bucket-tabs">
-      <div className="da-tab-header">
+    <div className="bucket-tabs">
+      <div className="tab-header">
         {bucketOrder.map((bid) => {
           const st = bucketState[bid] || 'pending';
           const isActive = defaultActive === bid;
@@ -34,37 +34,37 @@ export default function BucketTabs({
             <button
               key={bid}
               type="button"
-              className={`da-tab ${isActive ? 'active' : ''} st-${st}`}
+              className={`tab ${isActive ? 'active' : ''} st-${st}`}
               onClick={() => setActive(bid)}
             >
-              <span className="da-tab-status">
+              <span className="tab-status">
                 {st === 'done' && '✓'}
                 {st === 'error' && '✗'}
-                {st === 'running' && <span className="da-spinner" />}
+                {st === 'running' && <span className="spinner" />}
                 {st === 'pending' && '·'}
               </span>
-              <span className="da-tab-label">{BUCKET_DISPLAY_NAMES[bid]}</span>
+              <span className="tab-label">{BUCKET_DISPLAY_NAMES[bid]}</span>
             </button>
           );
         })}
       </div>
 
-      <div className="da-tab-body">
+      <div className="tab-body">
         {defaultActive && bucketState[defaultActive] === 'done' && bucketResults[defaultActive] && (
-          <div className="da-field-grid">
+          <div className="field-grid">
             {Object.entries(bucketResults[defaultActive]!.fields).map(([name, field]) => (
               <BucketFieldCard key={name} name={name} field={field} />
             ))}
           </div>
         )}
         {defaultActive && bucketState[defaultActive] === 'running' && (
-          <div className="da-tab-skeleton">解析中...</div>
+          <div className="tab-skeleton">解析中...</div>
         )}
         {defaultActive && bucketState[defaultActive] === 'pending' && (
-          <div className="da-tab-empty">等待中</div>
+          <div className="tab-empty">等待中</div>
         )}
         {defaultActive && bucketState[defaultActive] === 'error' && (
-          <div className="da-tab-error">
+          <div className="tab-error">
             该模块解析失败:{bucketErrors[defaultActive] || '未知错误'}
           </div>
         )}

@@ -14,14 +14,14 @@ const ORDER: CompanyType[] = ['equipment', 'material', 'packaging', 'ip', 'gener
  */
 export default function CompanyTypeSelector({ value, onChange, disabled }: Props) {
   return (
-    <div className="da-company-type-row">
-      <span className="da-company-type-label">企业类型</span>
-      <div className="da-company-type-options">
+    <div className="company-type-row">
+      <span className="company-type-label">企业类型</span>
+      <div className="company-type-options">
         {ORDER.map((ct) => (
           <button
             key={ct}
             type="button"
-            className={`da-chip ${value === ct ? 'active' : ''}`}
+            className={`chip ${value === ct ? 'active' : ''}`}
             onClick={() => onChange(ct)}
             disabled={disabled}
           >

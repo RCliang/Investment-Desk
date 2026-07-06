@@ -31,14 +31,14 @@ function formatValue(v: FieldValue['value']): string {
 export default function BucketFieldCard({ name, field }: Props) {
   const evClass = EVIDENCE_CLASS[field.evidence];
   return (
-    <div className={`da-field-card ${evClass}`}>
-      <div className="da-field-name">{name}</div>
-      <div className="da-field-value">{formatValue(field.value)}</div>
-      <div className={`da-field-evidence ${evClass}`}>
+    <div className={`field-card ${evClass}`}>
+      <div className="field-name">{name}</div>
+      <div className="field-value">{formatValue(field.value)}</div>
+      <div className={`field-evidence ${evClass}`}>
         {EVIDENCE_LABEL[field.evidence]}
       </div>
       {field.quote && (
-        <blockquote className="da-field-quote">"{field.quote}"</blockquote>
+        <blockquote className="field-quote">"{field.quote}"</blockquote>
       )}
     </div>
   );

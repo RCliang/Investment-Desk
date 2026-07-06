@@ -47,30 +47,30 @@ export default function ReportDownloadStep({
 
   return (
     <div>
-      <div className="da-row-between">
+      <div className="row-between">
         <div>
-          <div style={{ fontSize: 15, color: 'var(--da-text)' }}>
+          <div style={{ fontSize: 15, color: 'var(--ink)' }}>
             准备下载 {reports.length} 篇研报到 OSS
           </div>
-          <div style={{ fontSize: 12, color: 'var(--da-text-soft)', marginTop: 4 }}>
+          <div style={{ fontSize: 12, color: 'var(--ink-soft)', marginTop: 4 }}>
             路径：reports/{code}/&lt;日期&gt;_&lt;机构&gt;_&lt;标题&gt;.pdf
           </div>
         </div>
-        <div className="da-row">
-          <button className="da-btn da-btn-ghost" onClick={onBack} disabled={loading}>
+        <div className="row">
+          <button className="btn btn-ghost" onClick={onBack} disabled={loading}>
             ← 返回
           </button>
           {results.length === 0 ? (
-            <button className="da-btn" onClick={handleDownload} disabled={loading || reports.length === 0}>
+            <button className="btn" onClick={handleDownload} disabled={loading || reports.length === 0}>
               {loading ? '下载中...' : '开始下载'}
             </button>
           ) : (
             <>
-              <button className="da-btn da-btn-ghost" onClick={handleDownload} disabled={loading}>
+              <button className="btn btn-ghost" onClick={handleDownload} disabled={loading}>
                 {loading ? '重试中...' : '重新下载失败项'}
               </button>
               <button
-                className="da-btn"
+                className="btn"
                 onClick={() => onComplete(results)}
                 disabled={!canProceed}
               >
@@ -81,17 +81,17 @@ export default function ReportDownloadStep({
         </div>
       </div>
 
-      {error && <div className="da-error">{error}</div>}
+      {error && <div className="error-text">{error}</div>}
 
       {results.length > 0 && (
         <div style={{ marginTop: 16 }}>
-          <div style={{ fontSize: 12, color: 'var(--da-text-soft)', marginBottom: 8 }}>
+          <div style={{ fontSize: 12, color: 'var(--ink-soft)', marginBottom: 8 }}>
             成功 {successCount} / 失败 {failedCount} / 总计 {results.length}
           </div>
           {results.map((r) => (
-            <div key={r.info_code} className="da-status-row">
-              <div className="da-status-text">
-                <span className={`da-status-icon ${
+            <div key={r.info_code} className="status-row">
+              <div className="status-text">
+                <span className={`status-icon ${
                   r.status === 'ok' || r.status === 'exists' ? 'ok' :
                   r.status === 'failed' ? 'fail' : 'pending'
                 }`}>
@@ -99,10 +99,10 @@ export default function ReportDownloadStep({
                 </span>
                 {r.filename || r.info_code}
                 {r.status === 'exists' && (
-                  <span className="da-status-meta">已存在</span>
+                  <span className="status-meta">已存在</span>
                 )}
                 {r.status === 'failed' && (
-                  <span className="da-status-meta">失败：{r.error || 'unknown'}</span>
+                  <span className="status-meta">失败：{r.error || 'unknown'}</span>
                 )}
               </div>
             </div>
@@ -111,7 +111,7 @@ export default function ReportDownloadStep({
       )}
 
       {results.length === 0 && !loading && (
-        <div className="da-empty">点击「开始下载」批量上传 PDF 到 OSS</div>
+        <div className="empty-pad">点击「开始下载」批量上传 PDF 到 OSS</div>
       )}
     </div>
   );

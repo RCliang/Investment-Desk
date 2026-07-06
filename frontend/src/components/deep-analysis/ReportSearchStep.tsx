@@ -71,27 +71,27 @@ export default function ReportSearchStep({
   return (
     <div>
       <CompanyTypeSelector value={companyType} onChange={onCompanyTypeChange} />
-      <div className="da-row">
+      <div className="row">
         <input
-          className="da-search-input"
+          className="search-input"
           placeholder="股票代码，如 301095"
           value={code}
           onChange={(e) => setCode(e.target.value.trim())}
           onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
           style={{ width: 200 }}
         />
-        <button className="da-btn" onClick={handleSearch} disabled={loading || !code}>
+        <button className="btn" onClick={handleSearch} disabled={loading || !code}>
           {loading ? '搜索中...' : '搜索'}
         </button>
         {reports.length > 0 && (
           <>
-            <button className="da-btn-ghost da-btn" onClick={selectAll}>全选</button>
-            <button className="da-btn-ghost da-btn" onClick={selectNone}>清空</button>
+            <button className="btn-ghost btn" onClick={selectAll}>全选</button>
+            <button className="btn-ghost btn" onClick={selectNone}>清空</button>
           </>
         )}
         <div style={{ flex: 1 }} />
         <button
-          className="da-btn"
+          className="btn"
           onClick={handleNext}
           disabled={selected.size === 0}
         >
@@ -99,16 +99,16 @@ export default function ReportSearchStep({
         </button>
       </div>
 
-      {error && <div className="da-error">{error}</div>}
+      {error && <div className="error-text">{error}</div>}
 
       {reports.length > 0 && (
-        <div style={{ marginTop: 12, color: 'var(--da-text-soft)', fontSize: 12 }}>
+        <div style={{ marginTop: 12, color: 'var(--ink-soft)', fontSize: 12 }}>
           共 {reports.length} 篇，已选 {selected.size} 篇
         </div>
       )}
 
       {reports.length > 0 && (
-        <table className="da-table">
+        <table className="table-sketch">
           <thead>
             <tr>
               <th style={{ width: 36 }}></th>
@@ -128,10 +128,10 @@ export default function ReportSearchStep({
                     onChange={() => toggleSelect(r.info_code)}
                   />
                 </td>
-                <td className="da-title-cell">{r.title}</td>
-                <td className="da-meta-cell">{r.org_name}</td>
-                <td className="da-meta-cell">{r.rating || '-'}</td>
-                <td className="da-meta-cell">{r.publish_date}</td>
+                <td className="cell-title">{r.title}</td>
+                <td className="cell-meta">{r.org_name}</td>
+                <td className="cell-meta">{r.rating || '-'}</td>
+                <td className="cell-meta">{r.publish_date}</td>
               </tr>
             ))}
           </tbody>
@@ -139,7 +139,7 @@ export default function ReportSearchStep({
       )}
 
       {!loading && reports.length === 0 && !error && (
-        <div className="da-empty">输入股票代码后点击「搜索」</div>
+        <div className="empty-pad">输入股票代码后点击「搜索」</div>
       )}
     </div>
   );
