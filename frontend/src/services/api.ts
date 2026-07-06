@@ -23,17 +23,17 @@ export type {
 };
 
 export async function getChainKbTree(): Promise<TreeResponse> {
-  const { data } = await api.get<TreeResponse>('/chainkb/tree');
+  const { data } = await api.get<TreeResponse>('/api/chainkb/tree');
   return data;
 }
 
 export async function getChainKbSubIndustry(groupId: string): Promise<SubIndustryDetail> {
-  const { data } = await api.get<SubIndustryDetail>(`/chainkb/sub_industries/${groupId}`);
+  const { data } = await api.get<SubIndustryDetail>(`/api/chainkb/sub_industries/${groupId}`);
   return data;
 }
 
 export async function getChainKbCompany(ticker: string): Promise<CompanyProfile> {
-  const { data } = await api.get<CompanyProfile>(`/chainkb/companies/${ticker}`);
+  const { data } = await api.get<CompanyProfile>(`/api/chainkb/companies/${ticker}`);
   return data;
 }
 
@@ -45,14 +45,14 @@ export async function getChainKbTimeseries(
   if (opts.types && opts.types.length) params.types = opts.types.join(',');
   if (opts.limit != null) params.limit = String(opts.limit);
   const { data } = await api.get<TimeSeriesResponse>(
-    `/chainkb/companies/${ticker}/timeseries`,
+    `/api/chainkb/companies/${ticker}/timeseries`,
     { params },
   );
   return data;
 }
 
 export async function searchChainKb(q: string, limit = 20): Promise<SearchResponse> {
-  const { data } = await api.get<SearchResponse>('/chainkb/search', {
+  const { data } = await api.get<SearchResponse>('/api/chainkb/search', {
     params: { q, limit },
   });
   return data;
@@ -62,7 +62,7 @@ export async function searchChainKb(q: string, limit = 20): Promise<SearchRespon
 import type { FreshnessResponse } from '../types/chainkb';
 
 export async function getFreshness(): Promise<FreshnessResponse> {
-  const { data } = await api.get<FreshnessResponse>('/chainkb/freshness');
+  const { data } = await api.get<FreshnessResponse>('/api/chainkb/freshness');
   return data;
 }
 
