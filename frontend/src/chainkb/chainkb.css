@@ -957,3 +957,64 @@
     max-width: none;
   }
 }
+
+/* ── AI 公司拆解(LatestAnalysisSection) ─────────────────────────
+   tab 03「公司拆解」中嵌入的 BucketTabs 容器。
+   仅 .la-* 前缀为本组件新增; .da-root / .bucket-tabs 由 deep-analysis.css 提供。
+   */
+.la-section {
+  margin: 16px 0;
+  padding: 12px 14px;
+  background: rgba(26, 43, 74, 0.03);
+  border-left: 3px solid #5a6a85;
+  border-radius: 0 4px 4px 0;
+}
+.la-header {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin-bottom: 8px;
+  font-family: 'Patrick Hand', cursive;
+}
+.la-title {
+  font-size: 16px;
+  font-weight: bold;
+  color: #1a2b4a;
+}
+.la-pill {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  padding: 1px 6px;
+  border: 1px solid #5a6a85;
+  border-radius: 2px;
+  color: #3d4f6e;
+}
+.la-meta {
+  font-size: 12px;
+  color: #5a6a85;
+  margin-left: auto;
+}
+.la-pad {
+  padding: 14px;
+  color: #5a6a85;
+}
+.la-empty {
+  padding: 14px;
+  color: #5a6a85;
+}
+.la-empty-title {
+  font-size: 14px;
+  color: #3d4f6e;
+  margin-bottom: 4px;
+}
+.la-empty-sub {
+  font-size: 12px;
+  color: #5a6a85;
+}
+
+/* 让嵌入的 BucketTabs tab-header 贴合 chainkb sketch 风格(去掉默认深色背景) */
+.la-section .da-root .bucket-tabs .tab-header {
+  background: transparent;
+  border: none;
+  padding: 0;
+}

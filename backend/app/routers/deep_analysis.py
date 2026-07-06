@@ -119,3 +119,23 @@ async def get_record(analysis_id: int, db: Session = Depends(get_db)):
     if not record:
         raise HTTPException(404, "analysis_not_found")
     return record
+
+
+# ═══════════════════════════════════════════════════════════════════
+# GET /latest
+# ═══════════════════════════════════════════════════════════════════
+
+@router.get("/latest")
+async def latest(
+    code: str = Query(..., min_length=6, max_length=6, pattern=r"^\d{6}$"),
+    db: Session = Depends(get_db),
+):
+    """按 ticker 返回最新一条 v2 结构化分析(AnalysisDoc)。无则 404。
+
+    供 ChainKb tab 03「公司拆解」按 ticker 拉取,与 /analyze SSE 的
+    cached 事件 payload 同结构,前端类型零新增。
+    """
+    doc = svc.get_latest_v2(code, db)
+    if doc is None:
+        raise HTTPException(404, "no_v2_analysis")
+    return doc

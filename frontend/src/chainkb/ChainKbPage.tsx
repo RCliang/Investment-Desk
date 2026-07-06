@@ -18,7 +18,7 @@ const TABS: TabDef[] = [
   { key: 'overview', label: '00 · 总览' },
   { key: 'layers', label: '01 · 产业链层级' },
   // 02 · 公司对比 — deferred (compare-basket UX)
-  { key: 'finance', label: '03 · 财务拆解' },
+  { key: 'finance', label: '03 · 公司拆解' },
   // 04 · 风险标记 — deferred (risk inference layer)
 ];
 

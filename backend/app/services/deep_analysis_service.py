@@ -267,3 +267,25 @@ def get_analysis_by_id(analysis_id: int, db: Session) -> dict | None:
         "created_at": r.created_at.isoformat() if r.created_at else "",
         "model_name": r.model_name or "",
     }
+
+
+def get_latest_v2(code: str, db: Session) -> dict | None:
+    """
+    该 code 最新一条 v2 AnalysisDoc(raw dict)。
+
+    用于 ChainKb tab 03 按 ticker 拉取,无 v2 记录时返回 None。
+    只读 analysis_struct_json(已持久化的完整 AnalysisDoc),跳过 v1 文本记录。
+    """
+    rec = (
+        db.query(DeepAnalysis)
+        .filter(
+            DeepAnalysis.stock_code == code,
+            DeepAnalysis.analysis_version == "v2",
+            DeepAnalysis.analysis_struct_json.isnot(None),
+        )
+        .order_by(DeepAnalysis.created_at.desc())
+        .first()
+    )
+    if rec is None:
+        return None
+    return json.loads(rec.analysis_struct_json)

@@ -9,6 +9,7 @@ import { useCompany, useTimeseries, useSearch } from './hooks/useChainKb';
 import SketchPanel from './components/SketchPanel';
 import SketchKpi from './components/SketchKpi';
 import StickyNote from './components/StickyNote';
+import LatestAnalysisSection from './components/LatestAnalysisSection';
 
 interface FinanceScreenProps {
   initialTicker: string | null;
@@ -375,6 +376,9 @@ export default function FinanceScreen({ initialTicker, onResetTicker }: FinanceS
               deltaTone="neutral"
             />
           </div>
+
+          {/* AI 公司拆解(LatestAnalysisSection) */}
+          <LatestAnalysisSection ticker={ticker} />
 
           {/* Time-series */}
           <SketchPanel

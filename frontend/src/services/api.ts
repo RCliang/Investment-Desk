@@ -226,3 +226,20 @@ export async function getAnalysisRecord(id: number): Promise<AnalysisRecord> {
   const { data } = await api.get<AnalysisRecord>(`/api/deep-analysis/records/${id}`);
   return data;
 }
+
+/**
+ * 按 code 取最新一条 v2 结构化分析(ChainKb tab 03「公司拆解」用)。
+ * 该股票没有任何 v2 分析时返回 null(404 视为正常路径,吞掉)。
+ * 其他错误(500/网络)照样抛。
+ */
+export async function getLatestAnalysis(code: string): Promise<AnalysisDoc | null> {
+  try {
+    const { data } = await api.get<AnalysisDoc>('/api/deep-analysis/latest', {
+      params: { code },
+    });
+    return data;
+  } catch (err: unknown) {
+    if (err instanceof axios.AxiosError && err.response?.status === 404) return null;
+    throw err;
+  }
+}

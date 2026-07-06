@@ -6,6 +6,7 @@ import {
   getChainKbTimeseries,
   searchChainKb,
   getFreshness,
+  getLatestAnalysis,
 } from '../../services/api';
 import type {
   TreeResponse,
@@ -15,6 +16,7 @@ import type {
   SearchResponse,
   FreshnessResponse,
 } from '../../types/chainkb';
+import type { AnalysisDoc } from '../../types/deepAnalysis';
 
 interface FetchState<T> {
   data: T | null;
@@ -185,6 +187,38 @@ export function useSearch(q: string, limit = 20, delay = 280) {
     return () => window.clearTimeout(handle);
   }, [q, delay, fire]);
 
+  return state;
+}
+
+// ── Latest AI analysis: pulls /api/deep-analysis/latest once per ticker ─────
+/**
+ * 拉取该 ticker 最新一条 v2 AI 公司拆解。404(无记录)→ data=null,不报错。
+ * 其他错误(500/网络)写入 error 字段。
+ */
+export function useLatestAnalysis(code: string | null) {
+  const [state, setState] = useState<FetchState<AnalysisDoc>>(initial());
+  useEffect(() => {
+    if (!code) {
+      setState(initial());
+      return;
+    }
+    let cancelled = false;
+    setState({ data: null, loading: true, error: null });
+    getLatestAnalysis(code)
+      .then((data) => !cancelled && setState({ data, loading: false, error: null }))
+      .catch(
+        (err: unknown) =>
+          !cancelled &&
+          setState({
+            data: null,
+            loading: false,
+            error: err instanceof Error ? err.message : String(err),
+          }),
+      );
+    return () => {
+      cancelled = true;
+    };
+  }, [code]);
   return state;
 }
 
