@@ -1,26 +1,33 @@
-/* 顶层 nav + main 容器 — GitHub-inspired 暗色 */
+/* 顶层 nav + main 容器 — paper-ink 手绘风 */
 .app-root {
   min-height: 100vh;
-  background: #0d1117;
-  color: #e6edf3;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
-    "Microsoft YaHei", sans-serif;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: 'Patrick Hand', 'Caveat', cursive;
+  background-image:
+    linear-gradient(var(--graph) 1px, transparent 1px),
+    linear-gradient(90deg, var(--graph) 1px, transparent 1px),
+    linear-gradient(var(--graph-major) 1px, transparent 1px),
+    linear-gradient(90deg, var(--graph-major) 1px, transparent 1px);
+  background-size: 24px 24px, 24px 24px, 96px 96px, 96px 96px;
+  background-position: 0 0, 0 0, 0 0, 0 0;
 }
 
 .app-nav {
   display: flex;
   align-items: center;
   gap: 24px;
-  padding: 12px 24px;
-  background: #161b22;
-  border-bottom: 1px solid #30363d;
+  padding: 14px 28px;
+  background: var(--paper-2);
+  border-bottom: 2.5px solid var(--ink);
 }
 
 .app-nav-brand {
-  font-weight: 600;
-  font-size: 15px;
-  color: #58a6ff;
-  letter-spacing: 0.3px;
+  font-family: 'Caveat', cursive;
+  font-weight: 700;
+  font-size: 28px;
+  color: var(--ink);
+  letter-spacing: 0.5px;
 }
 
 .app-nav-items {
@@ -30,26 +37,28 @@
 
 .app-nav-item {
   background: transparent;
-  border: 1px solid transparent;
-  color: #8b949e;
+  border: 2px solid transparent;
+  color: var(--ink-soft);
   padding: 6px 14px;
-  border-radius: 6px;
+  border-radius: 4px;
   cursor: pointer;
-  font-size: 13px;
+  font-family: 'Patrick Hand', cursive;
+  font-size: 15px;
   transition: all 0.15s ease;
 }
 
 .app-nav-item:hover {
-  color: #e6edf3;
-  background: #21262d;
+  color: var(--ink);
+  background: rgba(26, 43, 74, 0.04);
 }
 
 .app-nav-item.active {
-  color: #e6edf3;
-  background: #21262d;
-  border-color: #30363d;
+  color: var(--ink);
+  background: var(--hi-yellow);
+  border-color: var(--hi-yellow-edge);
+  font-weight: 700;
 }
 
 .app-main {
-  /* ChainKbPage 自带 .chainkb-root 主题；DeepAnalysisPage 自带容器样式 */
+  /* ChainKbPage 自带 .chainkb-root 主题；DeepAnalysisPage 自带 .da-root 容器样式 */
 }
