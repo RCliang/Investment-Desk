@@ -38,9 +38,12 @@ OSS_ACCESS_KEY_SECRET = os.getenv("OSS_ACCESS_KEY_SECRET", "")
 OSS_ENDPOINT = os.getenv("OSS_ENDPOINT", "")
 OSS_BUCKET = os.getenv("OSS_BUCKET", "")
 
-# MinerU 云端 API — PDF 转 Markdown
-MINERU_API_URL = os.getenv("MINERU_API_URL", "https://mineru.dottore.com/api/v1")
+# MinerU 云端 API — PDF 转 Markdown (Precision Extract API v4)
+# 申请:https://mineru.net 注册后在「API 管理」获取 token
+MINERU_API_URL = os.getenv("MINERU_API_URL", "https://mineru.net/api/v4")
 MINERU_API_KEY = os.getenv("MINERU_API_KEY", "")
+# 解析模型:pipeline (默认通用) / vlm (视觉大模型, 更贵) / MinerU-HTML
+MINERU_MODEL_VERSION = os.getenv("MINERU_MODEL_VERSION", "pipeline")
 
 # Refresh API token — required for POST /api/chainkb/refresh/* endpoints.
 # Generate with: python -c "import secrets; print(secrets.token_hex(16))"
