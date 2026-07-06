@@ -5,11 +5,6 @@
  * chainkb.css. They are re-declared here on :root so that non-chainkb
  * surfaces (nav bar, DeepAnalysis page, future routes) can reference
  * the same palette without poking holes in chainkb.css scoping.
- *
- * The --da-* aliases are a TEMPORARY migration bridge. They map the old
- * GitHub-dark semantic names onto the paper palette so that TSX inline
- * styles using var(--da-text), var(--da-success), etc. keep working
- * during the migration. They will be removed in the final cleanup commit.
  */
 
 :root {
@@ -31,21 +26,4 @@
   --sticky-pink: #ffb8c5;
   --sticky-green: #b8e0a8;
   --tape: rgba(255, 243, 168, 0.6);
-
-  /* === Temporary --da-* aliases (paper-mapped) ===
-   * These exist ONLY to keep legacy var(--da-*) references working
-   * during the multi-commit migration. Remove once all consumers
-   * are updated to use paper-ink names directly.
-   */
-  --da-bg:        var(--paper);       /* page background */
-  --da-surface:   var(--paper);       /* card background */
-  --da-surface-2: var(--paper-2);     /* nested inset */
-  --da-border:        var(--ink);     /* primary border (rendered at 2-2.5px) */
-  --da-border-soft:   var(--pencil);  /* dashed secondary */
-  --da-text:      var(--ink);         /* primary text */
-  --da-text-soft: var(--ink-soft);    /* secondary text */
-  --da-accent:    var(--marker-red);  /* CTA / active marker */
-  --da-success:   var(--marker-green);
-  --da-warn:      var(--hi-yellow-edge);
-  --da-error:     var(--marker-red);
 }
