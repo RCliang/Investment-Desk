@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import axios from 'axios';
 import type { ResearchReport, DownloadResult } from '../../types/deepAnalysis';
 import { downloadReports } from '../../services/api';
 
@@ -9,6 +10,35 @@ interface Props {
   onResultsChange: (results: DownloadResult[]) => void;
   onComplete: (results: DownloadResult[]) => void;
   onBack: () => void;
+}
+
+/**
+ * 把下载失败的异常转成给用户看的中文消息。
+ * FastAPI 422 校验错误会返回 {detail:[{msg,...},...]},提取首条 msg 让用户看到具体哪个字段不合法。
+ */
+function describeDownloadError(e: unknown): string {
+  if (axios.isAxiosError(e)) {
+    const status = e.response?.status;
+    const data = e.response?.data;
+    if (status === 422) {
+      let detail: unknown = data;
+      if (data && typeof data === 'object' && 'detail' in data) {
+        detail = (data as { detail: unknown }).detail;
+      }
+      if (Array.isArray(detail) && detail.length > 0) {
+        const first = detail[0] as { msg?: string; loc?: unknown };
+        const loc = Array.isArray(first.loc) ? first.loc.join('.') : '';
+        return `字段校验失败(422): ${first.msg ?? '未知错误'}${loc ? ` [${loc}]` : ''}`;
+      }
+      if (typeof detail === 'string') return `字段校验失败(422): ${detail}`;
+      return '字段校验失败(422),请检查研报数据是否完整';
+    }
+    if (status && status >= 500) {
+      return `服务器错误(${status}),请稍后重试`;
+    }
+    return e.message || `请求失败(${status ?? 'network'})`;
+  }
+  return e instanceof Error ? e.message : String(e);
 }
 
 /**
@@ -25,16 +55,23 @@ export default function ReportDownloadStep({
     setLoading(true);
     setError('');
     try {
-      const payload = reports.map((r) => ({
-        info_code: r.info_code,
-        publish_date: r.publish_date,
-        org_name: r.org_name,
-        title: r.title,
-      }));
+      // 防御性过滤:即使后端已丢掉无 infoCode 的脏数据,这里再保一道闸。
+      const payload = reports
+        .filter((r) => r.info_code)
+        .map((r) => ({
+          info_code: r.info_code,
+          publish_date: r.publish_date,
+          org_name: r.org_name,
+          title: r.title,
+        }));
+      if (payload.length === 0) {
+        setError('没有可下载的有效研报(所有行均缺少 info_code)');
+        return;
+      }
       const resp = await downloadReports(code, payload);
       onResultsChange(resp.results);
     } catch (e) {
-      setError(`下载失败: ${e instanceof Error ? e.message : String(e)}`);
+      setError(`下载失败: ${describeDownloadError(e)}`);
     } finally {
       setLoading(false);
     }

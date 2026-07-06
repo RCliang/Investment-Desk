@@ -79,6 +79,14 @@ def fetch_reports_by_code(code: str, max_pages: int = 2) -> list[dict]:
 
         for row in rows:
             info_code = row.get("infoCode") or ""
+            if not info_code:
+                # 东财偶尔返回无 infoCode 的脏数据(无 PDF 链接,下载端点会 422),
+                # 在此提前丢弃以免污染整个下载批次。
+                logger.warning(
+                    "跳过无 infoCode 的研报行: %s",
+                    (row.get("title") or "")[:60],
+                )
+                continue
             all_records.append({
                 "title": row.get("title") or "",
                 "publish_date": (row.get("publishDate") or "")[:10],
@@ -89,7 +97,7 @@ def fetch_reports_by_code(code: str, max_pages: int = 2) -> list[dict]:
                 "eps_year_after": _safe_float(row.get("predictNextTwoYearEps")),
                 "industry": row.get("indvInduName") or "",
                 "info_code": info_code,
-                "pdf_url": PDF_TPL.format(info_code=info_code) if info_code else "",
+                "pdf_url": PDF_TPL.format(info_code=info_code),
             })
 
         total_pages = d.get("TotalPage") or 1
