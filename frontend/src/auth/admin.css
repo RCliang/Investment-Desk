@@ -1,0 +1,136 @@
+/* Admin login modal — paper aesthetic, scoped under .alm-* classes.
+   Reuses tokens from styles/tokens.css: --paper, --ink, --hi-yellow,
+   --marker-red, --pencil, --ink-soft. */
+.alm-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(26, 43, 74, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  font-family: 'Patrick Hand', 'Caveat', cursive;
+  animation: alm-fade 0.15s ease-out;
+}
+@keyframes alm-fade {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.alm-card {
+  background: var(--paper);
+  border: 2.5px solid var(--ink);
+  border-radius: 6px;
+  padding: 22px 26px 20px;
+  width: 360px;
+  max-width: calc(100vw - 32px);
+  box-shadow: 4px 6px 0 rgba(26, 43, 74, 0.18);
+  transform: rotate(-0.3deg);
+  position: relative;
+}
+
+.alm-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+.alm-icon {
+  font-size: 18px;
+  color: var(--ink);
+}
+.alm-title {
+  font-family: 'Caveat', cursive;
+  font-weight: 700;
+  font-size: 26px;
+  color: var(--ink);
+  line-height: 1;
+}
+
+.alm-subtitle {
+  font-size: 13px;
+  color: var(--ink-soft);
+  margin: 6px 0 14px;
+  line-height: 1.4;
+}
+
+.alm-input {
+  width: 100%;
+  background: var(--paper);
+  border: 2px solid var(--ink);
+  border-radius: 4px;
+  padding: 8px 12px;
+  font-family: 'Patrick Hand', cursive;
+  font-size: 15px;
+  color: var(--ink);
+  outline: none;
+  transition: border-color 0.15s ease;
+  box-sizing: border-box;
+}
+.alm-input:focus {
+  border-color: var(--marker-red);
+}
+
+.alm-error {
+  color: var(--marker-red);
+  font-size: 13px;
+  margin-top: 8px;
+  font-family: 'Patrick Hand', cursive;
+}
+
+.alm-remember {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 14px 0 18px;
+  font-size: 13px;
+  color: var(--ink-soft);
+  cursor: pointer;
+  user-select: none;
+}
+.alm-remember input {
+  accent-color: var(--ink);
+  cursor: pointer;
+}
+
+.alm-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.alm-btn {
+  background: var(--hi-yellow);
+  color: var(--ink);
+  border: 2px solid var(--ink);
+  padding: 6px 16px;
+  border-radius: 4px;
+  font-family: 'Patrick Hand', cursive;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  box-shadow: 2px 2px 0 rgba(26, 43, 74, 0.12);
+  transition: transform 0.1s ease, box-shadow 0.1s ease;
+}
+.alm-btn:hover:not(:disabled) {
+  transform: translate(-1px, -1px);
+  box-shadow: 3px 3px 0 rgba(26, 43, 74, 0.16);
+}
+.alm-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.alm-btn-ghost {
+  background: transparent;
+  color: var(--ink-soft);
+  border: 2px dashed var(--pencil);
+  box-shadow: none;
+}
+.alm-btn-ghost:hover:not(:disabled) {
+  background: rgba(26, 43, 74, 0.04);
+  color: var(--ink);
+  transform: none;
+  box-shadow: none;
+}
