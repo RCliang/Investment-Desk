@@ -12,15 +12,14 @@ Execution model:
 
 from __future__ import annotations
 
-import secrets
 from concurrent.futures import ThreadPoolExecutor
 
-from fastapi import APIRouter, Depends, Header, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
-from app.config import ADMIN_REFRESH_TOKEN
+from app.auth import verify_admin_token
 from app.db import get_db
 from app.services import refresh_service
 
@@ -58,21 +57,6 @@ class JobStatusResponse(BaseModel):
     rows_affected: int | None
     error: str | None
     triggered_by: str
-
-
-def verify_admin_token(x_admin_token: str = Header(default="")) -> None:
-    """FastAPI dependency: enforce X-Admin-Token header.
-
-    Returns 401 on missing/wrong token, 503 if ADMIN_REFRESH_TOKEN is
-    unset (empty string) in config.
-    """
-    if not ADMIN_REFRESH_TOKEN:
-        raise HTTPException(
-            status_code=503,
-            detail="ADMIN_REFRESH_TOKEN not configured; refresh endpoints disabled.",
-        )
-    if not x_admin_token or not secrets.compare_digest(x_admin_token, ADMIN_REFRESH_TOKEN):
-        raise HTTPException(status_code=401, detail="invalid or missing X-Admin-Token")
 
 
 def _serialize_job(job) -> dict:
