@@ -1,0 +1,7 @@
+dist/
+node_modules/
+.DS_Store
+# SWC 编译器下载的平台相关二进制缓存(自动重建,不入库)
+.swc/
+# 微信开发者工具的本机私有配置(每人不同,不入库)
+project.private.config.json
