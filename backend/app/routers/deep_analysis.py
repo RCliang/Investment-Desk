@@ -1,5 +1,5 @@
 """
-Deep analysis router — 个股深度分析 pipeline 的 HTTP 端点。
+Deep analysis router — 公司深度分析 pipeline 的 HTTP 端点。
 
 Endpoints:
 - POST /api/deep-analysis/parse           提交 PDF 解析（MinerU）
@@ -18,6 +18,7 @@ from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 from sse_starlette.sse import EventSourceResponse
 
+from app.auth import verify_admin_token
 from app.db import get_db
 from app.services import deep_analysis_service as svc
 from app.services import mineru_service
@@ -36,7 +37,7 @@ class ParseRequest(BaseModel):
     oss_keys: list[str] = Field(..., min_length=1)
 
 
-@router.post("/parse")
+@router.post("/parse", dependencies=[Depends(verify_admin_token)])
 async def parse(req: ParseRequest, db: Session = Depends(get_db)):
     """提交 PDF 给 MinerU 解析。已有缓存的自动跳过。"""
     # MinerU 未配置时仍允许（走 mock 模式），但显式告知调用方
@@ -57,7 +58,7 @@ async def parse(req: ParseRequest, db: Session = Depends(get_db)):
 # GET /parse-status
 # ═══════════════════════════════════════════════════════════════════
 
-@router.get("/parse-status")
+@router.get("/parse-status", dependencies=[Depends(verify_admin_token)])
 async def parse_status(
     code: str = Query(..., min_length=6, max_length=6, pattern=r"^\d{6}$"),
     db: Session = Depends(get_db),
@@ -70,7 +71,7 @@ async def parse_status(
 # GET /analyze (SSE)
 # ═══════════════════════════════════════════════════════════════════
 
-@router.get("/analyze")
+@router.get("/analyze", dependencies=[Depends(verify_admin_token)])
 async def analyze(
     code: str = Query(..., min_length=6, max_length=6, pattern=r"^\d{6}$"),
     oss_keys: str = Query(..., description="逗号分隔的 oss_key 列表"),
@@ -99,7 +100,7 @@ async def analyze(
 # GET /history
 # ═══════════════════════════════════════════════════════════════════
 
-@router.get("/history")
+@router.get("/history", dependencies=[Depends(verify_admin_token)])
 async def history(
     code: str = Query(..., min_length=6, max_length=6, pattern=r"^\d{6}$"),
     db: Session = Depends(get_db),
@@ -112,7 +113,7 @@ async def history(
 # GET /records/{analysis_id}
 # ═══════════════════════════════════════════════════════════════════
 
-@router.get("/records/{analysis_id}")
+@router.get("/records/{analysis_id}", dependencies=[Depends(verify_admin_token)])
 async def get_record(analysis_id: int, db: Session = Depends(get_db)):
     """按 id 拉取单条历史分析全文。"""
     record = svc.get_analysis_by_id(analysis_id, db)

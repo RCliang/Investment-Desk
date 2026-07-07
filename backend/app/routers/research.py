@@ -14,6 +14,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
+from app.auth import verify_admin_token
 from app.config import CACHE_TTL_RESEARCH, IWENCAI_API_KEY
 from app.db import get_db
 from app.models.models import DataCache
@@ -53,7 +54,7 @@ def _cache_set(db: Session, key: str, data, ttl: int):
 # GET /api/research/reports?code=301095&max_pages=2
 # ═══════════════════════════════════════════════════════════════════
 
-@router.get("/reports")
+@router.get("/reports", dependencies=[Depends(verify_admin_token)])
 async def get_reports_by_code(
     code: str = Query(..., min_length=6, max_length=6, pattern=r"^\d{6}$"),
     max_pages: int = Query(2, ge=1, le=5),
@@ -80,7 +81,7 @@ async def get_reports_by_code(
 # GET /api/research/search?keyword=EDA+硅光&size=50
 # ═══════════════════════════════════════════════════════════════════
 
-@router.get("/search")
+@router.get("/search", dependencies=[Depends(verify_admin_token)])
 async def search_reports(
     keyword: str = Query(..., min_length=1),
     size: int = Query(50, ge=1, le=100),
@@ -129,7 +130,7 @@ class DownloadRequest(BaseModel):
     reports: list[ReportItem] = Field(..., min_length=1)
 
 
-@router.post("/download")
+@router.post("/download", dependencies=[Depends(verify_admin_token)])
 async def download_reports(req: DownloadRequest):
     """批量下载研报 PDF 并上传到阿里云 OSS"""
     if not oss_service.is_configured():
