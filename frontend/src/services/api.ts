@@ -6,6 +6,33 @@ const api = axios.create({
   baseURL: isDev ? 'http://localhost:8000' : '/api'
 });
 
+// ── Admin auth interceptors ────────────────────────────────────────
+// Request: attach X-Admin-Token if a token is stored.
+api.interceptors.request.use((config) => {
+  const stored =
+    localStorage.getItem('adminToken') ?? sessionStorage.getItem('adminToken');
+  if (stored) {
+    config.headers['X-Admin-Token'] = stored;
+  }
+  return config;
+});
+
+// Response: on 401, clear any stored token and notify the auth context.
+// AdminAuthContext listens for this event and resets its state + the
+// app reopens the login modal.
+api.interceptors.response.use(
+  (resp) => resp,
+  (error) => {
+    const status = error?.response?.status;
+    if (status === 401) {
+      localStorage.removeItem('adminToken');
+      sessionStorage.removeItem('adminToken');
+      window.dispatchEvent(new Event('admin:unauthorized'));
+    }
+    return Promise.reject(error);
+  },
+);
+
 // --- Chain Knowledge Base (v1) ---
 import type {
   TreeResponse,
