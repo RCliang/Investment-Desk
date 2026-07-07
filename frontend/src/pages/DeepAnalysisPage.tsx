@@ -11,6 +11,10 @@ import ReportParseStep from '../components/deep-analysis/ReportParseStep';
 import AnalysisResultStep from '../components/deep-analysis/AnalysisResultStep';
 import './deep-analysis.css';
 
+interface Props {
+  onExit: () => void;
+}
+
 type Step = 1 | 2 | 3 | 4;
 
 const STEPS: { key: Step; label: string }[] = [
@@ -28,7 +32,7 @@ const STEPS: { key: Step; label: string }[] = [
  * - ossKeys（Step3 → Step4）
  * - companyType, analysisDoc（Step4 v2 结构化）
  */
-export default function DeepAnalysisPage() {
+export default function DeepAnalysisPage(_props: Props) {
   const [step, setStep] = useState<Step>(1);
 
   // ── 跨步状态 ───────────────────────────────────────────
