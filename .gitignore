@@ -14,3 +14,4 @@ nul
 tmpclaude*
 .claude/
 .agents/
+.claude/settings.local.json
