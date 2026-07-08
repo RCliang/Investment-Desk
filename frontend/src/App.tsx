@@ -34,14 +34,6 @@ function AppInner() {
     setView(item.key);
   };
 
-  // AdminAuthContext clears the token on 401; we watch isAdmin going
-  // false while the user is on the 'deep' view, and bounce them back
-  // to 'chain' + reopen the modal with an error.
-  // Implemented as an effect on isAdmin.
-  // (Doing this in AppInner keeps view/modal state local.)
-  // Use a separate effect via useEffect:
-  // (Import useEffect at the top — see step 2 if you forgot.)
-
   // Watch for unexpected 401 (axios interceptor cleared the token while
   // the user is sitting on the protected page). Reopen modal + show error.
   useEffect(() => {
