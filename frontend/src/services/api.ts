@@ -6,28 +6,46 @@ const api = axios.create({
   baseURL: isDev ? 'http://localhost:8000' : '/api'
 });
 
-// ── Admin auth interceptors ────────────────────────────────────────
+// ── Admin auth helpers ─────────────────────────────────────────────
+// Shared between the axios interceptors (below) and streamAnalyze's
+// native fetch() call (which bypasses axios). Keep STORAGE_KEY in sync
+// with frontend/src/auth/AdminAuthContext.tsx.
+const ADMIN_TOKEN_KEY = 'adminToken';
+const ADMIN_UNAUTHORIZED_EVENT = 'admin:unauthorized';
+
+function readAdminToken(): string | null {
+  return (
+    localStorage.getItem(ADMIN_TOKEN_KEY) ??
+    sessionStorage.getItem(ADMIN_TOKEN_KEY)
+  );
+}
+
+function notifyAdminUnauthorized() {
+  localStorage.removeItem(ADMIN_TOKEN_KEY);
+  sessionStorage.removeItem(ADMIN_TOKEN_KEY);
+  window.dispatchEvent(new Event(ADMIN_UNAUTHORIZED_EVENT));
+}
+
+// ── Admin auth interceptors (axios only) ───────────────────────────
 // Request: attach X-Admin-Token if a token is stored.
+// NOTE: streamAnalyze uses native fetch() and replicates this injection
+// itself — the interceptor does not catch fetch() calls.
 api.interceptors.request.use((config) => {
-  const stored =
-    localStorage.getItem('adminToken') ?? sessionStorage.getItem('adminToken');
-  if (stored) {
-    config.headers['X-Admin-Token'] = stored;
+  const token = readAdminToken();
+  if (token) {
+    config.headers['X-Admin-Token'] = token;
   }
   return config;
 });
 
 // Response: on 401, clear any stored token and notify the auth context.
-// AdminAuthContext listens for this event and resets its state + the
+// AdminAuthContext listens for this event, resets its state, and the
 // app reopens the login modal.
 api.interceptors.response.use(
   (resp) => resp,
   (error) => {
-    const status = error?.response?.status;
-    if (status === 401) {
-      localStorage.removeItem('adminToken');
-      sessionStorage.removeItem('adminToken');
-      window.dispatchEvent(new Event('admin:unauthorized'));
+    if (error?.response?.status === 401) {
+      notifyAdminUnauthorized();
     }
     return Promise.reject(error);
   },
@@ -190,11 +208,23 @@ export async function streamAnalyze(
   });
   if (options.forceRefresh) params.append('force_refresh', 'true');
 
+  // Native fetch() bypasses the axios interceptors above, so we
+  // replicate the admin-token injection here. On 401, mirror the
+  // response interceptor's behavior so the modal reopens.
+  const adminToken = readAdminToken();
   const resp = await fetch(
     `${base}/api/deep-analysis/analyze?${params.toString()}`,
-    { headers: { Accept: 'text/event-stream' } },
+    {
+      headers: {
+        Accept: 'text/event-stream',
+        ...(adminToken ? { 'X-Admin-Token': adminToken } : {}),
+      },
+    },
   );
   if (!resp.ok || !resp.body) {
+    if (resp.status === 401) {
+      notifyAdminUnauthorized();
+    }
     throw new Error(`HTTP ${resp.status}`);
   }
 
