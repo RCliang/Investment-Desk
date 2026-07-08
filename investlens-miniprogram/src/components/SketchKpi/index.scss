@@ -1,0 +1,32 @@
+@import '@/styles/tokens.scss';
+
+.sketch-kpi {
+  display: inline-flex;
+  flex-direction: column;
+  padding: 16px 20px;
+  background: rgba($hi-yellow, 0.4);
+  border-left: 4px solid $marker-red;
+  border-radius: 2px 6px 6px 2px;
+  min-width: 140px;
+
+  &__label {
+    font-size: 22px;
+    color: $pencil;
+    margin-bottom: 6px;
+  }
+
+  &__value {
+    font-family: $font-mono;
+    font-size: 36px;
+    font-weight: bold;
+    color: $ink;
+    line-height: 1.1;
+  }
+
+  &__unit {
+    font-size: 22px;
+    color: $pencil;
+    font-weight: normal;
+    margin-left: 4px;
+  }
+}

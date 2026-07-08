@@ -1,0 +1,48 @@
+@import '@/styles/tokens.scss';
+
+.sketch-panel {
+  position: relative;
+  background: #fff;
+  border: 2px dashed rgba($ink, 0.35);
+  border-radius: 8px;
+  padding: 28px 24px;
+  margin-bottom: 24px;
+  box-shadow: 2px 2px 0 rgba($ink, 0.08);
+
+  &__tape {
+    position: absolute;
+    top: -12px;
+    left: 24px;
+    width: 80px;
+    height: 24px;
+    background: rgba($sticky-yellow, 0.6);
+    transform: rotate(-3deg);
+    border-radius: 2px;
+  }
+
+  &__header {
+    display: flex;
+    align-items: baseline;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px dashed rgba($ink, 0.2);
+  }
+
+  &__code {
+    font-family: $font-mono;
+    font-size: 24px;
+    color: $marker-red;
+    margin-right: 16px;
+    font-weight: bold;
+  }
+
+  &__title {
+    font-size: 32px;
+    font-weight: bold;
+    color: $ink;
+  }
+
+  &__body {
+    color: $ink;
+  }
+}

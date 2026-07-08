@@ -1,0 +1,24 @@
+@import '@/styles/tokens.scss';
+
+.market-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px 10px;
+  border-radius: 4px;
+  font-family: $font-mono;
+  font-size: 20px;
+  font-weight: bold;
+  min-width: 36px;
+
+  &--sh { background: rgba($marker-red, 0.15); color: $marker-red; }
+  &--sz { background: rgba($marker-green, 0.15); color: $marker-green; }
+  &--bj { background: rgba($ink, 0.1); color: $ink; }
+  &--hk { background: rgba(#a020f0, 0.15); color: #a020f0; }
+  &--us { background: rgba(#1e90ff, 0.15); color: #1e90ff; }
+  &--other { background: rgba($pencil, 0.15); color: $pencil; }
+
+  &__text {
+    line-height: 1.4;
+  }
+}
