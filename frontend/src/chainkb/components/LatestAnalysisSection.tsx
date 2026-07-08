@@ -48,7 +48,7 @@ export default function LatestAnalysisSection({ ticker }: Props) {
         <div className="la-empty">
           <div className="la-empty-title">该股票暂无 AI 公司拆解</div>
           <div className="la-empty-sub">
-            前往「个股深度分析」页 → 选择企业类型 → 上传研报 → 一键生成
+            前往「公司深度分析」页 → 选择企业类型 → 上传研报 → 一键生成
           </div>
         </div>
       </div>
