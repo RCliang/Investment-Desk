@@ -23,6 +23,9 @@ const config = {
   cache: {
     enable: false
   },
+  alias: {
+    '@': path.resolve(__dirname, '..', 'src')
+  },
   mini: {
     postcss: {
       pxtransform: {
