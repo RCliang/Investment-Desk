@@ -9,6 +9,8 @@ import ReportSearchStep from '../components/deep-analysis/ReportSearchStep';
 import ReportDownloadStep from '../components/deep-analysis/ReportDownloadStep';
 import ReportParseStep from '../components/deep-analysis/ReportParseStep';
 import AnalysisResultStep from '../components/deep-analysis/AnalysisResultStep';
+import { LogoutIcon } from '../auth/icons';
+import { useAdminAuth } from '../auth/AdminAuthContext';
 import './deep-analysis.css';
 
 interface Props {
@@ -25,14 +27,15 @@ const STEPS: { key: Step; label: string }[] = [
 ];
 
 /**
- * 个股深度分析页面 — 4 步向导。
+ * 公司深度分析页面 — 4 步向导。
  * 每步独立组件，主容器持有跨步状态：
  * - code, selectedReports（Step1 → Step2）
  * - downloadResults（Step2 → Step3）
  * - ossKeys（Step3 → Step4）
  * - companyType, analysisDoc（Step4 v2 结构化）
  */
-export default function DeepAnalysisPage(_props: Props) {
+export default function DeepAnalysisPage({ onExit }: Props) {
+  const { logout } = useAdminAuth();
   const [step, setStep] = useState<Step>(1);
 
   // ── 跨步状态 ───────────────────────────────────────────
@@ -85,7 +88,19 @@ export default function DeepAnalysisPage(_props: Props) {
   return (
     <div className="da-root">
       <header className="da-header">
-        <h1>个股深度分析</h1>
+        <div className="row-between">
+          <h1>公司深度分析</h1>
+          <button
+            className="btn btn-ghost"
+            onClick={() => {
+              logout();
+              onExit();
+            }}
+            style={{ fontSize: 13 }}
+          >
+            <LogoutIcon /> 退出管理员
+          </button>
+        </div>
         <p className="da-subtitle">
           搜索研报 → 下载到 OSS → MinerU 解析 → AI 多维度分析
         </p>
