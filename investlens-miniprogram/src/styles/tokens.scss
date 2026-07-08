@@ -1,0 +1,12 @@
+// Paper-ink design tokens (复刻 frontend/src/styles/tokens.css 的 CSS 变量值)
+$paper:         #fbf9f4;
+$ink:           #1a2b4a;
+$pencil:        #5a6a85;
+$hi-yellow:     #fff3a8;
+$marker-red:    #e85a4f;
+$marker-green:  #3a8a5a;
+$sticky-yellow: #ffe97a;
+
+// 字体: 系统默认 (不加载 Caveat / Patrick Hand)
+$font-base: -apple-system, "PingFang SC", "Helvetica Neue", sans-serif;
+$font-mono: "SF Mono", "JetBrains Mono", Consolas, monospace;
