@@ -1,0 +1,49 @@
+@import '@/styles/tokens.scss';
+
+.latest-analysis {
+  margin-top: 24px;
+  padding: 20px;
+  background: #fff;
+  border: 2px dashed rgba($ink, 0.2);
+  border-radius: 8px;
+
+  &__head {
+    margin-bottom: 12px;
+  }
+
+  &__title {
+    display: block;
+    font-size: 32px;
+    font-weight: bold;
+    color: $ink;
+  }
+
+  &__meta {
+    display: block;
+    font-size: 20px;
+    color: $pencil;
+    margin-top: 4px;
+    font-family: $font-mono;
+  }
+
+  &__status {
+    display: block;
+    color: $pencil;
+    font-size: 24px;
+    margin-top: 12px;
+
+    &--err { color: $marker-red; }
+  }
+
+  &__empty {
+    display: block;
+    color: $pencil;
+    font-size: 22px;
+    margin-top: 12px;
+    font-style: italic;
+  }
+
+  &__fields {
+    margin-top: 8px;
+  }
+}
