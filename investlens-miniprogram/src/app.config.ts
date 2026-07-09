@@ -1,5 +1,3 @@
-import { defineAppConfig } from '@tarojs/taro'
-
 export default defineAppConfig({
   pages: [
     'pages/overview/index',

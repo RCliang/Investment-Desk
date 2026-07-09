@@ -5,6 +5,7 @@
     "removeComments": false,
     "preserveConstEnums": true,
     "experimentalDecorators": true,
+    "skipLibCheck": true,
     "noImplicitAny": false,
     "noUnusedLocals": true,
     "noUnusedParameters": true,

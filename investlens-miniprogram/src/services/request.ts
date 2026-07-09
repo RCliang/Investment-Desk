@@ -1,10 +1,5 @@
 import Taro from '@tarojs/taro';
-
-// dev: localhost (微信开发者工具需勾"不校验合法域名")
-// prod: 通过 config/prod.js defineConstants 注入 BASE_URL
-const BASE_URL = typeof BASE_URL_ENV !== 'undefined'
-  ? BASE_URL_ENV
-  : 'http://localhost:8000';
+import { callContainer, IS_CLOUD_ENABLED } from './cloud';
 
 export interface RequestOptions {
   method?: 'GET' | 'POST' | 'PUT' | 'DELETE';
@@ -23,19 +18,35 @@ export class ApiError extends Error {
 }
 
 /**
- * 统一 Taro.request 封装。
+ * 统一请求封装。
+ * - dev (npm run dev:weapp): Taro.request → localhost:8000
+ * - prod (npm run build:weapp): wx.cloud.callContainer → CloudBase AnyService → Lighthouse
+ *
  * path 形如 '/api/chainkb/tree' (含 /api 前缀)。
  * 非 2xx 状态码抛 ApiError。网络错误抛 Error。
  */
 export async function request<T>(path: string, opts: RequestOptions = {}): Promise<T> {
-  const { method = 'GET', query, body, header } = opts;
-  const url = BASE_URL + path + buildQuery(query);
+  const fullPath = path + buildQuery(opts.query);
 
+  if (IS_CLOUD_ENABLED) {
+    try {
+      return await callContainer<T>(fullPath, {
+        method: opts.method,
+        data: opts.body,
+        header: opts.header,
+      });
+    } catch (e) {
+      // callContainer 抛的是普通 Error, 这里统一包成 ApiError 保持调用方语义
+      throw new ApiError(0, e instanceof Error ? e.message : String(e));
+    }
+  }
+
+  // dev 直连
   const res = await Taro.request({
-    url,
-    method,
-    data: body,
-    header: { 'Content-Type': 'application/json', ...header },
+    url: BASE_URL_ENV + fullPath,
+    method: opts.method || 'GET',
+    data: opts.body,
+    header: { 'Content-Type': 'application/json', ...opts.header },
     timeout: 15000,
   });
 
