@@ -1,0 +1,113 @@
+@import '@/styles/tokens.scss';
+
+.layers {
+  height: 100vh;
+  padding: 20px;
+  background: $paper;
+
+  &--center {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: $pencil;
+  }
+
+  &__err { color: $marker-red; }
+
+  &__header {
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 2px dashed rgba($ink, 0.2);
+  }
+
+  &__sub-name {
+    display: block;
+    font-size: 40px;
+    font-weight: bold;
+    color: $ink;
+  }
+
+  &__sub-meta {
+    display: block;
+    font-size: 22px;
+    color: $pencil;
+    margin-top: 6px;
+  }
+
+  &__filter {
+    background: #fff;
+    border: 1px solid rgba($ink, 0.2);
+    border-radius: 6px;
+    padding: 14px 18px;
+    font-size: 26px;
+    margin-bottom: 16px;
+  }
+
+  &__table {
+    background: #fff;
+    border: 1px solid rgba($ink, 0.15);
+    border-radius: 6px;
+    overflow: hidden;
+  }
+
+  &__row {
+    display: flex;
+    align-items: center;
+    padding: 14px 12px;
+    border-bottom: 1px solid rgba($ink, 0.08);
+    font-size: 24px;
+
+    &--head {
+      background: rgba($hi-yellow, 0.3);
+      font-size: 20px;
+      color: $pencil;
+      font-weight: bold;
+    }
+
+    &--data {
+      &:active { background: rgba($hi-yellow, 0.2); }
+    }
+
+    &:last-child { border-bottom: none; }
+  }
+
+  &__cell {
+    flex: 1;
+    padding: 0 4px;
+
+    &--ticker {
+      flex: 1.2;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    &--name {
+      flex: 1.5;
+      color: $ink;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    &--num {
+      flex: 0.9;
+      text-align: right;
+      font-family: $font-mono;
+      color: $ink;
+    }
+    &--up { color: $marker-red; }
+    &--down { color: $marker-green; }
+  }
+
+  &__ticker {
+    font-family: $font-mono;
+    font-size: 22px;
+    color: $pencil;
+  }
+
+  &__empty {
+    text-align: center;
+    color: $pencil;
+    padding: 40px 0;
+    font-size: 26px;
+  }
+}
