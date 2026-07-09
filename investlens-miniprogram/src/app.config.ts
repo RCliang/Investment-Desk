@@ -26,6 +26,5 @@ export default defineAppConfig({
     backgroundColor: '#fbf9f4',
   },
   style: 'v2',
-  lazyCodeLoading: 'requiredComponents',
   sitemapLocation: 'sitemap.json',
 })
