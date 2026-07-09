@@ -3,7 +3,7 @@ import axios from 'axios';
 // 生产环境使用相对路径（通过nginx代理），开发环境使用localhost:8000
 const isDev = import.meta.env.DEV;
 const api = axios.create({
-  baseURL: isDev ? 'http://localhost:8000' : '/api'
+  baseURL: isDev ? 'http://localhost:8000' : ''
 });
 
 // ── Admin auth helpers ─────────────────────────────────────────────
