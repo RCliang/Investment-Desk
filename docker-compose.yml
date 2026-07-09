@@ -13,15 +13,12 @@ services:
       - ADMIN_REFRESH_TOKEN=${ADMIN_REFRESH_TOKEN}
       - CORS_ORIGINS=http://localhost:5173,http://localhost:3000,http://43.153.151.229:3000
     volumes:
-      - backend-data:/app/data
+      - ./backend/data:/app/data
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 1
 
   frontend:
     build: ./frontend
     ports:
-      - "80:80"
+      - "3000:80"
     depends_on:
       - backend
-
-volumes:
-  backend-data:
