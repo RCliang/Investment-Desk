@@ -1,0 +1,53 @@
+@import '@/styles/tokens.scss';
+
+.ts-table {
+  background: #fff;
+  border: 1px solid rgba($ink, 0.15);
+  border-radius: 6px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  max-height: 800px;
+
+  &__head {
+    display: flex;
+    background: rgba($hi-yellow, 0.3);
+    padding: 12px 10px;
+    border-bottom: 1px solid rgba($ink, 0.15);
+  }
+
+  &__head-cell {
+    font-size: 20px;
+    color: $pencil;
+    font-weight: bold;
+    padding: 0 6px;
+  }
+
+  &__body {
+    flex: 1;
+    overflow: auto;
+  }
+
+  &__row {
+    display: flex;
+    padding: 12px 10px;
+    border-bottom: 1px solid rgba($ink, 0.06);
+    font-size: 22px;
+
+    &:last-child { border-bottom: none; }
+  }
+
+  &__cell {
+    color: $ink;
+    padding: 0 6px;
+    font-family: $font-mono;
+    word-break: break-all;
+  }
+
+  &__empty {
+    padding: 40px 0;
+    text-align: center;
+    color: $pencil;
+    font-size: 24px;
+  }
+}
