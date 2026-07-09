@@ -1,0 +1,109 @@
+@import '@/styles/tokens.scss';
+
+.finance {
+  height: 100vh;
+  padding: 20px;
+  background: $paper;
+
+  &--center {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: $pencil;
+  }
+
+  &__err { color: $marker-red; }
+
+  &__head {
+    background: #fff;
+    padding: 20px;
+    border: 2px dashed rgba($ink, 0.2);
+    border-radius: 8px;
+    margin-bottom: 20px;
+  }
+
+  &__head-row {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    margin-bottom: 8px;
+
+    &:last-child { margin-bottom: 0; }
+  }
+
+  &__ticker {
+    font-family: $font-mono;
+    font-size: 26px;
+    color: $pencil;
+  }
+
+  &__name {
+    font-size: 32px;
+    font-weight: bold;
+    color: $ink;
+  }
+
+  &__price {
+    font-family: $font-mono;
+    font-size: 48px;
+    font-weight: bold;
+    color: $ink;
+
+    &--up { color: $marker-red; }
+    &--down { color: $marker-green; }
+  }
+
+  &__change {
+    font-family: $font-mono;
+    font-size: 28px;
+    &--up { color: $marker-red; }
+    &--down { color: $marker-green; }
+  }
+
+  &__sub {
+    display: block;
+    font-size: 22px;
+    color: $pencil;
+    margin-top: 8px;
+  }
+
+  &__kpis {
+    display: flex;
+    white-space: nowrap;
+    margin-bottom: 20px;
+
+    .sketch-kpi { margin-right: 12px; }
+  }
+
+  &__subtabs {
+    display: flex;
+    background: #fff;
+    border-radius: 6px;
+    overflow: hidden;
+    margin-bottom: 12px;
+    border: 1px solid rgba($ink, 0.1);
+  }
+
+  &__subtab {
+    flex: 1;
+    text-align: center;
+    padding: 14px 0;
+    font-size: 24px;
+    color: $pencil;
+    border-bottom: 3px solid transparent;
+
+    &--active {
+      color: $ink;
+      font-weight: bold;
+      border-bottom-color: $marker-red;
+      background: rgba($hi-yellow, 0.3);
+    }
+  }
+
+  &__footer {
+    text-align: center;
+    color: $pencil;
+    font-size: 20px;
+    padding: 24px 0;
+  }
+}
