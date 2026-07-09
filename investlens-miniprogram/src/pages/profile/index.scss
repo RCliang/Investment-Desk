@@ -1,0 +1,61 @@
+@import '@/styles/tokens.scss';
+
+.profile {
+  height: 100vh;
+  padding: 24px;
+  background: $paper;
+
+  &__brand {
+    margin-bottom: 24px;
+    padding-bottom: 16px;
+    border-bottom: 2px dashed rgba($ink, 0.2);
+  }
+
+  &__brand-name {
+    display: block;
+    font-size: 52px;
+    font-weight: bold;
+    color: $ink;
+    font-family: $font-mono;
+    letter-spacing: -1px;
+  }
+
+  &__brand-sub {
+    display: block;
+    font-size: 22px;
+    color: $pencil;
+    margin-top: 6px;
+  }
+
+  &__about {
+    display: block;
+    font-size: 24px;
+    color: $ink;
+    line-height: 1.7;
+  }
+
+  &__row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 0;
+    border-bottom: 1px solid rgba($ink, 0.06);
+    font-size: 26px;
+    color: $ink;
+
+    &:last-child { border-bottom: none; }
+    &--disabled { color: $pencil; }
+  }
+
+  &__row-meta {
+    font-size: 22px;
+    color: $pencil;
+  }
+
+  &__footer {
+    text-align: center;
+    color: $pencil;
+    font-size: 20px;
+    padding: 32px 0;
+  }
+}

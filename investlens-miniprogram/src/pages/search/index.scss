@@ -1,0 +1,94 @@
+@import '@/styles/tokens.scss';
+
+.search {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  padding: 20px;
+  background: $paper;
+
+  &__input {
+    background: #fff;
+    border: 2px solid rgba($ink, 0.2);
+    border-radius: 8px;
+    padding: 16px 20px;
+    font-size: 28px;
+    margin-bottom: 16px;
+  }
+
+  &__body {
+    flex: 1;
+    overflow: auto;
+  }
+
+  &__hint, &__status, &__empty {
+    text-align: center;
+    color: $pencil;
+    padding: 60px 0;
+    font-size: 24px;
+  }
+
+  &__status--err { color: $marker-red; }
+
+  &__group {
+    margin-bottom: 24px;
+  }
+
+  &__group-title {
+    display: block;
+    font-size: 22px;
+    color: $pencil;
+    margin-bottom: 10px;
+    border-bottom: 1px dashed rgba($ink, 0.2);
+    padding-bottom: 6px;
+  }
+
+  &__sub-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #fff;
+    padding: 14px 16px;
+    border-radius: 4px;
+    margin-bottom: 6px;
+    border-left: 3px solid rgba($marker-red, 0.5);
+
+    &:active { background: rgba($hi-yellow, 0.3); }
+  }
+
+  &__sub-name {
+    font-size: 26px;
+    color: $ink;
+    font-weight: bold;
+  }
+
+  &__sub-gid {
+    font-family: $font-mono;
+    font-size: 22px;
+    color: $pencil;
+  }
+
+  &__company-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: #fff;
+    padding: 14px 16px;
+    border-radius: 4px;
+    margin-bottom: 6px;
+    border-left: 3px solid rgba($marker-green, 0.5);
+
+    &:active { background: rgba($hi-yellow, 0.3); }
+  }
+
+  &__company-ticker {
+    font-family: $font-mono;
+    font-size: 24px;
+    color: $pencil;
+  }
+
+  &__company-name {
+    font-size: 26px;
+    color: $ink;
+  }
+}
