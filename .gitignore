@@ -15,3 +15,6 @@ tmpclaude*
 .claude/
 .agents/
 .claude/settings.local.json
+
+# Abandoned native miniprogram prototype (replaced by investlens-miniprogram/ Taro project)
+miniprogram/
