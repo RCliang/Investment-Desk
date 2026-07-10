@@ -34,6 +34,13 @@
     line-height: 1.7;
   }
 
+  &__disclaimer {
+    display: block;
+    font-size: 22px;
+    color: $pencil;
+    line-height: 1.7;
+  }
+
   &__row {
     display: flex;
     justify-content: space-between;

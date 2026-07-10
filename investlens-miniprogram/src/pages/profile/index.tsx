@@ -28,6 +28,12 @@ export default function ProfilePage() {
         </Text>
       </SketchPanel>
 
+      <SketchPanel title='免责声明'>
+        <Text className='profile__disclaimer'>
+          本工具展示的所有数据（包括但不限于公司财务、行情、研报、AI 分析）均来自公开渠道，仅供学术研究与信息浏览使用，不构成任何投资建议或交易指导。使用者据此操作的风险由其自行承担。
+        </Text>
+      </SketchPanel>
+
       <SketchPanel title='更多'>
         <View className='profile__row profile__row--disabled'>
           <Text>设置</Text><Text className='profile__row-meta'>敬请期待</Text>
