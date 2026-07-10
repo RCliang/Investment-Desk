@@ -8,8 +8,8 @@ module.exports = {
   },
   defineConstants: {
     BASE_URL_ENV: '""',  // prod 不走 BASE_URL, 由 wx.cloud.callContainer 取代
-    CLOUD_ENV: '"<your-cloud-env-id>"',
-    ANY_SERVICE_NAME: '"<your-anyservice-name>"'
+    CLOUD_ENV: '"test-env-1gtvp15qde6188b1"',
+    ANY_SERVICE_NAME: '"investlens"'
   },
   mini: {},
   h5: {}
