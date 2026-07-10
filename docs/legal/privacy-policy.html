@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>InvestLens 小程序隐私政策</title>
+  <style>
+    :root {
+      --paper: #fbf9f4;
+      --ink: #1a2b4a;
+      --pencil: #5a6a85;
+      --rule: rgba(26, 43, 74, 0.12);
+      --marker-red: #e85a4f;
+    }
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: var(--paper);
+      color: var(--ink);
+      font-family: -apple-system, "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif;
+      font-size: 16px;
+      line-height: 1.75;
+      -webkit-font-smoothing: antialiased;
+    }
+    .container {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 56px 24px 80px;
+    }
+    .brand {
+      display: flex;
+      align-items: baseline;
+      gap: 12px;
+      padding-bottom: 24px;
+      margin-bottom: 32px;
+      border-bottom: 2px dashed var(--rule);
+    }
+    .brand-name {
+      font-family: "SF Mono", "JetBrains Mono", Consolas, monospace;
+      font-size: 36px;
+      font-weight: 700;
+      letter-spacing: -1px;
+      color: var(--ink);
+    }
+    .brand-sub {
+      font-size: 14px;
+      color: var(--pencil);
+    }
+    h1 {
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--ink);
+      margin: 0 0 8px;
+      line-height: 1.3;
+    }
+    .effective-date {
+      font-size: 14px;
+      color: var(--pencil);
+      margin-bottom: 40px;
+    }
+    .lead {
+      background: rgba(255, 243, 168, 0.4);
+      padding: 16px 20px;
+      border-left: 3px solid var(--marker-red);
+      border-radius: 2px;
+      font-size: 16px;
+      color: var(--ink);
+      margin-bottom: 40px;
+    }
+    h2 {
+      font-size: 20px;
+      font-weight: 600;
+      color: var(--ink);
+      margin: 40px 0 16px;
+      padding-top: 16px;
+      border-top: 1px solid var(--rule);
+    }
+    h2:first-of-type {
+      border-top: none;
+      padding-top: 0;
+    }
+    p {
+      margin: 0 0 14px;
+    }
+    ul {
+      margin: 0 0 14px;
+      padding-left: 24px;
+    }
+    li {
+      margin-bottom: 8px;
+    }
+    strong {
+      color: var(--ink);
+      font-weight: 600;
+    }
+    a {
+      color: var(--ink);
+      text-decoration: underline;
+      text-decoration-thickness: 1px;
+      text-underline-offset: 2px;
+    }
+    a:hover {
+      color: var(--marker-red);
+    }
+    .footer {
+      margin-top: 64px;
+      padding-top: 24px;
+      border-top: 2px dashed var(--rule);
+      text-align: center;
+      color: var(--pencil);
+      font-size: 13px;
+    }
+    @media (max-width: 480px) {
+      .container { padding: 32px 16px 56px; }
+      h1 { font-size: 24px; }
+      h2 { font-size: 18px; }
+      .brand-name { font-size: 28px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="container">
+    <header class="brand">
+      <span class="brand-name">InvestLens</span>
+      <span class="brand-sub">投资研究工作台</span>
+    </header>
+
+    <h1>InvestLens 小程序隐私政策</h1>
+    <p class="effective-date">生效日期：2026-07-10</p>
+
+    <div class="lead">
+      本政策描述 InvestLens 微信小程序（以下简称"本应用"）在用户使用过程中对个人信息的处理规则。本应用开发者（以下简称"我们"）承诺按照《中华人民共和国个人信息保护法》《微信小程序平台运营规范》等法律法规要求，保护用户隐私。
+    </div>
+
+    <h2>1. 我们收集的信息</h2>
+    <p><strong>本应用自身不主动收集任何用户个人信息。</strong></p>
+    <p>具体而言：</p>
+    <ul>
+      <li>本应用不要求用户注册、登录或绑定手机号；</li>
+      <li>本应用不上报微信 openid、unionid、手机号、地理位置、通讯录等个人标识信息到自有服务器；</li>
+      <li>本应用不写入任何用户设备的本地存储用于身份追踪。</li>
+    </ul>
+
+    <h2>2. 由微信平台处理的信息</h2>
+    <p>用户在使用本应用时，以下信息由微信平台（腾讯）依法处理，我们不接触、不存储、不中转：</p>
+    <ul>
+      <li>用户的 openid、unionid；</li>
+      <li>用户的网络状态、设备型号等系统信息（由 wx.cloud SDK 自身采集，详见<a href="https://weixin.qq.com/cgi-bin/readtemplate?t=weixin_agreement&s=privacy" target="_blank" rel="noopener">微信开放平台隐私协议</a>）。</li>
+    </ul>
+    <p>如需管理此类信息，请在微信「我 → 设置 → 个人信息与权限」中进行。</p>
+
+    <h2>3. 业务必需的网络请求</h2>
+    <p>本应用展示的产业链数据、公司财务、行情、研报、AI 分析等业务数据，通过腾讯云 CloudBase AnyService 代理转发至开发者自有后端服务（部署于腾讯云 Lighthouse）。转发链路中：</p>
+    <ul>
+      <li>请求 header 仅携带业务必需字段（路由路径、调用方法、X-WX-SERVICE、X-AnyService-Name）；</li>
+      <li><strong>不携带</strong> openid、unionid、设备标识或其他个人信息；</li>
+      <li>后端日志仅记录匿名访问 IP（用于安全审计）与请求路径，不与任何用户身份关联。</li>
+    </ul>
+
+    <h2>4. 第三方服务</h2>
+    <p>本应用的数据来源为公开的 A 股市场公开数据接口（包括但不限于行情、财务、研报公开数据），不涉及任何第三方用户行为追踪 SDK、广告 SDK 或统计 SDK。</p>
+
+    <h2>5. 信息存储</h2>
+    <p>由于本应用自身不收集个人信息，因此：</p>
+    <ul>
+      <li>不存在用户个人信息的存储位置、期限与跨境传输问题；</li>
+      <li>后端业务数据（行情、财务、研报缓存）存储于开发者自有服务器，不属于用户个人信息范畴。</li>
+    </ul>
+
+    <h2>6. 用户权利</h2>
+    <p>鉴于本应用不收集用户个人信息，以下权利均天然成立：</p>
+    <ul>
+      <li><strong>查阅、复制、更正、删除权</strong>：本应用不持有任何您的个人信息，无需申请；</li>
+      <li><strong>撤回同意权</strong>：您可随时通过微信「小程序管理」删除本应用；</li>
+      <li><strong>投诉举报权</strong>：如对本应用有任何疑问，可通过本政策第 8 条的联系方式反馈。</li>
+    </ul>
+
+    <h2>7. 政策更新</h2>
+    <p>本政策可能因业务变化或法律法规调整而更新。更新后的政策将在本页面发布，并同步至小程序内"我的 → 关于"页面。重大变更（如新增信息收集行为）将以弹窗形式提示用户。</p>
+
+    <h2>8. 联系我们</h2>
+    <p>如对本政策有任何疑问、意见或投诉，请通过以下方式联系：</p>
+    <ul>
+      <li>项目地址：<a href="https://github.com/RCliang/Investment-Desk" target="_blank" rel="noopener">https://github.com/RCliang/Investment-Desk</a></li>
+      <li>邮箱：betterdl041@163.com</li>
+    </ul>
+    <p>我们将在收到反馈后 15 个工作日内予以回复。</p>
+
+    <footer class="footer">
+      © 2026 InvestLens. All rights reserved.
+    </footer>
+  </main>
+</body>
+</html>
