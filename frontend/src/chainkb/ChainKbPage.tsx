@@ -3,10 +3,11 @@ import './chainkb.css';
 import OverviewScreen from './OverviewScreen';
 import LayerScreen from './LayerScreen';
 import FinanceScreen from './FinanceScreen';
+import SignalPanel from './SignalPanel';
 import DataFreshness from './components/DataFreshness';
 import { useFreshness } from './hooks/useChainKb';
 
-type TabKey = 'overview' | 'layers' | 'finance';
+type TabKey = 'overview' | 'layers' | 'finance' | 'signals';
 
 interface TabDef {
   key: TabKey;
@@ -20,6 +21,7 @@ const TABS: TabDef[] = [
   // 02 · 公司对比 — deferred (compare-basket UX)
   { key: 'finance', label: '03 · 公司拆解' },
   // 04 · 风险标记 — deferred (risk inference layer)
+  { key: 'signals', label: '04 · 量化信号' },
 ];
 
 export default function ChainKbPage() {
@@ -111,6 +113,7 @@ export default function ChainKbPage() {
             onResetTicker={handleResetTicker}
           />
         )}
+        {activeTab === 'signals' && <SignalPanel />}
       </div>
     </div>
   );

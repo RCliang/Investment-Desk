@@ -353,6 +353,96 @@ class ChainRefreshLog(Base):
                           default="manual")  # manual | scheduler | cli
 
 
+# ── Quant: daily OHLCV bars for backtesting & signal scanning ──────────────
+
+class DailyBar(Base):
+    """Daily OHLCV bar per ticker. mootdx source (default front-adjusted).
+
+    Populated by scripts/backfill_mootdx_klines.py → load_seed_to_db loader.
+    One row per (ticker, date). 5 years of history retained (~1200 bars/ticker).
+
+    Note: tickers are normalized to bare 6-digit codes (the seed stores a few
+    with .SZ suffix like 002594.SZ; the loader strips it before lookup).
+    """
+    __tablename__ = "chain_daily_bars"
+    __table_args__ = (
+        UniqueConstraint("ticker", "date", name="uq_daily_bar"),
+        Index("ix_daily_bar_ticker_date", "ticker", "date"),
+    )
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    ticker = Column(String(16), nullable=False, index=True)
+    date = Column(Date, nullable=False, index=True)
+    open = Column(Float)
+    high = Column(Float)
+    low = Column(Float)
+    close = Column(Float)
+    volume = Column(Float)                                          # 成交量 (股)
+    amount = Column(Float)                                          # 成交额 (元)
+    turnover_pct = Column(Float)                                    # 换手率% (Tencent补, 可空)
+    pe_ttm = Column(Float)                                          # PE_TTM (Tencent补, 可空)
+    pb = Column(Float)                                              # PB (Tencent补, 可空)
+    adj_factor = Column(Float, default=1.0)                         # 复权因子
+    fetched_at = Column(DateTime, nullable=False, server_default=func.now())
+    source = Column(String(32), default="mootdx")
+
+
+class Signal(Base):
+    """Daily composite trading signal per ticker. Quant scorecard output.
+
+    Regenerated wholesale each scan (idempotent upsert on
+    ticker+date+strategy_set). strategy_set 'v1_default' is the shipped
+    multi-factor config; future sets may co-exist for comparison.
+    """
+    __tablename__ = "chain_signals"
+    __table_args__ = (
+        UniqueConstraint("ticker", "date", "strategy_set", name="uq_signal"),
+        Index("ix_signal_date_action", "date", "action"),
+        Index("ix_signal_ticker", "ticker"),
+    )
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    ticker = Column(String(16), nullable=False, index=True)
+    date = Column(Date, nullable=False, index=True)
+    strategy_set = Column(String(32), nullable=False, default="v1_default")
+    composite_score = Column(Float, nullable=False)                 # [-1, +1]
+    action = Column(String(8), nullable=False, index=True)          # BUY / SELL / HOLD
+    position_pct = Column(Float, default=0.0)                       # 建议仓位 0-1
+    stop_loss_price = Column(Float, nullable=True)
+    target_price = Column(Float, nullable=True)
+    detail_json = Column(Text, default="")                          # 各子策略分数明细
+    created_at = Column(DateTime, nullable=False, server_default=func.now())
+
+
+class BacktestRun(Base):
+    """One backtest execution record. Quant backtester output.
+
+    Stores summary metrics + serialized equity curve & trade list so the
+    frontend can render without re-running the backtest.
+    """
+    __tablename__ = "chain_backtest_runs"
+    __table_args__ = (
+        Index("ix_bt_ticker_strategy", "ticker", "strategy_set"),
+    )
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    ticker = Column(String(16), nullable=False, index=True)
+    strategy_set = Column(String(32), nullable=False, default="v1_default")
+    start_date = Column(Date, nullable=False)
+    end_date = Column(Date, nullable=False)
+    total_return_pct = Column(Float)                                # 总收益%
+    annual_return_pct = Column(Float)                               # 年化%
+    max_drawdown_pct = Column(Float)                                # 最大回撤%
+    sharpe_ratio = Column(Float)                                    # 夏普
+    win_rate_pct = Column(Float)                                    # 胜率%
+    trade_count = Column(Integer)
+    avg_hold_days = Column(Float)
+    equity_curve_json = Column(Text, default="")                   # [{date, equity}]
+    trades_json = Column(Text, default="")                         # [{entry_date, exit_date, ...}]
+    params_json = Column(Text, default="")                         # commission/stamp/slippage
+    created_at = Column(DateTime, nullable=False, server_default=func.now())
+
+
 __all__ = [
     # Static entities
     "Layer", "SubIndustry", "Company", "Concept",
@@ -363,6 +453,8 @@ __all__ = [
     "MarginDaily", "ResearchReport",
     # Refresh log
     "ChainRefreshLog",
+    # Quant
+    "DailyBar", "Signal", "BacktestRun",
     # Constants
     "LIFECYCLE_CANONICAL", "LIFECYCLE_GENERATED", "LIFECYCLE_DEPRECATED",
 ]

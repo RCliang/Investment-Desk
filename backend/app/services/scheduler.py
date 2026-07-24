@@ -43,6 +43,14 @@ _QUOTES_TRIGGERS = [
 ]
 _MARGIN_TRIGGER = CronTrigger(day_of_week="mon-fri", hour="15", minute="30",
                               timezone="Asia/Shanghai")
+# Daily-bar incremental refresh: after close + after margin, mootdx TCP.
+# Only fetches today's bar per ticker via --incremental flag.
+_QUOTES_HISTORY_TRIGGER = CronTrigger(day_of_week="mon-fri", hour="16", minute="30",
+                                      timezone="Asia/Shanghai")
+# Quant signal scan: 30 min after the daily-bar refresh lands, recompute
+# all signals so the /api/quant/signals endpoint is fresh next morning.
+_SIGNAL_SCAN_TRIGGER = CronTrigger(day_of_week="mon-fri", hour="17", minute="00",
+                                   timezone="Asia/Shanghai")
 _FINANCE_TRIGGER = CronTrigger(day_of_week="sun", hour="3",
                                timezone="Asia/Shanghai")
 _REPORTS_TRIGGER = CronTrigger(day_of_week="sun", hour="4",
@@ -62,6 +70,23 @@ def _run_refresh(refresh_type: str) -> None:
         refresh_service.dispatch(refresh_type, session, trigger="scheduler")
     except Exception:
         log.exception("scheduled refresh '%s' failed", refresh_type)
+    finally:
+        session.close()
+
+
+def _run_signal_scan() -> None:
+    """Job wrapper: recompute quant signals for all tickers.
+
+    Separate from _run_refresh because the scan is pure in-DB compute
+    (no backfill script subprocess); it calls signal_service.scan_all directly.
+    """
+    session = SessionLocal()
+    try:
+        from app.services.quant import signal_service
+        result = signal_service.scan_all(session)
+        log.info("scheduled signal scan: %s", result)
+    except Exception:
+        log.exception("scheduled signal scan failed")
     finally:
         session.close()
 
@@ -90,18 +115,25 @@ def start_scheduler() -> None:
             replace_existing=True,
         )
     for type_name, trig in [
-        ("margin",   _MARGIN_TRIGGER),
-        ("finance",  _FINANCE_TRIGGER),
-        ("reports",  _REPORTS_TRIGGER),
-        ("lockup",   _LOCKUP_TRIGGER),
-        ("holders",  _HOLDERS_TRIGGER),
-        ("concepts", _CONCEPTS_TRIGGER),
+        ("margin",         _MARGIN_TRIGGER),
+        ("quotes_history", _QUOTES_HISTORY_TRIGGER),
+        ("finance",        _FINANCE_TRIGGER),
+        ("reports",        _REPORTS_TRIGGER),
+        ("lockup",         _LOCKUP_TRIGGER),
+        ("holders",        _HOLDERS_TRIGGER),
+        ("concepts",       _CONCEPTS_TRIGGER),
     ]:
         _scheduler.add_job(
             _run_refresh, trig,
             args=[type_name], id=type_name,
             replace_existing=True,
         )
+
+    # Quant signal scan — separate handler (no backfill subprocess).
+    _scheduler.add_job(
+        _run_signal_scan, _SIGNAL_SCAN_TRIGGER,
+        id="signal_scan", replace_existing=True,
+    )
 
     _scheduler.start()
     log.info("scheduler started with %d jobs",

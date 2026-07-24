@@ -50,6 +50,7 @@ from app.models.chain_models import (
     HolderPeriod,
     MarginDaily,
     ResearchReport,
+    DailyBar,
     LIFECYCLE_CANONICAL,
 )
 
@@ -502,6 +503,48 @@ def load_reports(session) -> int:
     return _upsert_many(session, ResearchReport, rows, ["ticker", "info_code"])
 
 
+def load_daily_bars(session, batch_size: int = 5000) -> int:
+    """backfill_mootdx_klines.json → DailyBar (5y OHLCV per ticker).
+
+    Returns total upserted rows. Batches the upsert (default 5000 rows/batch)
+    to stay under SQLite's default 999-host-parameter ceiling: each bar has
+    ~9 columns, so 5000 rows ≈ 45k params, well above the limit if sent in
+    one statement — hence chunking.
+
+    Backfill JSON shape (from scripts/backfill_mootdx_klines.py):
+        {"bars": {ticker: [{ticker,date,open,high,low,close,volume,amount}, ...]}}
+
+    Idempotent via (ticker, date) unique constraint. Re-running with an
+    incremental backfill (only today's bar) just updates the latest row.
+    """
+    data = _load("backfill_mootdx_klines.json")
+    all_bars = data.get("bars", {})
+    if not all_bars:
+        return 0
+
+    total = 0
+    batch: list[dict] = []
+    for ticker, bars in all_bars.items():
+        for b in bars:
+            batch.append({
+                "ticker": ticker,
+                "date": _to_date(b.get("date")),
+                "open": _safe_float(b.get("open")),
+                "high": _safe_float(b.get("high")),
+                "low": _safe_float(b.get("low")),
+                "close": _safe_float(b.get("close")),
+                "volume": _safe_float(b.get("volume")),   # shares
+                "amount": _safe_float(b.get("amount")),   # CNY
+                "source": "mootdx",
+            })
+            if len(batch) >= batch_size:
+                total += _upsert_many(session, DailyBar, batch, ["ticker", "date"])
+                batch.clear()
+    if batch:
+        total += _upsert_many(session, DailyBar, batch, ["ticker", "date"])
+    return total
+
+
 def _safe_float(v):
     if v is None or v == "":
         return None
@@ -601,6 +644,17 @@ def main():
             session.rollback()
             print(f"  [reports] FAILED: {e}")
 
+        # Daily OHLCV bars — used by the quant signal/backtest pipeline.
+        # Large payload (300+ tickers × 1600 bars ≈ 500k rows); commit in
+        # batches inside load_daily_bars, then a final commit here.
+        try:
+            n_bars = load_daily_bars(session)
+            session.commit()
+            print(f"  [daily_bars] upserted={n_bars:,}")
+        except Exception as e:
+            session.rollback()
+            print(f"  [daily_bars] FAILED: {e}")
+
     # Post-load table counts
     print()
     print("  Final table row counts:")
@@ -608,7 +662,8 @@ def main():
         for model in (Layer, SubIndustry, Company, Concept,
                       SubIndustryCompany, CompanyConcept,
                       Quote, FinanceSnapshot, LockupEvent, HolderPeriod,
-                      MarginDaily, ResearchReport):
+                      MarginDaily, ResearchReport,
+                      DailyBar):
             n = _count(session, model)
             print(f"    {model.__tablename__:<32} {n:>6}")
 

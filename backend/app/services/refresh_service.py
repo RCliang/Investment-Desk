@@ -39,19 +39,23 @@ SCRIPTS_DIR = BACKEND_DIR / "scripts"
 
 RefreshType = Literal[
     "quotes", "finance", "reports", "concepts",
-    "lockup", "holders", "margin", "all",
+    "lockup", "holders", "margin", "quotes_history", "all",
 ]
 Trigger = Literal["manual", "scheduler", "cli"]
 
-# type → (script path, loader function name in load_seed_to_db)
-_TYPE_MAP: dict[str, tuple[str, str]] = {
-    "quotes":   ("backfill_tencent_quotes.py",     "load_quotes"),
-    "finance":  ("backfill_mootdx_finance.py",     "load_finance"),
-    "reports":  ("backfill_em_reports.py",         "load_reports"),
-    "concepts": ("backfill_em_concept_blocks.py",  "load_concept_blocks"),
-    "lockup":   ("backfill_em_lockup_expiry.py",   "load_lockup"),
-    "holders":  ("backfill_em_holder_num.py",      "load_holder_num"),
-    "margin":   ("backfill_em_margin_trading.py",  "load_margin"),
+# type → (script path, loader function name in load_seed_to_db, extra args)
+# extra_args: CLI flags appended to the backfill script invocation.
+# quotes_history uses --incremental so the daily job only fetches today's
+# bar per ticker (full 5y history is a one-off backfill done manually).
+_TYPE_MAP: dict[str, tuple[str, str, list[str]]] = {
+    "quotes":         ("backfill_tencent_quotes.py",     "load_quotes",      []),
+    "finance":        ("backfill_mootdx_finance.py",     "load_finance",     []),
+    "reports":        ("backfill_em_reports.py",         "load_reports",     []),
+    "concepts":       ("backfill_em_concept_blocks.py",  "load_concept_blocks", []),
+    "lockup":         ("backfill_em_lockup_expiry.py",   "load_lockup",      []),
+    "holders":        ("backfill_em_holder_num.py",      "load_holder_num",  []),
+    "margin":         ("backfill_em_margin_trading.py",  "load_margin",      []),
+    "quotes_history": ("backfill_mootdx_klines.py",      "load_daily_bars",  ["--incremental"]),
 }
 
 # Per-type subprocess timeout (seconds). Generous upper bound; scripts
@@ -59,6 +63,8 @@ _TYPE_MAP: dict[str, tuple[str, str]] = {
 _TIMEOUTS: dict[str, int] = {
     "quotes": 60, "finance": 600, "reports": 900, "concepts": 900,
     "lockup": 900, "holders": 900, "margin": 900,
+    # mootdx TCP, 321 tickers × 1 page each, ~0.1s gap = ~40s + overhead.
+    "quotes_history": 300,
 }
 
 
@@ -168,7 +174,7 @@ def _run_one(session: Session, refresh_type: str, trigger: Trigger) -> ChainRefr
         # Concurrency conflict — caller (HTTP) turns this into 409.
         raise RefreshConflictError(refresh_type)
 
-    script_name, loader_name = _TYPE_MAP[refresh_type]
+    script_name, loader_name, extra_args = _TYPE_MAP[refresh_type]
     script_path = SCRIPTS_DIR / script_name
 
     log_row = ChainRefreshLog(
@@ -182,7 +188,8 @@ def _run_one(session: Session, refresh_type: str, trigger: Trigger) -> ChainRefr
 
     try:
         # Step 1: run backfill script (writes JSON to backend/data/)
-        log.info("refresh '%s': running %s ...", refresh_type, script_name)
+        log.info("refresh '%s': running %s %s ...",
+                 refresh_type, script_name, " ".join(extra_args))
         # Run the backfill script with UTF-8 stdio. On Windows, `text=True`
         # without an explicit encoding falls back to the system locale (cp936/
         # GBK), which fails to decode non-ASCII bytes printed by the scripts
@@ -192,7 +199,7 @@ def _run_one(session: Session, refresh_type: str, trigger: Trigger) -> ChainRefr
         # writes UTF-8 too; encoding/errors below decode the parent side.
         env = {**os.environ, "PYTHONUTF8": "1", "PYTHONIOENCODING": "utf-8"}
         result = subprocess.run(
-            [sys.executable, str(script_path)],
+            [sys.executable, str(script_path), *extra_args],
             cwd=str(BACKEND_DIR),
             capture_output=True,
             text=True,
@@ -255,14 +262,23 @@ def refresh_holders(session: Session, trigger: Trigger = "manual") -> ChainRefre
 def refresh_margin(session: Session, trigger: Trigger = "manual") -> ChainRefreshLog:
     return _run_one(session, "margin", trigger)
 
-def refresh_all(session: Session, trigger: Trigger = "manual") -> list[ChainRefreshLog]:
-    """Sequentially run all 7 refreshes in order: fast → slow.
+def refresh_quotes_history(session: Session, trigger: Trigger = "manual") -> ChainRefreshLog:
+    """Incremental daily-bar refresh via mootdx (--incremental flag).
 
-    Order: quotes → margin → lockup → holders → reports → concepts → finance.
+    Only fetches today's bar per ticker; the full 5y history is a one-off
+    backfill run manually via `python scripts/backfill_mootdx_klines.py`.
+    """
+    return _run_one(session, "quotes_history", trigger)
+
+def refresh_all(session: Session, trigger: Trigger = "manual") -> list[ChainRefreshLog]:
+    """Sequentially run all refreshes in order: fast → slow.
+
+    Order: quotes → quotes_history → margin → lockup → holders → reports → concepts → finance.
     Returns the list of per-type log rows. Continues on per-type failure
     (each failure is logged; does not abort the sequence).
     """
-    order = ["quotes", "margin", "lockup", "holders", "reports", "concepts", "finance"]
+    order = ["quotes", "quotes_history", "margin", "lockup", "holders",
+             "reports", "concepts", "finance"]
     results: list[ChainRefreshLog] = []
     for t in order:
         try:
@@ -283,6 +299,7 @@ _REFRESH_FUNCTIONS = {
     "lockup": refresh_lockup,
     "holders": refresh_holders,
     "margin": refresh_margin,
+    "quotes_history": refresh_quotes_history,
     "all": refresh_all,
 }
 

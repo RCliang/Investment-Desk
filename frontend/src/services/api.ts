@@ -67,6 +67,24 @@ export type {
   SearchResponse,
 };
 
+// --- Quant signal + backtest ---
+import type {
+  StrategiesResponse,
+  SignalListResponse,
+  SignalDetailResponse,
+  ScanResult,
+  BacktestSummary,
+  BacktestDetail,
+} from '../types/signal';
+export type {
+  StrategiesResponse,
+  SignalListResponse,
+  SignalDetailResponse,
+  ScanResult,
+  BacktestSummary,
+  BacktestDetail,
+};
+
 export async function getChainKbTree(): Promise<TreeResponse> {
   const { data } = await api.get<TreeResponse>('/api/chainkb/tree');
   return data;
@@ -294,6 +312,72 @@ export async function getLatestAnalysis(code: string): Promise<AnalysisDoc | nul
     const { data } = await api.get<AnalysisDoc>('/api/deep-analysis/latest', {
       params: { code },
     });
+    return data;
+  } catch (err: unknown) {
+    if (err instanceof axios.AxiosError && err.response?.status === 404) return null;
+    throw err;
+  }
+}
+
+// ── Quant signal + backtest (/api/quant/*) ─────────────────────────────
+
+export async function getStrategies(): Promise<StrategiesResponse> {
+  const { data } = await api.get<StrategiesResponse>('/api/quant/strategies');
+  return data;
+}
+
+export interface SignalFilter {
+  action?: 'BUY' | 'SELL' | 'HOLD';
+  layer?: string;          // I/II/III/IV/V
+  sub_industry?: string;
+  ticker?: string;
+  strategy_set?: string;
+  target_date?: string;
+  min_score?: number;
+  limit?: number;
+  offset?: number;
+}
+
+export async function getSignals(filter: SignalFilter = {}): Promise<SignalListResponse> {
+  const { data } = await api.get<SignalListResponse>('/api/quant/signals', { params: filter });
+  return data;
+}
+
+export async function getSignalDetail(ticker: string): Promise<SignalDetailResponse | null> {
+  try {
+    const { data } = await api.get<SignalDetailResponse>(`/api/quant/signals/${ticker}`);
+    return data;
+  } catch (err: unknown) {
+    if (err instanceof axios.AxiosError && err.response?.status === 404) return null;
+    throw err;
+  }
+}
+
+/** Trigger a full-market scan (admin-gated). Token comes from the axios
+ * interceptor that auto-attaches X-Admin-Token from storage. */
+export async function triggerScan(strategySet = 'v1_default'): Promise<ScanResult> {
+  const { data } = await api.post<ScanResult>('/api/quant/scan', null, {
+    params: { strategy_set: strategySet },
+  });
+  return data;
+}
+
+export interface BacktestRequest {
+  ticker: string;
+  strategy_set?: string;
+  start_date?: string;
+  end_date?: string;
+  initial_capital?: number;
+}
+
+export async function runBacktest(req: BacktestRequest): Promise<BacktestSummary> {
+  const { data } = await api.post<BacktestSummary>('/api/quant/backtest', req);
+  return data;
+}
+
+export async function getBacktest(runId: number): Promise<BacktestDetail | null> {
+  try {
+    const { data } = await api.get<BacktestDetail>(`/api/quant/backtest/${runId}`);
     return data;
   } catch (err: unknown) {
     if (err instanceof axios.AxiosError && err.response?.status === 404) return null;
