@@ -1,4 +1,4 @@
-"""Risk factor: market-regime gate + ATR-based stop loss.
+"""Risk factor: market-regime gate + fixed-percentage stop loss.
 
 This is the only 'risk'-category strategy. It does NOT contribute a
 directional score to the composite; instead it gates the *position size*
@@ -11,8 +11,10 @@ Two responsibilities:
      allowed position — bear regimes deserve smaller bets even when
      micro signals fire BUY. We use the stock's own MA60 as a per-ticker
      regime proxy (no index dependency → fully backtestable per ticker).
-  2. Stop loss: trailing stop at close - 2 * ATR14. Tightened to 1.5 * ATR
-     when the trend is strongly bullish (MA5 > MA20 > MA60) to lock gains.
+  2. Stop loss: HARD 10% from entry. For the signal panel (which doesn't
+     know the eventual entry price), we report close × 0.9 as the
+     "if-bought-today" reference stop. The backtester overrides this with
+     the actual entry price × 0.9 once a position is opened.
 
 The compute() return value is the regime gate in {-1, 0, +1}:
     +1 = bull regime (full position allowed)
@@ -27,8 +29,39 @@ import pandas as pd
 
 from .base import Strategy
 
+# Hard stop-loss: 10% below entry. A classic retail risk rule — simple,
+# unambiguous, doesn't widen during volatility spikes like ATR stops.
+STOP_LOSS_PCT = 0.10
+
+# Trailing take-profit (移动止盈): once unrealized gain ≥ ACTIVATION_PCT,
+# switch from the fixed stop to a trailing stop that follows the highest
+# price since entry. The trail sits TRAIL_PCT below that high water mark
+# and only moves up (never down) — so it locks in profit as the stock runs.
+#
+# Lifecycle of the stop during one holding period:
+#   open       → fixed_stop = entry × (1 - STOP_LOSS_PCT)        [e.g. entry × 0.90]
+#   gain < 15% → fixed_stop unchanged (still entry × 0.90)
+#   gain ≥ 15% → trailing_stop = high_since_entry × (1 - TRAIL_PCT)  [e.g. high × 0.92]
+#                effective_stop = max(fixed_stop, trailing_stop)
+#
+# Why 20%/8%: 20% activation only kicks in on confirmed big winners — small
+# winners and normal uptrend pullbacks keep the loose fixed stop so the
+# strategy doesn't get shaken out prematurely. 8% trail is tight enough to
+# exit near the top of a blow-off but loose enough to not get shaken out by
+# a single volatile session (AI-chain stocks routinely gap ±6% intraday).
+TRAIL_ACTIVATION_PCT = 0.20   # activate trailing after +20% gain
+TRAIL_PCT = 0.08              # trail 8% below the peak
+
 
 class RiskATR(Strategy):
+    """Despite the name (kept for back-compat with stored strategy_set keys),
+    this now implements a fixed-percentage stop, not an ATR-based one.
+
+    Renaming would invalidate existing chain_signals rows (detail_json keys);
+    the strategy_set 'v1_default' stays stable. The ATR indicator is still
+    computed in indicators.enrich() and used by the scorecard for nothing
+    now, but kept available for future strategy variants.
+    """
     name = "risk_atr"
     category = "risk"
     weight = 1.0  # not blended into composite; weight unused
@@ -52,24 +85,18 @@ class RiskATR(Strategy):
         """Return per-day {allowed_position, stop_loss} Series.
 
         allowed_position: 1.0 in bull regime, 0.5 in deep bear, 0.8 neutral.
-        stop_loss:        close - k*ATR, where k=1.5 in strong uptrend else 2.0.
+        stop_loss:        close × (1 - STOP_LOSS_PCT). Reference stop "if
+                          bought today at today's close". The backtester
+                          replaces this with entry_price × 0.9 once filled.
         """
         close = df["close"]
-        atr = df["atr14"]
-        ma5 = df["ma5"]
-        ma20 = df["ma20"]
-        ma60 = df["ma60"]
 
         # Position modifier from regime.
         gate = self.compute(df)
         allowed = gate.replace({1.0: 1.0, 0.0: 0.8, -1.0: 0.5}).fillna(0.8)
 
-        # Stop-loss multiplier: tighter (1.5) when MA5>MA20>MA60 (strong up).
-        strong_up = (ma5 > ma20) & (ma20 > ma60)
-        k = pd.Series(2.0, index=df.index)
-        k[strong_up] = 1.5
-
-        stop = close - k * atr
+        # Hard 10% stop from today's close (signal-panel reference).
+        stop = close * (1.0 - STOP_LOSS_PCT)
         return {
             "allowed_position": allowed,
             "stop_loss": stop,

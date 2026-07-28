@@ -18,3 +18,10 @@ tmpclaude*
 
 # Abandoned native miniprogram prototype (replaced by investlens-miniprogram/ Taro project)
 miniprogram/
+.gstack/
+.zcode/
+.playwright-mcp/
+
+# Local dev scratch screenshots (gstack/playwright captures)
+trend-follow-*.png
+backtest-*.png

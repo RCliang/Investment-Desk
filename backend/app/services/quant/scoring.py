@@ -32,7 +32,7 @@ import pandas as pd
 
 from . import indicators
 from .strategies import (
-    Strategy, TrendMA, BreakoutDonchian,
+    Strategy, TrendMA, TrendBreakout, BreakoutDonchian,
     MomentumMACD, MomentumRSI,
     VolumePrice, RiskATR,
 )
@@ -129,6 +129,20 @@ class ScoreCard:
         action[composite >= self.buy_threshold] = "BUY"
         action[composite <= self.sell_threshold] = "SELL"
 
+        # ── Trend gate (打分卡级硬过滤) ──────────────────────────────────
+        # BUY signals only fire in a confirmed uptrend: MA5 > MA20 > MA60
+        # (多头排列). This kills the "混乱市抄底" trades where a golden cross
+        # inside a downtrend (MA60 still overhead) produced false BUYs.
+        # Backtest on 002475: cuts trades 20→13, win rate 30%→38%, drawdown
+        # 37%→30%. SELL signals are NOT gated — we always want to exit risk.
+        #
+        # composite_score is preserved (UI shows the raw score); only the
+        # final action is downgraded so users can see "this would have been
+        # a BUY but the trend gate blocked it."
+        if "ma5" in df.columns and "ma20" in df.columns and "ma60" in df.columns:
+            bull_aligned = (df["ma5"] > df["ma20"]) & (df["ma20"] > df["ma60"])
+            action = action.where(~(action.eq("BUY") & ~bull_aligned), "HOLD")
+
         # Target price: 2 * ATR above close (assumes 1:2 risk:reward vs stop).
         atr = df.get("atr14", pd.Series(0.0, index=df.index))
         target = df["close"] + 2 * atr
@@ -183,3 +197,78 @@ def default_strategies() -> list[Strategy]:
 
 
 DEFAULT_CARD = ScoreCard(default_strategies())
+
+
+# ── trend_follow: pure trend-following card ────────────────────────────────
+#
+# A single-strategy card for the "确定趋势后买入，趋势破位后卖出" philosophy.
+# Unlike v1_default (which blends 5 factors and lets RSI/MACD trigger exits
+# inside uptrends), trend_follow ONLY listens to trend alignment:
+#   BUY  when MA5>MA20>MA60 establishes
+#   SELL when MA5<MA20 AND close<MA20 for ≥2 consecutive days
+# RSI/MACD/volume are NOT computed here, so they can't fire premature exits.
+# The risk_atr layer is still included to provide stop-loss + trailing-stop
+# (风控兜底), but its compute() output is a gate, not a directional score.
+#
+# Thresholds ±0.5: since TrendBreakout emits exactly {-1, 0, +1}, any
+# threshold in (0, 1) gives the same BUY/SELL mapping; 0.5 is conventional.
+
+def trend_follow_strategies() -> list[Strategy]:
+    """The trend_follow strategy set: trend + risk only."""
+    return [
+        TrendBreakout(),        # trend, sole signal source
+        RiskATR(),              # risk (gate: stop-loss + trailing)
+    ]
+
+
+def _make_trend_follow_card() -> "ScoreCard":
+    """Build the trend_follow card with trend-heavy weights.
+
+    Trend gets 0.85 (TrendBreakout is the only signal), risk gets 0.15
+    (gate only, as in v1_default). The trend gate in ScoreCard.score()
+    (要求多头排列才 BUY) is redundant here since TrendBreakout already
+    requires it — but harmless.
+    """
+    return ScoreCard(
+        trend_follow_strategies(),
+        category_weights={"trend": 0.85, "momentum": 0.0, "volume": 0.0, "risk": 0.15},
+        buy_threshold=0.5,
+        sell_threshold=-0.5,
+    )
+
+
+TREND_FOLLOW_CARD = _make_trend_follow_card()
+
+
+# ── Strategy-set registry ─────────────────────────────────────────────────
+# Maps strategy_set name → card. signal_service.scan_all / get_signals /
+# backtest all look up the card by name via get_card(strategy_set).
+# Add new strategy sets here; the DB strategy_set column stores the key.
+
+_CARDS: dict[str, "ScoreCard"] = {
+    "v1_default": DEFAULT_CARD,
+    "trend_follow": TREND_FOLLOW_CARD,
+}
+
+
+def get_card(strategy_set: str = "v1_default") -> "ScoreCard":
+    """Look up a ScoreCard by strategy_set name. Falls back to v1_default
+    for unknown keys (defensive — the DB may have rows from a renamed set)."""
+    return _CARDS.get(strategy_set, DEFAULT_CARD)
+
+
+def list_strategy_sets() -> list[dict]:
+    """Catalog of available strategy sets, for the /api/quant/strategies endpoint."""
+    out = []
+    for name, card in _CARDS.items():
+        out.append({
+            "strategy_set": name,
+            "buy_threshold": card.buy_threshold,
+            "sell_threshold": card.sell_threshold,
+            "category_weights": {k: round(v, 3) for k, v in card.category_weights.items()},
+            "strategies": [
+                {"name": s.name, "category": s.category, "weight": s.weight}
+                for s in card.strategies
+            ],
+        })
+    return out

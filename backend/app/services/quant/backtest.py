@@ -38,6 +38,7 @@ from sqlalchemy.orm import Session
 
 from app.models.chain_models import DailyBar, BacktestRun
 from . import indicators, scoring
+from .strategies.risk_atr import STOP_LOSS_PCT, TRAIL_ACTIVATION_PCT, TRAIL_PCT
 
 # ── Cost model (A-share defaults) ──────────────────────────────────────────
 
@@ -74,7 +75,7 @@ class Trade:
     pnl: float
     pnl_pct: float
     hold_days: int
-    exit_reason: str  # "signal" | "stop_loss" | "end"
+    exit_reason: str  # "signal" | "stop_loss" | "trailing_stop" | "end"
 
 
 @dataclass
@@ -127,6 +128,7 @@ class Backtester:
         initial_capital: float = 1e5,
         start_date: Optional[str] = None,
         end_date: Optional[str] = None,
+        strategy_set: str = "v1_default",
     ) -> BacktestResult:
         """Backtest one ticker.
 
@@ -148,7 +150,10 @@ class Backtester:
         closes = merged["close"].values
         prev_closes = pd.Series(closes).shift(1).values
         actions = merged["action"].values if "action" in merged.columns else np.array(["HOLD"] * len(merged), dtype=object)
-        stop_losses = merged["stop_loss_price"].values if "stop_loss_price" in merged.columns else np.array([np.nan] * len(merged))
+        # NOTE: stop_loss_price is still merged (the signal panel displays it
+        # as the "if-bought-today" reference), but the backtester no longer
+        # reads it per-bar. Instead it uses a fixed stop locked at entry
+        # (entry_price × (1 - STOP_LOSS_PCT)). See fixed_stop below.
         position_pcts = merged["position_pct"].values if "position_pct" in merged.columns else np.ones(len(merged))
 
         # Date slice.
@@ -171,6 +176,18 @@ class Backtester:
         entry_price = 0.0
         entry_date = None
         entry_idx = -1  # T+1: can't sell on the buy day
+        # Fixed-percentage stop: locked at entry_price × (1 - STOP_LOSS_PCT)
+        # when the position opens, held constant until the position closes.
+        # (Previous version read a per-bar ATR stop which widened with vol.)
+        fixed_stop = 0.0
+        # Trailing take-profit state. high_since_entry tracks the highest
+        # close since the position opened; once unrealized gain exceeds
+        # TRAIL_ACTIVATION_PCT, the effective stop becomes
+        # max(fixed_stop, high_since_entry × (1 - TRAIL_PCT)). This locks
+        # in profit on extended runs (solves the "高位回吐" problem where
+        # lagging SELL signals gave back 30-40% of peak gains).
+        high_since_entry = 0.0
+        trailing_active = False
         trades: list[Trade] = []
         equity_curve: list[dict] = []
         peak_equity = initial_capital
@@ -186,24 +203,53 @@ class Backtester:
             c = closes[i]
             pc = prev_closes[i] if not math.isnan(prev_closes[i]) else c
             act = actions[i]
-            stop = stop_losses[i]
             pos_pct = position_pcts[i] if not math.isnan(position_pcts[i]) else 1.0
 
-            # ── 1. Stop-loss check (intraday low breach, only if held & T+1 ok).
-            if shares_held > 0 and i > entry_idx and not math.isnan(stop) and l <= stop:
-                # Fill at stop price (conservative: assume fill at stop, not worse).
-                fill = stop
+            # ── 0. Update trailing-stop state (before the stop check).
+            # Track the highest close since entry; once the position is
+            # sufficiently in profit, activate the trailing stop.
+            if shares_held > 0 and c > high_since_entry:
+                high_since_entry = c
+            if shares_held > 0 and not trailing_active and entry_price > 0:
+                if (high_since_entry - entry_price) / entry_price >= TRAIL_ACTIVATION_PCT:
+                    trailing_active = True
+
+            # Effective stop: fixed (entry × 0.9) until trailing activates,
+            # then max(fixed, high × (1 - TRAIL_PCT)). The max() ensures
+            # the stop never moves DOWN — trailing only ever tightens.
+            if shares_held > 0:
+                effective_stop = fixed_stop
+                if trailing_active:
+                    trailing_stop = high_since_entry * (1.0 - TRAIL_PCT)
+                    effective_stop = max(effective_stop, trailing_stop)
+            else:
+                effective_stop = 0.0
+
+            # ── 1. Stop-loss / take-profit check (intraday low breach).
+            # Fires when the day's low breaches effective_stop. exit_reason
+            # distinguishes fixed stop (initial risk) from trailing (profit
+            # lock) so backtests can tell them apart.
+            if shares_held > 0 and i > entry_idx and effective_stop > 0 and l <= effective_stop:
+                fill = effective_stop
                 proceeds, cost = self._sell_cost(shares_held, fill)
                 cash += proceeds
                 pnl = proceeds - (shares_held * entry_price)
+                reason = "trailing_stop" if trailing_active and fill > entry_price * (1 - STOP_LOSS_PCT) else "stop_loss"
                 trades.append(Trade(
                     entry_date=str(entry_date), entry_price=entry_price,
                     exit_date=d, exit_price=fill, shares=shares_held,
                     pnl=pnl, pnl_pct=pnl / (shares_held * entry_price) if entry_price else 0,
-                    hold_days=i - entry_idx, exit_reason="stop_loss",
+                    hold_days=i - entry_idx, exit_reason=reason,
                 ))
                 shares_held = 0
                 entry_price = 0.0
+                fixed_stop = 0.0
+                high_since_entry = 0.0
+                trailing_active = False
+                entry_date = None
+                entry_idx = -1
+                # Stop-loss preempts the day's signal.
+                fixed_stop = 0.0
                 entry_date = None
                 entry_idx = -1
                 # Stop-loss preempts the day's signal.
@@ -233,6 +279,9 @@ class Backtester:
                         ))
                         shares_held = 0
                         entry_price = 0.0
+                        fixed_stop = 0.0
+                        high_since_entry = 0.0
+                        trailing_active = False
                         entry_date = None
                         entry_idx = -1
 
@@ -250,6 +299,14 @@ class Backtester:
                             cash -= (cost_value + commission)
                             shares_held = buy_shares
                             entry_price = fill
+                            # Lock the hard 10% stop at entry. Stays as the
+                            # floor; trailing stop (if activated later) only
+                            # ever raises it via max().
+                            fixed_stop = fill * (1.0 - STOP_LOSS_PCT)
+                            # Seed high-water mark at the fill price; the
+                            # first bar's close will update it if higher.
+                            high_since_entry = fill
+                            trailing_active = False
                             entry_date = dates[sig_idx]
                             entry_idx = i
 
@@ -301,7 +358,7 @@ class Backtester:
 
         return BacktestResult(
             ticker=ticker,
-            strategy_set="v1_default",
+            strategy_set=strategy_set,
             start_date=str(dates[start_idx]),
             end_date=str(dates[end_idx]),
             initial_capital=initial_capital,
@@ -354,7 +411,8 @@ def run_and_store(
         raise ValueError(f"insufficient bars for {ticker} (need ≥60, got {len(df) if df is not None else 0})")
 
     enriched = indicators.enrich(df)
-    signals = scoring.DEFAULT_CARD.score_summary(enriched)
+    card = scoring.get_card(strategy_set)
+    signals = card.score_summary(enriched)
 
     bt = Backtester()
     result = bt.run(
@@ -362,6 +420,7 @@ def run_and_store(
         initial_capital=initial_capital,
         start_date=str(start_date) if start_date else None,
         end_date=str(end_date) if end_date else None,
+        strategy_set=strategy_set,
     )
 
     row = BacktestRun(
@@ -369,6 +428,8 @@ def run_and_store(
         strategy_set=strategy_set,
         start_date=date.fromisoformat(result.start_date),
         end_date=date.fromisoformat(result.end_date),
+        initial_capital=result.initial_capital,
+        final_equity=result.final_equity,
         total_return_pct=result.total_return_pct,
         annual_return_pct=result.annual_return_pct,
         max_drawdown_pct=result.max_drawdown_pct,
@@ -414,6 +475,8 @@ def get_run(db: Session, run_id: int) -> Optional[dict]:
         "strategy_set": row.strategy_set,
         "start_date": str(row.start_date),
         "end_date": str(row.end_date),
+        "initial_capital": row.initial_capital,
+        "final_equity": row.final_equity,
         "total_return_pct": row.total_return_pct,
         "annual_return_pct": row.annual_return_pct,
         "max_drawdown_pct": row.max_drawdown_pct,

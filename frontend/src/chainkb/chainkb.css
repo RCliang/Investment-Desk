@@ -1018,3 +1018,351 @@
   border: none;
   padding: 0;
 }
+
+/* ─────────────────────────────────────────────────────────────────────
+ * SignalPanel — quant signal list + backtest drawer
+ * Scoped under .chainkb-root .signal-panel so it inherits the sketch tokens.
+ * ──────────────────────────────────────────────────────────────────── */
+
+.signal-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.signal-filter-row {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+.filter-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.filter-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  color: var(--pencil);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.filter-chip {
+  background: var(--paper);
+  border: 2px solid var(--graph-major);
+  border-radius: 14px;
+  padding: 4px 14px;
+  font-family: inherit;
+  font-size: 14px;
+  cursor: pointer;
+  color: var(--ink-soft);
+  transition: transform 0.1s;
+}
+.filter-chip:hover { transform: translateY(-1px); }
+.filter-chip.active {
+  background: var(--hi-yellow);
+  color: var(--ink);
+  font-weight: 600;
+}
+.filter-group select {
+  background: var(--paper);
+  border: 2px solid var(--graph-major);
+  border-radius: 6px;
+  padding: 4px 10px;
+  font-family: inherit;
+  font-size: 14px;
+  color: var(--ink);
+  cursor: pointer;
+}
+.filter-meta {
+  margin-left: auto;
+  display: flex;
+  gap: 16px;
+  font-size: 13px;
+  color: var(--pencil);
+}
+
+.kpi-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 12px;
+  margin: 12px 0;
+}
+
+/* ── Signal table ── */
+.signal-table {
+  cursor: default;
+}
+.signal-table tbody tr {
+  cursor: pointer;
+  transition: background 0.1s;
+}
+.signal-table tbody tr:hover {
+  background: var(--hi-yellow);
+}
+.signal-table tbody tr.row-selected {
+  background: var(--sticky-yellow);
+}
+.signal-table .mono {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+}
+.action-badge {
+  display: inline-block;
+  padding: 2px 10px;
+  border: 1.5px solid;
+  border-radius: 4px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+.score-up { color: var(--marker-green); font-weight: 600; }
+.score-down { color: var(--marker-red); font-weight: 600; }
+.chain-cell {
+  max-width: 200px;
+}
+.chain-tag {
+  display: inline-block;
+  background: var(--paper-2);
+  border: 1px solid var(--graph-major);
+  border-radius: 3px;
+  padding: 1px 6px;
+  margin: 1px 2px;
+  font-size: 11px;
+  color: var(--ink-soft);
+  white-space: nowrap;
+}
+.mini-btn {
+  background: var(--paper);
+  border: 1.5px solid var(--ink-soft);
+  border-radius: 3px;
+  padding: 2px 10px;
+  font-family: inherit;
+  font-size: 12px;
+  cursor: pointer;
+  color: var(--ink);
+}
+.mini-btn:hover {
+  background: var(--hi-orange);
+}
+
+/* ── Detail bar (per-strategy breakdown) ── */
+.signal-detail-bar {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 8px 0 16px;
+}
+.detail-row {
+  display: grid;
+  grid-template-columns: 100px 1fr 40px;
+  align-items: center;
+  gap: 10px;
+}
+.detail-label {
+  font-size: 13px;
+  color: var(--ink-soft);
+}
+.detail-track {
+  position: relative;
+  height: 14px;
+  background: var(--graph);
+  border-radius: 3px;
+  overflow: hidden;
+}
+.detail-midline {
+  position: absolute;
+  left: 50%;
+  top: 0; bottom: 0;
+  width: 1px;
+  background: var(--graph-major);
+}
+.detail-fill {
+  position: absolute;
+  height: 100%;
+  opacity: 0.75;
+}
+.detail-val {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  text-align: right;
+  color: var(--pencil);
+}
+
+.section-subhead {
+  margin: 16px 0 6px;
+  font-size: 14px;
+  color: var(--ink);
+  font-weight: 600;
+  border-bottom: 1px dashed var(--graph-major);
+  padding-bottom: 4px;
+}
+.chain-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+/* ── Equity sparkline ── */
+.equity-svg {
+  display: block;
+  margin: 8px auto;
+  max-width: 100%;
+  height: auto;
+}
+.backtest-meta {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px dashed var(--graph-major);
+  font-size: 12px;
+  color: var(--pencil);
+  line-height: 1.6;
+}
+
+.empty-pad {
+  padding: 24px;
+  text-align: center;
+  color: var(--pencil);
+  font-size: 14px;
+}
+.empty-pad.error { color: var(--marker-red); }
+
+/* ── Equity sparkline trade markers ── */
+.marker-legend {
+  display: flex;
+  gap: 18px;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-top: 4px;
+  font-size: 12px;
+  color: var(--pencil);
+}
+.marker-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.legend-mark {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+}
+
+/* ── Equity sparkline: clickable wrapper + zoom hint ── */
+.equity-spark-wrap {
+  cursor: zoom-in;
+  position: relative;
+  border: 1px dashed transparent;
+  border-radius: 4px;
+  transition: border-color 0.15s;
+}
+.equity-spark-wrap:hover {
+  border-color: var(--graph-major);
+}
+.equity-spark-wrap:focus-visible {
+  outline: 2px solid var(--ink-soft);
+  outline-offset: 2px;
+}
+.equity-zoom-hint {
+  text-align: center;
+  font-size: 11px;
+  color: var(--pencil);
+  margin-top: 2px;
+  opacity: 0.7;
+}
+.equity-spark-wrap:hover .equity-zoom-hint {
+  opacity: 1;
+  color: var(--ink-soft);
+}
+
+/* ── Zoomable modal ── */
+.equity-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(26, 43, 74, 0.55);
+  backdrop-filter: blur(2px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 24px;
+}
+.equity-modal-panel {
+  background: var(--paper);
+  border: 2.5px solid var(--ink);
+  border-radius: 8px;
+  box-shadow: 0 12px 48px rgba(0, 0, 0, 0.3);
+  max-width: 95vw;
+  max-height: 95vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.equity-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px;
+  border-bottom: 1.5px solid var(--graph-major);
+  background: var(--paper-2);
+}
+.equity-modal-title {
+  font-weight: 600;
+  font-size: 15px;
+  color: var(--ink);
+}
+.equity-modal-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.equity-zoom-pct {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  color: var(--pencil);
+  min-width: 42px;
+  text-align: right;
+}
+.equity-close {
+  border-color: var(--marker-red);
+  color: var(--marker-red);
+}
+.equity-close:hover {
+  background: var(--marker-red-soft);
+}
+.equity-modal-canvas {
+  /* The big SVG canvas lives inside; CSS transform handles zoom/pan.
+     overflow:hidden so panning doesn't spill. Cursor changes to grab/grabbing. */
+  overflow: hidden;
+  cursor: grab;
+  width: min(90vw, 2200px);
+  height: min(72vh, 640px);
+  background: var(--paper);
+  /* Subtle grid so panning is perceptible. */
+  background-image:
+    linear-gradient(var(--graph) 1px, transparent 1px),
+    linear-gradient(90deg, var(--graph) 1px, transparent 1px);
+  background-size: 40px 40px;
+  touch-action: none;  /* let pointer events drive, not browser gestures */
+}
+.equity-modal-canvas:active {
+  cursor: grabbing;
+}
+.equity-modal-transform {
+  /* The SVG is rendered at BASE_W × BASE_H and scaled here. */
+  transform-origin: 0 0;
+  will-change: transform;
+}
+.equity-modal-transform .equity-svg {
+  display: block;
+}
+.equity-modal-tip {
+  margin-left: auto;
+  font-size: 11px;
+  color: var(--pencil);
+  font-style: italic;
+}

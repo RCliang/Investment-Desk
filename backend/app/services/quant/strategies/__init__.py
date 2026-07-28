@@ -13,6 +13,7 @@ canonical composition.
 
 from .base import Strategy, StrategyCategory
 from .trend_ma import TrendMA
+from .trend_breakout import TrendBreakout
 from .breakout_donchian import BreakoutDonchian
 from .momentum_macd import MomentumMACD
 from .momentum_rsi import MomentumRSI
@@ -21,7 +22,7 @@ from .risk_atr import RiskATR
 
 __all__ = [
     "Strategy", "StrategyCategory",
-    "TrendMA", "BreakoutDonchian",
+    "TrendMA", "TrendBreakout", "BreakoutDonchian",
     "MomentumMACD", "MomentumRSI",
     "VolumePrice", "RiskATR",
 ]

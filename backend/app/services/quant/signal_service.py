@@ -81,7 +81,7 @@ def scan_all(db: Session, strategy_set: str = "v1_default",
     if target_date is None:
         target_date = _latest_bar_date(db)
 
-    card = scoring.DEFAULT_CARD  # v1_default; future: registry by strategy_set
+    card = scoring.get_card(strategy_set)  # v1_default or trend_follow
 
     # All tickers that have bars.
     tickers = [r[0] for r in db.execute(

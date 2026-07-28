@@ -430,6 +430,8 @@ class BacktestRun(Base):
     strategy_set = Column(String(32), nullable=False, default="v1_default")
     start_date = Column(Date, nullable=False)
     end_date = Column(Date, nullable=False)
+    initial_capital = Column(Float)                                 # 初始资金
+    final_equity = Column(Float)                                    # 终值
     total_return_pct = Column(Float)                                # 总收益%
     annual_return_pct = Column(Float)                               # 年化%
     max_drawdown_pct = Column(Float)                                # 最大回撤%

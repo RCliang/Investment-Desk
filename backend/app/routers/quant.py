@@ -32,23 +32,13 @@ router = APIRouter(prefix="/api/quant", tags=["quant"])
 
 @router.get("/strategies")
 def list_strategies():
-    """List the v1_default scorecard: strategies, categories, weights, thresholds."""
-    card = scoring.DEFAULT_CARD
-    items = []
-    for s in card.strategies:
-        items.append({
-            "name": s.name,
-            "category": s.category,
-            "weight": s.weight,
-            "normalized_weight": round(getattr(s, "_normalized_weight", 0.0), 4),
-        })
-    return {
-        "strategy_set": "v1_default",
-        "category_weights": {k: round(v, 3) for k, v in card.category_weights.items()},
-        "buy_threshold": card.buy_threshold,
-        "sell_threshold": card.sell_threshold,
-        "strategies": items,
-    }
+    """List all available strategy sets with their weights and thresholds.
+
+    Returns a catalog (v1_default multi-factor + trend_follow pure trend) so
+    the frontend can show a strategy-set picker. Each set's `strategies` list
+    shows the active factors and weights.
+    """
+    return {"strategy_sets": scoring.list_strategy_sets()}
 
 
 # ── Signal queries ─────────────────────────────────────────────────────────
@@ -115,9 +105,14 @@ class BacktestRequest(BaseModel):
 def run_backtest(
     req: BacktestRequest,
     db: Session = Depends(get_db),
-    _: None = Depends(verify_admin_token),
 ):
-    """Run a backtest for one ticker. Admin-gated (heavy compute).
+    """Run a backtest for one ticker.
+
+    NOT admin-gated: a backtest is a pure read-only compute (reads bars,
+    writes only its own result row). Unlike /scan (full-market batch write)
+    or /refresh (expensive backfill subprocess), it's cheap and safe to
+    expose — the whole point of the panel is letting anyone explore how a
+    strategy would have performed on a given ticker.
 
     Stores the result in chain_backtest_runs and returns the run summary.
     Fetch full equity curve / trades via GET /backtest/{run_id}.

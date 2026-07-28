@@ -1,20 +1,25 @@
 /** Types for the quant signal + backtest pipeline (backend /api/quant/*). */
 
-/** One strategy in the v1_default scorecard. */
+/** One strategy in a scorecard. */
 export interface StrategyDef {
-  name: string;           // trend_ma | breakout_donchian | momentum_macd | ...
+  name: string;           // trend_ma | trend_breakout | breakout_donchian | ...
   category: 'trend' | 'momentum' | 'volume' | 'risk';
   weight: number;         // within-category weight
-  normalized_weight: number;  // weight × category_weight, summing to ~1.0
+  normalized_weight?: number;  // weight × category_weight (v1_default only)
 }
 
-/** Strategy catalog + thresholds. */
-export interface StrategiesResponse {
+/** One strategy set (e.g. v1_default, trend_follow). */
+export interface StrategySet {
   strategy_set: string;
   category_weights: Record<string, number>;
   buy_threshold: number;
   sell_threshold: number;
   strategies: StrategyDef[];
+}
+
+/** Strategy catalog response: a list of available strategy sets. */
+export interface StrategiesResponse {
+  strategy_sets: StrategySet[];
 }
 
 /** Per-strategy score breakdown for a single day. */
@@ -112,7 +117,7 @@ export interface BacktestTrade {
   pnl: number;
   pnl_pct: number;
   hold_days: number;
-  exit_reason: 'signal' | 'stop_loss' | 'end';
+  exit_reason: 'signal' | 'stop_loss' | 'trailing_stop' | 'end';
 }
 
 /** Full backtest detail (returned by GET /backtest/:id). */
