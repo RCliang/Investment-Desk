@@ -445,6 +445,36 @@ class BacktestRun(Base):
     created_at = Column(DateTime, nullable=False, server_default=func.now())
 
 
+class MfSignal(Base):
+    """Multi-factor cross-sectional signal — daily portfolio recommendation.
+
+    Unlike Signal (per-ticker BUY/SELL/HOLD), MfSignal stores one row per
+    (date, ticker) ranked by the composite score from the cross-sectional
+    multi-factor engine. The top-N ranked stocks form the recommended
+    portfolio; the rest provide context for the full ranking.
+
+    Regenerated each scan (idempotent upsert on ticker+date). A scheduled
+    job runs after the daily-bar refresh to keep this current.
+    """
+    __tablename__ = "chain_mf_signals"
+    __table_args__ = (
+        UniqueConstraint("ticker", "date", name="uq_mf_signal"),
+        Index("ix_mf_signal_date_rank", "date", "rank"),
+    )
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    ticker = Column(String(16), nullable=False, index=True)
+    date = Column(Date, nullable=False, index=True)                 # 信号日期
+    rank = Column(Integer, nullable=False)                          # 截面排名 (1=最优)
+    composite_score = Column(Float, nullable=False)                 # 综合评分 [0,1]
+    is_selected = Column(Boolean, default=False, index=True)        # 是否入选Top-N组合
+    weight = Column(Float, default=0.0)                             # 建议权重 (入选时>0)
+    factor_scores_json = Column(Text, default="")                  # 各因子分项明细
+    ic_summary_json = Column(Text, default="")                     # IC统计快照
+    config_json = Column(Text, default="")                         # 策略配置快照
+    created_at = Column(DateTime, nullable=False, server_default=func.now())
+
+
 __all__ = [
     # Static entities
     "Layer", "SubIndustry", "Company", "Concept",
@@ -456,7 +486,7 @@ __all__ = [
     # Refresh log
     "ChainRefreshLog",
     # Quant
-    "DailyBar", "Signal", "BacktestRun",
+    "DailyBar", "Signal", "BacktestRun", "MfSignal",
     # Constants
     "LIFECYCLE_CANONICAL", "LIFECYCLE_GENERATED", "LIFECYCLE_DEPRECATED",
 ]

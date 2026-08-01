@@ -51,6 +51,11 @@ _QUOTES_HISTORY_TRIGGER = CronTrigger(day_of_week="mon-fri", hour="16", minute="
 # all signals so the /api/quant/signals endpoint is fresh next morning.
 _SIGNAL_SCAN_TRIGGER = CronTrigger(day_of_week="mon-fri", hour="17", minute="00",
                                    timezone="Asia/Shanghai")
+# Multi-factor cross-sectional scan: runs after the per-ticker scan,
+# generates the daily Top-20 portfolio recommendation with IC-adaptive
+# weighting + market-cap neutralization. ~15s on 200 tickers.
+_MF_SCAN_TRIGGER = CronTrigger(day_of_week="mon-fri", hour="17", minute="30",
+                               timezone="Asia/Shanghai")
 _FINANCE_TRIGGER = CronTrigger(day_of_week="sun", hour="3",
                                timezone="Asia/Shanghai")
 _REPORTS_TRIGGER = CronTrigger(day_of_week="sun", hour="4",
@@ -87,6 +92,25 @@ def _run_signal_scan() -> None:
         log.info("scheduled signal scan: %s", result)
     except Exception:
         log.exception("scheduled signal scan failed")
+    finally:
+        session.close()
+
+
+def _run_mf_scan() -> None:
+    """Job wrapper: run the multi-factor cross-sectional scan.
+
+    Generates the daily Top-N portfolio recommendation using the
+    trend-following multi-factor model (IC-adaptive weighting +
+    market-cap neutralization). Results stored in chain_mf_signals.
+    """
+    session = SessionLocal()
+    try:
+        from app.services.quant import mf_signal_service
+        result = mf_signal_service.scan_mf_signals(session)
+        log.info("scheduled MF scan: date=%s, selected=%d, %.1fs",
+                 result["date"], result["selected"], result["elapsed_s"])
+    except Exception:
+        log.exception("scheduled MF scan failed")
     finally:
         session.close()
 
@@ -133,6 +157,12 @@ def start_scheduler() -> None:
     _scheduler.add_job(
         _run_signal_scan, _SIGNAL_SCAN_TRIGGER,
         id="signal_scan", replace_existing=True,
+    )
+
+    # Multi-factor cross-sectional scan (Top-N portfolio recommendation).
+    _scheduler.add_job(
+        _run_mf_scan, _MF_SCAN_TRIGGER,
+        id="mf_scan", replace_existing=True,
     )
 
     _scheduler.start()

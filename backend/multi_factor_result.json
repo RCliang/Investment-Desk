@@ -1,0 +1,184 @@
+{
+  "summary": {
+    "total_return_pct": 99.38,
+    "annual_return_pct": 32.99,
+    "max_drawdown_pct": 35.1,
+    "sharpe_ratio": 0.851,
+    "hit_rate_pct": 50.7,
+    "rebalance_count": 31,
+    "avg_turnover_pct": 5.5
+  },
+  "ic_summary": {
+    "price_momentum_20": {
+      "ic_mean": 0.1011,
+      "icir": 0.4033,
+      "ic_pct_positive": 0.7333
+    },
+    "price_momentum_60": {
+      "ic_mean": 0.1021,
+      "icir": 0.38,
+      "ic_pct_positive": 0.7833
+    },
+    "trend_slope": {
+      "ic_mean": 0.1232,
+      "icir": 0.4897,
+      "ic_pct_positive": 0.7167
+    },
+    "multi_ma_align": {
+      "ic_mean": 0.1437,
+      "icir": 0.4832,
+      "ic_pct_positive": 0.7833
+    },
+    "breakout_strength": {
+      "ic_mean": 0.0799,
+      "icir": 0.3069,
+      "ic_pct_positive": 0.6833
+    },
+    "volume_momentum": {
+      "ic_mean": 0.0762,
+      "icir": 0.3027,
+      "ic_pct_positive": 0.7333
+    },
+    "trend_consistency": {
+      "ic_mean": 0.0821,
+      "icir": 0.3586,
+      "ic_pct_positive": 0.7333
+    }
+  },
+  "config": {
+    "holding_period": 20,
+    "top_n": 20,
+    "max_weight": 0.1,
+    "ic_window": 60,
+    "weighting_method": "icir",
+    "factors": [
+      "price_momentum_20",
+      "price_momentum_60",
+      "trend_slope",
+      "multi_ma_align",
+      "breakout_strength",
+      "volume_momentum",
+      "trend_consistency"
+    ]
+  },
+  "rebalance_dates": [
+    "2024-01-17",
+    "2024-02-22",
+    "2024-03-21",
+    "2024-04-22",
+    "2024-05-23",
+    "2024-06-21",
+    "2024-07-19",
+    "2024-08-16",
+    "2024-09-13",
+    "2024-10-22",
+    "2024-11-19",
+    "2024-12-17",
+    "2025-01-15",
+    "2025-02-20",
+    "2025-03-20",
+    "2025-04-18",
+    "2025-05-21",
+    "2025-06-19",
+    "2025-07-17",
+    "2025-08-14",
+    "2025-09-11",
+    "2025-10-17",
+    "2025-11-14",
+    "2025-12-12",
+    "2026-01-13",
+    "2026-02-10",
+    "2026-03-18",
+    "2026-04-16",
+    "2026-05-19",
+    "2026-06-16",
+    "2026-07-15"
+  ],
+  "last_portfolio": {
+    "date": "2026-07-15",
+    "holdings": [
+      {
+        "ticker": "688505",
+        "weight": 0.05
+      },
+      {
+        "ticker": "300759",
+        "weight": 0.05
+      },
+      {
+        "ticker": "002841",
+        "weight": 0.05
+      },
+      {
+        "ticker": "002422",
+        "weight": 0.05
+      },
+      {
+        "ticker": "300990",
+        "weight": 0.05
+      },
+      {
+        "ticker": "688206",
+        "weight": 0.05
+      },
+      {
+        "ticker": "688120",
+        "weight": 0.05
+      },
+      {
+        "ticker": "688123",
+        "weight": 0.05
+      },
+      {
+        "ticker": "600521",
+        "weight": 0.05
+      },
+      {
+        "ticker": "301165",
+        "weight": 0.05
+      },
+      {
+        "ticker": "688802",
+        "weight": 0.05
+      },
+      {
+        "ticker": "002185",
+        "weight": 0.05
+      },
+      {
+        "ticker": "603893",
+        "weight": 0.05
+      },
+      {
+        "ticker": "000977",
+        "weight": 0.05
+      },
+      {
+        "ticker": "688766",
+        "weight": 0.05
+      },
+      {
+        "ticker": "688702",
+        "weight": 0.05
+      },
+      {
+        "ticker": "000938",
+        "weight": 0.05
+      },
+      {
+        "ticker": "002156",
+        "weight": 0.05
+      },
+      {
+        "ticker": "300369",
+        "weight": 0.05
+      },
+      {
+        "ticker": "300223",
+        "weight": 0.05
+      }
+    ],
+    "turnover_pct": 4.95,
+    "n_stocks": 20
+  }
+}
