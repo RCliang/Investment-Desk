@@ -13,6 +13,11 @@ from .trend_factors import (
     VolumeMomentum,
     TrendConsistency,
 )
+from .fund_flow_factors import (
+    MainInflowMomentum20,
+    MainInflowPersistence,
+    MainInflowAcceleration,
+)
 
 __all__ = [
     "Factor",
@@ -25,4 +30,7 @@ __all__ = [
     "BreakoutStrength",
     "VolumeMomentum",
     "TrendConsistency",
+    "MainInflowMomentum20",
+    "MainInflowPersistence",
+    "MainInflowAcceleration",
 ]

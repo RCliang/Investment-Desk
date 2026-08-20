@@ -270,11 +270,118 @@ def get_mf_ranking_history(
     """Get a ticker's multi-factor ranking history.
 
     Shows how the stock's rank and composite score evolved over time —
-    useful for tracking if a stock is improving or deteriorating in
-    the model's assessment.
+    useful for tracking if a stock is improving or deteriorating in the
+    model's assessment.
     """
     from app.services.quant import mf_signal_service
     history = mf_signal_service.get_ranking_history(db, ticker, days=days)
     if not history:
         raise HTTPException(404, f"No MF signal history for '{ticker}'")
     return {"ticker": ticker, "history": history}
+
+
+# ── Sector Rotation (板块轮动中期趋势策略) ────────────────────────────────────
+
+@router.get("/rotation/sectors")
+def get_rotation_sectors(db: Session = Depends(get_db)):
+    """Latest sector strength snapshot (8 pool sectors).
+
+    Returns each sector's composite strength [0,1], the fund-flow and
+    technical dimensional ranks behind it, member count, and whether the
+    sector is in today's Top-K rotation portfolio.
+    """
+    from app.services.quant import rotation_service
+    return rotation_service.get_latest_sector_scores(db)
+
+
+@router.get("/rotation/sector-history")
+def get_rotation_sector_history(
+    days: int = Query(30, ge=1, le=180, description="回看天数"),
+    db: Session = Depends(get_db),
+):
+    """Sector strength evolution over the last N days (for the heatmap)."""
+    from app.services.quant import rotation_service
+    return rotation_service.get_sector_history(db, days=days)
+
+
+@router.get("/rotation/portfolio")
+def get_rotation_portfolio(db: Session = Depends(get_db)):
+    """Latest recommended rotation portfolio (Top-K sectors × Top-N stocks).
+
+    Includes per-holding factor scores, entry confirmation (bullish MA
+    alignment), divergence warning, and the reference hard-stop level.
+    """
+    from app.services.quant import rotation_service
+    return rotation_service.get_latest_portfolio(db)
+
+
+@router.get("/rotation/rankings")
+def get_rotation_rankings(
+    sector: Optional[str] = Query(None, description="板块名, 缺省=全部"),
+    db: Session = Depends(get_db),
+):
+    """Full in-sector rankings for the latest date (whole pool)."""
+    from app.services.quant import rotation_service
+    return rotation_service.get_rotation_rankings(db, sector=sector)
+
+
+@router.post("/rotation/scan")
+def trigger_rotation_scan(
+    top_k: int = Query(3, ge=1, le=8),
+    top_n_per_sector: int = Query(2, ge=1, le=5),
+    db: Session = Depends(get_db),
+    _: None = Depends(verify_admin_token),
+):
+    """Run the rotation scan NOW (admin-gated).
+
+    Normally triggered by the scheduler at 17:40 on trading days. Persists
+    chain_sector_scores + chain_rotation_signals for the latest bar date.
+    """
+    from app.services.quant import rotation_service
+    try:
+        return rotation_service.scan_rotation_signals(
+            db, top_k=top_k, top_n_per_sector=top_n_per_sector)
+    except ValueError as e:
+        raise HTTPException(400, str(e))
+
+
+class RotationBacktestRequest(BaseModel):
+    """Request body for the sector-rotation portfolio backtest."""
+    start_date: Optional[date] = None
+    end_date: Optional[date] = None
+    initial_capital: float = Field(1e6, gt=0, description="初始资金(元)")
+    holding_period: int = Field(20, ge=5, le=60, description="调仓周期(交易日)")
+    top_k: int = Field(3, ge=1, le=8, description="持仓板块数")
+    top_n_per_sector: int = Field(2, ge=1, le=5, description="每板块持仓股票数")
+    max_weight: float = Field(0.20, gt=0, le=0.40, description="单只最大权重")
+    use_fund_flow_factors: bool = Field(
+        True, description="false=纯技术面骨架(长历史) / true=含主力资金流因子")
+
+
+@router.post("/rotation/backtest")
+def run_rotation_backtest(
+    req: RotationBacktestRequest,
+    db: Session = Depends(get_db),
+):
+    """Run the sector-rotation portfolio backtest.
+
+    Not admin-gated (read-only compute like /multi-factor/backtest):
+    loads pool bars + fund flow, runs the 3-layer engine with daily trend
+    exits, simulates with A-share costs, and benchmarks against the
+    pool equal-weight index. Full curve/trades via GET /backtest/{run_id}.
+    """
+    from app.services.quant import rotation_backtest
+    try:
+        return rotation_backtest.run_and_store(
+            db,
+            start_date=req.start_date,
+            end_date=req.end_date,
+            initial_capital=req.initial_capital,
+            holding_period=req.holding_period,
+            top_k=req.top_k,
+            top_n_per_sector=req.top_n_per_sector,
+            max_weight=req.max_weight,
+            use_fund_flow_factors=req.use_fund_flow_factors,
+        )
+    except ValueError as e:
+        raise HTTPException(400, str(e))

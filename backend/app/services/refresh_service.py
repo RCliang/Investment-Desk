@@ -39,7 +39,7 @@ SCRIPTS_DIR = BACKEND_DIR / "scripts"
 
 RefreshType = Literal[
     "quotes", "finance", "reports", "concepts",
-    "lockup", "holders", "margin", "quotes_history", "all",
+    "lockup", "holders", "margin", "quotes_history", "fund_flow", "all",
 ]
 Trigger = Literal["manual", "scheduler", "cli"]
 
@@ -56,6 +56,7 @@ _TYPE_MAP: dict[str, tuple[str, str, list[str]]] = {
     "holders":        ("backfill_em_holder_num.py",      "load_holder_num",  []),
     "margin":         ("backfill_em_margin_trading.py",  "load_margin",      []),
     "quotes_history": ("backfill_mootdx_klines.py",      "load_daily_bars",  ["--incremental"]),
+    "fund_flow":      ("backfill_em_fund_flow.py",       "load_fund_flow",   ["--incremental"]),
 }
 
 # Per-type subprocess timeout (seconds). Generous upper bound; scripts
@@ -65,6 +66,8 @@ _TIMEOUTS: dict[str, int] = {
     "lockup": 900, "holders": 900, "margin": 900,
     # mootdx TCP, 321 tickers × 1 page each, ~0.1s gap = ~40s + overhead.
     "quotes_history": 300,
+    # push2his, ~70 pool tickers × 1.7s throttle = ~2 min + retries.
+    "fund_flow": 600,
 }
 
 
@@ -270,6 +273,14 @@ def refresh_quotes_history(session: Session, trigger: Trigger = "manual") -> Cha
     """
     return _run_one(session, "quotes_history", trigger)
 
+def refresh_fund_flow(session: Session, trigger: Trigger = "manual") -> ChainRefreshLog:
+    """Incremental fund-flow refresh via EM push2his (--incremental flag).
+
+    Only fetches the last ~5 days per pool ticker; the 120-day history is
+    a one-off full backfill via `python scripts/backfill_em_fund_flow.py`.
+    """
+    return _run_one(session, "fund_flow", trigger)
+
 def refresh_all(session: Session, trigger: Trigger = "manual") -> list[ChainRefreshLog]:
     """Sequentially run all refreshes in order: fast → slow.
 
@@ -300,6 +311,7 @@ _REFRESH_FUNCTIONS = {
     "holders": refresh_holders,
     "margin": refresh_margin,
     "quotes_history": refresh_quotes_history,
+    "fund_flow": refresh_fund_flow,
     "all": refresh_all,
 }
 

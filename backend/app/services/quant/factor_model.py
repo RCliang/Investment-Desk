@@ -181,6 +181,22 @@ class MultiFactorEngine:
         the rank-normalized panels. Result is a composite panel ∈ [0, 1].
 
         Dates before the IC warmup period use equal weights.
+
+        Two robustness properties:
+
+        1. NaN-aware per-stock renormalization: a factor that is NaN for a
+           stock (e.g. fund-flow factors before the backfill history start)
+           is dropped from THAT stock's weighted average instead of
+           poisoning the whole row — the denominator only sums weights of
+           factors the stock actually has. With no missing values this is
+           identical to the plain weighted mean.
+
+        2. IC lag: rolling IC stats at date x fold in forward returns up to
+           x + holding_period (ic_analysis.forward_returns_panel), so reading
+           them AT the rebalance date leaks future information into the
+           factor weights. We shift each stats panel back by `holding_period`
+           rows so the weights used on date dt are built only from ICs whose
+           forward windows have fully realized (≤ dt).
         """
         all_dates = sorted(set().union(*(p.index for p in factor_panels.values())))
         composite = pd.DataFrame(
@@ -189,21 +205,31 @@ class MultiFactorEngine:
             columns=next(iter(factor_panels.values())).columns,
         )
 
+        lagged_stats = {
+            name: stats.shift(self.holding_period)
+            for name, stats in ic_stats.items()
+        }
+
         for dt in all_dates:
             weights = ic_analysis.adaptive_factor_weights(
-                ic_stats, dt, method=self.weighting_method,
+                lagged_stats, dt, method=self.weighting_method,
             )
-            row = pd.Series(0.0, index=composite.columns)
-            weight_sum = 0.0
+            num = pd.Series(0.0, index=composite.columns)
+            den = pd.Series(0.0, index=composite.columns)
             for name, panel in factor_panels.items():
                 w = weights.get(name, 0)
                 if w == 0 or dt not in panel.index:
                     continue
                 vals = panel.loc[dt]
-                row = row.add(vals * w, fill_value=0)
-                weight_sum += w
-            if weight_sum > 0:
-                composite.loc[dt] = row / weight_sum
+                mask = vals.notna()
+                num = num.add(vals.where(mask, 0.0) * w, fill_value=0)
+                den = den.add(
+                    pd.Series(w, index=composite.columns).where(mask, 0.0),
+                    fill_value=0,
+                )
+            with np.errstate(divide="ignore", invalid="ignore"):
+                row = num / den.where(den > 0)
+            composite.loc[dt] = row
 
         return composite
 

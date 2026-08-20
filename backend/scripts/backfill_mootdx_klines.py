@@ -185,13 +185,25 @@ def main():
                     help="Only fetch the latest bar per ticker (daily refresh)")
     ap.add_argument("--limit", type=int, default=None,
                     help="Cap number of tickers (for smoke testing)")
+    ap.add_argument("--pool", action="store_true",
+                    help="Use the sector-rotation pool (data/sector_pool.json) "
+                         "instead of the aichainmap seed")
     args = ap.parse_args()
 
-    if not SEED_PATH.exists():
-        raise SystemExit(f"seed not found: {SEED_PATH}")
-
-    seed = json.loads(SEED_PATH.read_text(encoding="utf-8"))
-    tickers = collect_cn_tickers(seed)
+    if args.pool:
+        # Sector-rotation universe (hard-constrained pool). Lives inside
+        # the quant package (tracked config), not in gitignored data/.
+        pool_path = Path(__file__).resolve().parent.parent / "app" / "services" / "quant" / "sector_pool.json"
+        pool = json.loads(pool_path.read_text(encoding="utf-8"))
+        tickers: dict[str, str] = {}
+        for cfg in pool.values():
+            for t, name in cfg["stocks"]:
+                tickers.setdefault(t, name)
+    else:
+        if not SEED_PATH.exists():
+            raise SystemExit(f"seed not found: {SEED_PATH}")
+        seed = json.loads(SEED_PATH.read_text(encoding="utf-8"))
+        tickers = collect_cn_tickers(seed)
     if args.limit:
         # Deterministic slice for reproducible smoke tests.
         items = list(tickers.items())[: args.limit]

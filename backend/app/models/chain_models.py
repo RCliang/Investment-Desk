@@ -475,6 +475,92 @@ class MfSignal(Base):
     created_at = Column(DateTime, nullable=False, server_default=func.now())
 
 
+# ── Quant: sector-rotation strategy (板块轮动) ─────────────────────────────
+
+class FundFlowDaily(Base):
+    """Daily per-ticker fund flow (主力资金) from EM push2his.
+
+    Source: scripts/backfill_em_fund_flow.py (a-stock-data skill §4.5).
+    All monetary fields in 元 (yuan). History limited to ~120 trading days
+    at source; grows +1 row/ticker/day via the 16:40 incremental refresh.
+
+    main_net = super_net + large_net (东财"主力"定义: 超大单+大单).
+    """
+    __tablename__ = "chain_fund_flow_daily"
+    __table_args__ = (
+        UniqueConstraint("ticker", "date", name="uq_fund_flow_daily"),
+        Index("ix_fund_flow_ticker_date", "ticker", "date"),
+    )
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    ticker = Column(String(16), nullable=False, index=True)
+    date = Column(Date, nullable=False)
+    main_net = Column(Float)                                          # 主力净流入 (元)
+    super_net = Column(Float)                                         # 超大单净流入 (元)
+    large_net = Column(Float)                                         # 大单净流入 (元)
+    mid_net = Column(Float)                                           # 中单净流入 (元)
+    small_net = Column(Float)                                         # 小单净流入 (元)
+    close_price = Column(Float)
+    change_pct = Column(Float)
+    fetched_at = Column(DateTime, nullable=False, server_default=func.now())
+    source = Column(String(32), default="eastmoney")
+
+
+class SectorScore(Base):
+    """Daily sector strength snapshot from the rotation engine.
+
+    One row per (date, sector). strength ∈ [0,1] is the 50/50 blend of
+    flow_dim (主力维: sector-aggregated main_net/amount, 20d smoothed,
+    cross-sector rank) and tech_dim (技术维: bullish-MA member share +
+    sector-index 20d momentum, cross-sector rank).
+    """
+    __tablename__ = "chain_sector_scores"
+    __table_args__ = (
+        UniqueConstraint("date", "sector", name="uq_sector_score"),
+        Index("ix_sector_score_date", "date"),
+    )
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    date = Column(Date, nullable=False, index=True)
+    sector = Column(String(32), nullable=False)
+    strength = Column(Float, nullable=False)                          # 合成强度 [0,1]
+    flow_dim = Column(Float)                                          # 主力维 rank [0,1]
+    tech_dim = Column(Float)                                          # 技术维 rank [0,1]
+    member_count = Column(Integer)
+    is_selected = Column(Boolean, default=False, index=True)          # 当日 Top-K
+    detail_json = Column(Text, default="")                            # 原始均值/动量等明细
+    created_at = Column(DateTime, nullable=False, server_default=func.now())
+
+
+class RotationSignal(Base):
+    """Daily per-ticker rotation signal for the pool universe.
+
+    One row per (date, ticker) for every pool stock (selected or not) so
+    the frontend can show full in-sector rankings. Selected rows carry the
+    recommended weight plus risk levels from the trend-follow exit rules.
+    """
+    __tablename__ = "chain_rotation_signals"
+    __table_args__ = (
+        UniqueConstraint("date", "ticker", name="uq_rotation_signal"),
+        Index("ix_rotation_date_sel", "date", "is_selected"),
+    )
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    date = Column(Date, nullable=False, index=True)
+    ticker = Column(String(16), nullable=False, index=True)
+    sector = Column(String(32), nullable=False)
+    rank_in_sector = Column(Integer)                                  # 板块内综合分排名 (1=最优)
+    composite_score = Column(Float)                                  # 多因子综合分 [0,1]
+    is_selected = Column(Boolean, default=False, index=True)
+    weight = Column(Float, default=0.0)                              # 建议权重
+    entry_ok = Column(Boolean, default=False)                         # 多头排列入场确认
+    divergence_flag = Column(Boolean, default=False)                  # 价创新高但主力净流出
+    stop_loss_price = Column(Float)                                   # 硬止损 = 现价×0.9
+    trail_stop_price = Column(Float)                                  # 移动止盈参考位
+    factor_scores_json = Column(Text, default="")
+    created_at = Column(DateTime, nullable=False, server_default=func.now())
+
+
 __all__ = [
     # Static entities
     "Layer", "SubIndustry", "Company", "Concept",
@@ -482,11 +568,12 @@ __all__ = [
     "SubIndustryCompany", "CompanyConcept",
     # Time-series
     "Quote", "FinanceSnapshot", "LockupEvent", "HolderPeriod",
-    "MarginDaily", "ResearchReport",
+    "MarginDaily", "ResearchReport", "FundFlowDaily",
     # Refresh log
     "ChainRefreshLog",
     # Quant
     "DailyBar", "Signal", "BacktestRun", "MfSignal",
+    "SectorScore", "RotationSignal",
     # Constants
     "LIFECYCLE_CANONICAL", "LIFECYCLE_GENERATED", "LIFECYCLE_DEPRECATED",
 ]

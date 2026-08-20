@@ -51,6 +51,7 @@ from app.models.chain_models import (
     MarginDaily,
     ResearchReport,
     DailyBar,
+    FundFlowDaily,
     LIFECYCLE_CANONICAL,
 )
 
@@ -103,25 +104,36 @@ def _upsert_many(session, model, rows: list[dict], conflict_cols: list[str]) -> 
 
     Falls back to ON CONFLICT DO NOTHING when the row has no columns outside
     conflict_cols (pure junction tables).
+
+    Chunked by a host-parameter budget: this host's SQLite caps a single
+    statement at 999 bound params (some builds allow 32766 — budget for
+    the lowest). A 5000-row × 10-col batch would exceed it, so callers
+    may pass any batch size and we re-split here.
     """
     if not rows:
         return 0
-    stmt = sqlite_insert(model).values(rows)
-    update_cols = {
-        col: getattr(stmt.excluded, col)
-        for col in rows[0].keys()
-        if col not in conflict_cols
-    }
-    if update_cols:
-        stmt = stmt.on_conflict_do_update(
-            index_elements=conflict_cols,
-            set_=update_cols,
-        )
-    else:
-        # Pure junction table — nothing to update, just skip duplicates.
-        stmt = stmt.on_conflict_do_nothing(index_elements=conflict_cols)
-    session.execute(stmt)
-    return len(rows)
+    n_cols = len(rows[0])
+    chunk_size = max(1, 900 // max(n_cols, 1))
+    total = 0
+    for i in range(0, len(rows), chunk_size):
+        chunk = rows[i:i + chunk_size]
+        stmt = sqlite_insert(model).values(chunk)
+        update_cols = {
+            col: getattr(stmt.excluded, col)
+            for col in chunk[0].keys()
+            if col not in conflict_cols
+        }
+        if update_cols:
+            stmt = stmt.on_conflict_do_update(
+                index_elements=conflict_cols,
+                set_=update_cols,
+            )
+        else:
+            # Pure junction table — nothing to update, just skip duplicates.
+            stmt = stmt.on_conflict_do_nothing(index_elements=conflict_cols)
+        session.execute(stmt)
+        total += len(chunk)
+    return total
 
 
 def _count(session, model) -> int:
@@ -480,6 +492,31 @@ def load_margin(session) -> int:
                 "change_pct": d.get("change_pct"),
             })
     return _upsert_many(session, MarginDaily, rows, ["ticker", "date"])
+
+
+def load_fund_flow(session) -> int:
+    """backfill_em_fund_flow.json → FundFlowDaily.
+
+    Idempotent upsert on (ticker, date); the daily incremental just
+    refreshes/extends the latest rows. Skips zero-history tickers.
+    Per-ticker source (eastmoney | sina) travels into the row.
+    """
+    data = _load("backfill_em_fund_flow.json")
+    rows = []
+    for ticker, payload in data.get("tickers", {}).items():
+        source = payload.get("source") or "eastmoney"
+        for d in payload.get("history", []):
+            rows.append({
+                "ticker": ticker,
+                "date": _to_date(d.get("date")),
+                "main_net": _safe_float(d.get("main_net")),
+                "super_net": _safe_float(d.get("super_net")),
+                "large_net": _safe_float(d.get("large_net")),
+                "mid_net": _safe_float(d.get("mid_net")),
+                "small_net": _safe_float(d.get("small_net")),
+                "source": source,
+            })
+    return _upsert_many(session, FundFlowDaily, rows, ["ticker", "date"])
 
 
 def load_reports(session) -> int:

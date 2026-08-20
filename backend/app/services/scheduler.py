@@ -47,6 +47,10 @@ _MARGIN_TRIGGER = CronTrigger(day_of_week="mon-fri", hour="15", minute="30",
 # Only fetches today's bar per ticker via --incremental flag.
 _QUOTES_HISTORY_TRIGGER = CronTrigger(day_of_week="mon-fri", hour="16", minute="30",
                                       timezone="Asia/Shanghai")
+# Fund-flow incremental refresh (EM push2his, ~70 pool tickers × ~1.7s):
+# after the daily-bar refresh lands, before the signal scans consume it.
+_FUND_FLOW_TRIGGER = CronTrigger(day_of_week="mon-fri", hour="16", minute="40",
+                                 timezone="Asia/Shanghai")
 # Quant signal scan: 30 min after the daily-bar refresh lands, recompute
 # all signals so the /api/quant/signals endpoint is fresh next morning.
 _SIGNAL_SCAN_TRIGGER = CronTrigger(day_of_week="mon-fri", hour="17", minute="00",
@@ -56,6 +60,11 @@ _SIGNAL_SCAN_TRIGGER = CronTrigger(day_of_week="mon-fri", hour="17", minute="00"
 # weighting + market-cap neutralization. ~15s on 200 tickers.
 _MF_SCAN_TRIGGER = CronTrigger(day_of_week="mon-fri", hour="17", minute="30",
                                timezone="Asia/Shanghai")
+# Sector-rotation scan: after the multi-factor scan, computes sector
+# strength (fund-flow + technical) and the Top-K sectors × Top-N stocks
+# rotation portfolio for the pool universe.
+_ROTATION_SCAN_TRIGGER = CronTrigger(day_of_week="mon-fri", hour="17", minute="40",
+                                     timezone="Asia/Shanghai")
 _FINANCE_TRIGGER = CronTrigger(day_of_week="sun", hour="3",
                                timezone="Asia/Shanghai")
 _REPORTS_TRIGGER = CronTrigger(day_of_week="sun", hour="4",
@@ -115,6 +124,26 @@ def _run_mf_scan() -> None:
         session.close()
 
 
+def _run_rotation_scan() -> None:
+    """Job wrapper: run the sector-rotation scan.
+
+    Computes sector strength (fund-flow dim + technical dim) for the 8
+    pool sectors and persists the Top-K × Top-N rotation portfolio into
+    chain_sector_scores / chain_rotation_signals.
+    """
+    session = SessionLocal()
+    try:
+        from app.services.quant import rotation_service
+        result = rotation_service.scan_rotation_signals(session)
+        log.info("scheduled rotation scan: date=%s, sectors=%d, selected=%d, %.1fs",
+                 result["date"], result["sector_count"],
+                 result["selected"], result["elapsed_s"])
+    except Exception:
+        log.exception("scheduled rotation scan failed")
+    finally:
+        session.close()
+
+
 def start_scheduler() -> None:
     """Idempotent: safe to call multiple times."""
     global _scheduler
@@ -141,6 +170,7 @@ def start_scheduler() -> None:
     for type_name, trig in [
         ("margin",         _MARGIN_TRIGGER),
         ("quotes_history", _QUOTES_HISTORY_TRIGGER),
+        ("fund_flow",      _FUND_FLOW_TRIGGER),
         ("finance",        _FINANCE_TRIGGER),
         ("reports",        _REPORTS_TRIGGER),
         ("lockup",         _LOCKUP_TRIGGER),
@@ -163,6 +193,12 @@ def start_scheduler() -> None:
     _scheduler.add_job(
         _run_mf_scan, _MF_SCAN_TRIGGER,
         id="mf_scan", replace_existing=True,
+    )
+
+    # Sector-rotation scan (Top-K sectors × Top-N stocks portfolio).
+    _scheduler.add_job(
+        _run_rotation_scan, _ROTATION_SCAN_TRIGGER,
+        id="rotation_scan", replace_existing=True,
     )
 
     _scheduler.start()

@@ -384,3 +384,57 @@ export async function getBacktest(runId: number): Promise<BacktestDetail | null>
     throw err;
   }
 }
+
+// ── Sector rotation (/api/quant/rotation/*) ────────────────────────────
+
+import type {
+  SectorScoresResponse,
+  SectorHistoryResponse,
+  RotationPortfolioResponse,
+  RotationRankingsResponse,
+  RotationBacktestSummary,
+  RotationBacktestRequest,
+  RotationScanResult,
+} from '../types/rotation';
+
+export async function getRotationSectors(): Promise<SectorScoresResponse> {
+  const { data } = await api.get<SectorScoresResponse>('/api/quant/rotation/sectors');
+  return data;
+}
+
+export async function getRotationSectorHistory(days = 30): Promise<SectorHistoryResponse> {
+  const { data } = await api.get<SectorHistoryResponse>('/api/quant/rotation/sector-history', {
+    params: { days },
+  });
+  return data;
+}
+
+export async function getRotationPortfolio(): Promise<RotationPortfolioResponse> {
+  const { data } = await api.get<RotationPortfolioResponse>('/api/quant/rotation/portfolio');
+  return data;
+}
+
+export async function getRotationRankings(sector?: string): Promise<RotationRankingsResponse> {
+  const { data } = await api.get<RotationRankingsResponse>('/api/quant/rotation/rankings', {
+    params: sector ? { sector } : {},
+  });
+  return data;
+}
+
+export async function runRotationBacktest(
+  req: RotationBacktestRequest = {},
+): Promise<RotationBacktestSummary> {
+  const { data } = await api.post<RotationBacktestSummary>(
+    '/api/quant/rotation/backtest', req);
+  return data;
+}
+
+export async function triggerRotationScan(
+  topK = 3,
+  topNPerSector = 2,
+): Promise<RotationScanResult> {
+  const { data } = await api.post<RotationScanResult>('/api/quant/rotation/scan', null, {
+    params: { top_k: topK, top_n_per_sector: topNPerSector },
+  });
+  return data;
+}
