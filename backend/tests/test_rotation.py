@@ -249,6 +249,57 @@ class TestSectorStrength:
         div = compute_divergence_panel(bars)
         assert div.iloc[-1].any()
 
+    def test_atr_panel_constant_range(self):
+        """Constant daily high-low range ⇒ ATR == that range."""
+        from app.services.quant.sector_rotation import build_atr_panel
+        n = 40
+        df = make_bars(n=n, seed=6)
+        # Flatten closes FIRST, then derive a constant ±1 daily range from
+        # them (no gaps: TR == high - low == 2.0).
+        df["close"] = 100.0
+        df["open"] = 100.0
+        df["high"] = df["close"] + 1.0
+        df["low"] = df["close"] - 1.0
+        panel = build_atr_panel({"600000": df})
+        assert panel["600000"].iloc[-1] == pytest.approx(2.0, rel=1e-9)
+
+    def test_breakdown_buffer_suppresses_marginal_break(self):
+        """A close 2% under MA20 breaks v1 rules but not a 3%-buffered one."""
+        from app.services.quant.sector_rotation import build_breakdown_panel
+        n = 80
+        # Flat closes then a decisive drop: engineered so close sits just
+        # under MA20 on the last two days.
+        df = make_bars(n=n, seed=8)
+        df["close"] = 100.0
+        df["open"] = 100.0
+        df["high"] = 100.5
+        df["low"] = 99.5
+        # Drop 2%: close 98 < MA20(=100) → v1 breakdown, but 98 > 100×0.97
+        # → buffered (3%) does NOT trigger.
+        df.loc[n - 2:, "close"] = 98.0
+        df.loc[n - 2:, "high"] = 98.5
+        df.loc[n - 2:, "low"] = 97.5
+        bars = {"600000": df}
+        v1 = build_breakdown_panel(bars)
+        buffered = build_breakdown_panel(bars, buffer=0.03)
+        assert bool(v1["600000"].iloc[-1]) is True
+        assert bool(buffered["600000"].iloc[-1]) is False
+
+    def test_atr_stop_mode_changes_exit_mix(self):
+        """Huge ATR mult ⇒ effectively no stop-loss exits; tiny ⇒ many."""
+        bars, membership = make_universe()
+        engine = SectorRotationEngine(membership, holding_period=20)
+
+        wide = RotationBacktester(stop_mode="atr", atr_mult=50.0).run(
+            bars, membership, engine, initial_capital=1e6)
+        reasons_wide = [t["exit_reason"] for t in wide["result"]["trades"]]
+        assert "stop_loss" not in reasons_wide
+
+        tight = RotationBacktester(stop_mode="atr", atr_mult=0.05).run(
+            bars, membership, engine, initial_capital=1e6)
+        reasons_tight = [t["exit_reason"] for t in tight["result"]["trades"]]
+        assert "stop_loss" in reasons_tight
+
 
 # ── 4. Selection ────────────────────────────────────────────────────────────
 

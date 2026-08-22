@@ -33,8 +33,8 @@ import pandas as pd
 from sqlalchemy.orm import Session
 
 from .sector_rotation import (
-    SectorRotationEngine, build_breakdown_panel, TOP_K_SECTORS,
-    TOP_N_PER_SECTOR, MAX_WEIGHT,
+    SectorRotationEngine, build_breakdown_panel, build_atr_panel,
+    TOP_K_SECTORS, TOP_N_PER_SECTOR, MAX_WEIGHT,
 )
 from .factor_model import HOLDING_PERIOD, build_close_panel
 from .strategies.risk_atr import STOP_LOSS_PCT, TRAIL_ACTIVATION_PCT, TRAIL_PCT
@@ -64,7 +64,14 @@ class RotationTrade:
 
 
 class RotationBacktester:
-    """Portfolio backtester with per-position trend exits."""
+    """Portfolio backtester with per-position trend exits.
+
+    Exit-rule knobs (v1 defaults reproduce the original fixed rules):
+      stop_mode:        "fixed" = entry × (1 - 10%) | "atr" = entry − mult×ATR14
+      atr_mult:         ATR multiplier for stop distance (default 2.0)
+      breakdown_buffer: fraction below MA20 that still counts as noise
+                        (0.0 = v1 exact-breakdown; 0.03 = 3% buffer)
+    """
 
     def __init__(
         self,
@@ -72,11 +79,42 @@ class RotationBacktester:
         commission_min: float = COMMISSION_MIN,
         stamp_duty_rate: float = STAMP_DUTY_RATE,
         slippage_rate: float = SLIPPAGE_RATE,
+        stop_mode: str = "fixed",
+        atr_mult: float = 2.0,
+        breakdown_buffer: float = 0.0,
     ):
         self.commission_rate = commission_rate
         self.commission_min = commission_min
         self.stamp_duty_rate = stamp_duty_rate
         self.slippage_rate = slippage_rate
+        if stop_mode not in ("fixed", "atr"):
+            raise ValueError(f"unknown stop_mode: {stop_mode}")
+        self.stop_mode = stop_mode
+        self.atr_mult = atr_mult
+        self.breakdown_buffer = breakdown_buffer
+
+    def _entry_stop(
+        self,
+        fill: float,
+        dt,
+        ticker: str,
+        atr_panel,
+    ) -> float:
+        """Hard-stop level locked at entry.
+
+        "atr": entry − atr_mult × ATR14(entry date) — volatility-scaled, so
+        calm names get tighter stops and high-vol semis don't get shaken
+        out by their own noise. Falls back to the fixed rule when ATR is
+        not yet formed (warm-up / missing bars).
+        """
+        if self.stop_mode == "atr" and atr_panel is not None:
+            try:
+                atr_val = atr_panel.loc[dt, ticker]
+            except KeyError:
+                atr_val = None
+            if atr_val is not None and pd.notna(atr_val) and atr_val > 0:
+                return fill - self.atr_mult * float(atr_val)
+        return fill * (1.0 - STOP_LOSS_PCT)
 
     def _sell(self, shares: int, price: float) -> float:
         gross = shares * price
@@ -105,7 +143,9 @@ class RotationBacktester:
             close_panel = close_panel[close_panel.index >= start_date]
         if end_date:
             close_panel = close_panel[close_panel.index <= end_date]
-        breakdown = build_breakdown_panel(bars).reindex(close_panel.index)
+        breakdown = build_breakdown_panel(
+            bars, buffer=self.breakdown_buffer).reindex(close_panel.index)
+        atr_panel = build_atr_panel(bars) if self.stop_mode == "atr" else None
 
         all_dates = list(close_panel.index)
         if len(all_dates) < engine.holding_period + 5:
@@ -238,7 +278,7 @@ class RotationBacktester:
                         "entry_idx": i,
                         "high_close": fill,
                         "trailing": False,
-                        "fixed_stop": fill * (1.0 - STOP_LOSS_PCT),
+                        "fixed_stop": self._entry_stop(fill, dt, t, atr_panel),
                         "entry_date": dt,
                         "sector": sector_of(t),
                     }
@@ -351,6 +391,14 @@ class RotationBacktester:
                 "rebalance_log": rebalance_log,
                 "ic_summary": model["ic_summary"],
                 "config": model["config"],
+                "exit_rules": {
+                    "stop_mode": self.stop_mode,
+                    "atr_mult": self.atr_mult,
+                    "breakdown_buffer": self.breakdown_buffer,
+                    "trailing_activation_pct": TRAIL_ACTIVATION_PCT,
+                    "trailing_giveback_pct": TRAIL_PCT,
+                    "hard_stop_fallback_pct": STOP_LOSS_PCT,
+                },
             },
         }
 
@@ -381,6 +429,9 @@ def run_and_store(
     max_weight: float = MAX_WEIGHT,
     use_fund_flow_factors: bool = True,
     bars_limit: int = 1200,
+    stop_mode: str = "fixed",
+    atr_mult: float = 2.0,
+    breakdown_buffer: float = 0.0,
 ) -> dict:
     """Run the rotation backtest on the pool universe, store, return summary."""
     from . import rotation_service
@@ -400,7 +451,11 @@ def run_and_store(
         max_weight=max_weight,
         use_fund_flow_factors=use_fund_flow_factors,
     )
-    bt = RotationBacktester()
+    bt = RotationBacktester(
+        stop_mode=stop_mode,
+        atr_mult=atr_mult,
+        breakdown_buffer=breakdown_buffer,
+    )
     out = bt.run(
         bars, membership, engine,
         initial_capital=initial_capital,

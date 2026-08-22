@@ -356,6 +356,13 @@ class RotationBacktestRequest(BaseModel):
     max_weight: float = Field(0.20, gt=0, le=0.40, description="单只最大权重")
     use_fund_flow_factors: bool = Field(
         True, description="false=纯技术面骨架(长历史) / true=含主力资金流因子")
+    stop_mode: str = Field(
+        "fixed", pattern="^(fixed|atr)$",
+        description="硬止损: fixed=入场价×0.9 | atr=入场价−2×ATR14(波动自适应)")
+    atr_mult: float = Field(2.0, gt=0, le=6, description="ATR 止损倍数")
+    breakdown_buffer: float = Field(
+        0.0, ge=0, le=0.10,
+        description="破位缓冲带: close 需低于 MA20×(1-buffer) 才算破位(0.03=3%%)")
 
 
 @router.post("/rotation/backtest")
@@ -382,6 +389,9 @@ def run_rotation_backtest(
             top_n_per_sector=req.top_n_per_sector,
             max_weight=req.max_weight,
             use_fund_flow_factors=req.use_fund_flow_factors,
+            stop_mode=req.stop_mode,
+            atr_mult=req.atr_mult,
+            breakdown_buffer=req.breakdown_buffer,
         )
     except ValueError as e:
         raise HTTPException(400, str(e))

@@ -67,19 +67,54 @@ def build_bullish_panel(bars: dict[str, pd.DataFrame]) -> pd.DataFrame:
     return (ma5 > ma20) & (ma20 > ma60)
 
 
-def build_breakdown_panel(bars: dict[str, pd.DataFrame]) -> pd.DataFrame:
+def build_breakdown_panel(
+    bars: dict[str, pd.DataFrame],
+    buffer: float = 0.0,
+) -> pd.DataFrame:
     """Per-stock MA-breakdown SELL condition (trend_breakout parity).
 
-    MA5 < MA20 AND close < MA20 for 2 consecutive days (the rolling-2 sum
-    filters one-day shakeouts). Exit signal on day T → executed T+1 in the
-    backtester, mirroring the single-stock backtester's timing.
+    MA5 < MA20 AND close < MA20 × (1 - buffer) for 2 consecutive days
+    (the rolling-2 sum filters one-day shakeouts). Exit signal on day T
+    → executed T+1 in the backtester, mirroring the single-stock
+    backtester's timing.
+
+    `buffer` (e.g. 0.03 = 3%) widens the breakdown trigger below MA20 —
+    in high-volatility sectors a close marginally under MA20 is noise,
+    not a trend break (v2 anti-whipsaw knob).
     """
     close = build_close_panel(bars)
     ma5 = close.rolling(5, min_periods=5).mean()
     ma20 = close.rolling(20, min_periods=20).mean()
-    raw_break = ((ma5 < ma20) & (close < ma20)).astype(float)
+    trigger_level = ma20 * (1.0 - buffer)
+    raw_break = ((ma5 < ma20) & (close < trigger_level)).astype(float)
     raw_break = raw_break.where(close.notna())
     return raw_break.rolling(2, min_periods=2).sum() == 2
+
+
+def build_atr_panel(
+    bars: dict[str, pd.DataFrame],
+    window: int = 14,
+) -> pd.DataFrame:
+    """ATR14 panel for volatility-scaled stops.
+
+    TR = max(high - low, |high - prev_close|, |low - prev_close|);
+    ATR = rolling mean of TR over `window` days. Missing bars propagate
+    NaN (warm-up days, suspended dates).
+    """
+    highs, lows, closes = {}, {}, {}
+    for t, df in bars.items():
+        idx = df["date"].astype(str)
+        highs[t] = pd.Series(df["high"].values, index=idx)
+        lows[t] = pd.Series(df["low"].values, index=idx)
+        closes[t] = pd.Series(df["close"].values, index=idx)
+    h = pd.DataFrame(highs).sort_index()
+    l = pd.DataFrame(lows).sort_index()
+    c = pd.DataFrame(closes).sort_index()
+    pc = c.shift(1)
+    tr = (h - l)
+    tr = tr.where(tr >= (h - pc).abs(), (h - pc).abs())
+    tr = tr.where(tr >= (l - pc).abs(), (l - pc).abs())
+    return tr.rolling(window, min_periods=window).mean()
 
 
 def compute_sector_strength(
