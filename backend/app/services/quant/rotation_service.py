@@ -27,7 +27,7 @@ from app.models.chain_models import DailyBar, FundFlowDaily, SectorScore, Rotati
 from app.services.quant import sector_pool
 from app.services.quant.sector_rotation import (
     SectorRotationEngine, select_portfolio_at,
-    build_bullish_panel, compute_divergence_panel,
+    build_bullish_panel, compute_divergence_panel, build_atr_panel,
     TOP_K_SECTORS, TOP_N_PER_SECTOR, MAX_WEIGHT, ENTRY_FALLBACK,
 )
 from .factor_model import HOLDING_PERIOD
@@ -157,6 +157,11 @@ def scan_rotation_signals(
 
     bullish = build_bullish_panel(bars)
     divergence = compute_divergence_panel(bars)
+    # Stop reference for the signal panel: matches the validated v2 exit
+    # rule (close − 2×ATR14, volatility-scaled), falling back to the v1
+    # fixed 10% when ATR isn't formed. Displayed as the "if-bought-today"
+    # hard-stop level.
+    atr_panel = build_atr_panel(bars)
     weights, sel_detail = select_portfolio_at(
         latest, composite, strength, bullish, membership,
         top_k=top_k, top_n_per_sector=top_n_per_sector,
@@ -258,6 +263,15 @@ def scan_rotation_signals(
         div_flag = bool(divergence.loc[latest].get(t, False)) \
             if latest in divergence.index else False
 
+        def _stop_ref(t: str, close: Optional[float]) -> Optional[float]:
+            if close is None:
+                return None
+            if latest in atr_panel.index and t in atr_panel.columns:
+                atr_val = atr_panel.loc[latest, t]
+                if pd.notna(atr_val) and atr_val > 0:
+                    return round(close - 2.0 * float(atr_val), 3)
+            return round(close * 0.9, 3)
+
         stock_rows.append({
             "date": sig_date,
             "ticker": t,
@@ -268,7 +282,7 @@ def scan_rotation_signals(
             "weight": round(float(weights.get(t, 0.0)), 4),
             "entry_ok": entry_ok,
             "divergence_flag": div_flag,
-            "stop_loss_price": round(close_at * 0.9, 3) if close_at else None,
+            "stop_loss_price": _stop_ref(t, close_at),
             "trail_stop_price": None,
             "factor_scores_json": json.dumps(f_scores, ensure_ascii=False),
         })
