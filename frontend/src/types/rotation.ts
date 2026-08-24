@@ -94,6 +94,13 @@ export interface RotationBacktestRequest {
   top_n_per_sector?: number;
   max_weight?: number;
   use_fund_flow_factors?: boolean;
+  fund_flow_direction?: 1 | -1;
+  stop_mode?: 'fixed' | 'atr';
+  atr_mult?: number;
+  breakdown_buffer?: number;
+  keep_in_trend?: boolean;
+  reentry_enabled?: boolean;
+  reentry_cooldown?: number;
 }
 
 /** Scan summary (admin-triggered POST /rotation/scan). */

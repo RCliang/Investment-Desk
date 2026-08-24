@@ -356,6 +356,8 @@ class RotationBacktestRequest(BaseModel):
     max_weight: float = Field(0.20, gt=0, le=0.40, description="单只最大权重")
     use_fund_flow_factors: bool = Field(
         True, description="false=纯技术面骨架(长历史) / true=含主力资金流因子")
+    fund_flow_direction: int = Field(
+        1, ge=-1, le=1, description="主力因子方向: 1=正向(吸筹看多) / -1=反向(资金追高看空)")
     stop_mode: str = Field(
         "fixed", pattern="^(fixed|atr)$",
         description="硬止损: fixed=入场价×0.9 | atr=入场价−2×ATR14(波动自适应)")
@@ -363,6 +365,12 @@ class RotationBacktestRequest(BaseModel):
     breakdown_buffer: float = Field(
         0.0, ge=0, le=0.10,
         description="破位缓冲带: close 需低于 MA20×(1-buffer) 才算破位(0.03=3%%)")
+    keep_in_trend: bool = Field(
+        False, description="调仓日保留仍在多头排列的旧持仓(降低换手)")
+    reentry_enabled: bool = Field(
+        False, description="退出后现金在趋势重立时回补(降低空仓损耗)")
+    reentry_cooldown: int = Field(
+        5, ge=0, le=60, description="退出后同票回补的最小间隔(交易日)")
 
 
 @router.post("/rotation/backtest")
@@ -389,9 +397,13 @@ def run_rotation_backtest(
             top_n_per_sector=req.top_n_per_sector,
             max_weight=req.max_weight,
             use_fund_flow_factors=req.use_fund_flow_factors,
+            fund_flow_direction=req.fund_flow_direction,
             stop_mode=req.stop_mode,
             atr_mult=req.atr_mult,
             breakdown_buffer=req.breakdown_buffer,
+            keep_in_trend=req.keep_in_trend,
+            reentry_enabled=req.reentry_enabled,
+            reentry_cooldown=req.reentry_cooldown,
         )
     except ValueError as e:
         raise HTTPException(400, str(e))

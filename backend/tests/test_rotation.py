@@ -300,6 +300,53 @@ class TestSectorStrength:
         reasons_tight = [t["exit_reason"] for t in tight["result"]["trades"]]
         assert "stop_loss" in reasons_tight
 
+    def test_keep_in_trend_reduces_planned_rotation(self):
+        """Retention never increases rebalance-exit count or turnover."""
+        bars, membership = make_universe()
+        engine = SectorRotationEngine(membership, holding_period=20)
+        v2 = dict(stop_mode="atr", atr_mult=2.0, breakdown_buffer=0.03)
+
+        plain = RotationBacktester(**v2).run(
+            bars, membership, engine, initial_capital=1e6)["result"]
+        kept = RotationBacktester(keep_in_trend=True, **v2).run(
+            bars, membership, engine, initial_capital=1e6)["result"]
+
+        rot_plain = sum(1 for t in plain["trades"] if t["exit_reason"] == "rebalance")
+        rot_kept = sum(1 for t in kept["trades"] if t["exit_reason"] == "rebalance")
+        assert rot_kept <= rot_plain
+        assert kept["avg_turnover_pct"] <= plain["avg_turnover_pct"] + 1e-9
+
+    def test_reentry_cooldown_beyond_sample_equals_disabled(self):
+        """A cooldown longer than the sample makes re-entry a no-op.
+
+        Deterministic invariant: with no re-entry possible, the equity
+        curve must be identical to reentry_enabled=False.
+        """
+        bars, membership = make_universe()
+        engine = SectorRotationEngine(membership, holding_period=20)
+        v2 = dict(stop_mode="atr", atr_mult=2.0, breakdown_buffer=0.03)
+
+        off = RotationBacktester(reentry_enabled=False, **v2).run(
+            bars, membership, engine, initial_capital=1e6)["result"]
+        frozen = RotationBacktester(reentry_enabled=True,
+                                    reentry_cooldown=10**6, **v2).run(
+            bars, membership, engine, initial_capital=1e6)["result"]
+        assert off["equity_curve"] == frozen["equity_curve"]
+        assert off["trades"] == frozen["trades"]
+
+    def test_fund_flow_direction_flips_composite(self):
+        """Contrarian fund-flow factors must change the composite ranking."""
+        bars, membership = make_universe()
+        up = SectorRotationEngine(membership).run(bars)
+        down = SectorRotationEngine(membership, fund_flow_direction=-1).run(bars)
+        latest = up["composite"].dropna(how="all").index[-1]
+        row_up = up["composite"].loc[latest].dropna()
+        row_down = down["composite"].loc[latest].dropna()
+        # Same stocks, (generally) different scores — at least the values
+        # can't all be bit-identical across the whole cross-section.
+        assert not all(
+            abs(row_up[t] - row_down[t]) < 1e-12 for t in row_up.index)
+
 
 # ── 4. Selection ────────────────────────────────────────────────────────────
 

@@ -34,7 +34,7 @@ from sqlalchemy.orm import Session
 
 from .sector_rotation import (
     SectorRotationEngine, build_breakdown_panel, build_atr_panel,
-    TOP_K_SECTORS, TOP_N_PER_SECTOR, MAX_WEIGHT,
+    build_bullish_panel, TOP_K_SECTORS, TOP_N_PER_SECTOR, MAX_WEIGHT,
 )
 from .factor_model import HOLDING_PERIOD, build_close_panel
 from .strategies.risk_atr import STOP_LOSS_PCT, TRAIL_ACTIVATION_PCT, TRAIL_PCT
@@ -71,6 +71,18 @@ class RotationBacktester:
       atr_mult:         ATR multiplier for stop distance (default 2.0)
       breakdown_buffer: fraction below MA20 that still counts as noise
                         (0.0 = v1 exact-breakdown; 0.03 = 3% buffer)
+
+    Deployment knobs (v3 anti-churn / anti-cash-drag):
+      keep_in_trend:    at rebalance, held stocks that dropped out of the
+                        new target but are still in bullish MA alignment
+                        keep their slot (bounded by the target size) —
+                        planned rotation stops ejecting healthy trends.
+      reentry_enabled:  between rebalances, redeploy cash freed by
+                        stop/breakdown/trailing exits into not-yet-held
+                        members of the LAST target portfolio once they
+                        (re-)establish bullish alignment.
+      reentry_cooldown: min trading days between a stop/breakdown/trailing
+                        exit and a re-entry buy of the same ticker.
     """
 
     def __init__(
@@ -82,6 +94,9 @@ class RotationBacktester:
         stop_mode: str = "fixed",
         atr_mult: float = 2.0,
         breakdown_buffer: float = 0.0,
+        keep_in_trend: bool = False,
+        reentry_enabled: bool = False,
+        reentry_cooldown: int = 5,
     ):
         self.commission_rate = commission_rate
         self.commission_min = commission_min
@@ -92,6 +107,9 @@ class RotationBacktester:
         self.stop_mode = stop_mode
         self.atr_mult = atr_mult
         self.breakdown_buffer = breakdown_buffer
+        self.keep_in_trend = keep_in_trend
+        self.reentry_enabled = reentry_enabled
+        self.reentry_cooldown = reentry_cooldown
 
     def _entry_stop(
         self,
@@ -145,6 +163,7 @@ class RotationBacktester:
             close_panel = close_panel[close_panel.index <= end_date]
         breakdown = build_breakdown_panel(
             bars, buffer=self.breakdown_buffer).reindex(close_panel.index)
+        bullish = build_bullish_panel(bars).reindex(close_panel.index)
         atr_panel = build_atr_panel(bars) if self.stop_mode == "atr" else None
 
         all_dates = list(close_panel.index)
@@ -166,6 +185,10 @@ class RotationBacktester:
         prev_equity = initial_capital
         daily_returns: list[float] = []
         turnovers: list[float] = []
+        # Re-entry state: last target portfolio + day of each trend-driven
+        # exit (stop/breakdown/trailing) for the cooldown check.
+        last_target: dict[str, float] = {}
+        last_exit_idx: dict[str, int] = {}
 
         def sector_of(ticker: str) -> str:
             return membership.get(ticker, ["?"])[0]
@@ -221,6 +244,9 @@ class RotationBacktester:
                     ))
                     del positions[t]
                     cooldown.add(t)
+                    last_exit_idx[t] = i
+
+            bullish_row = bullish.loc[dt] if dt in bullish.index else None
 
             # ── 2. Rebalance to target weights (close fills). ─────────────
             if dt in portfolios:
@@ -229,13 +255,26 @@ class RotationBacktester:
                     (price_of(t) or pos["entry_price"]) * pos["shares"]
                     for t, pos in positions.items()
                 )
+                # Retention: out-of-target holdings that are still in
+                # bullish alignment keep their slot, bounded by the
+                # position budget implied by the new target size.
+                keep_set: set[str] = set()
+                if self.keep_in_trend and bullish_row is not None:
+                    held_in_target = sum(1 for t in positions if t in target)
+                    budget = max(0, len(target) - held_in_target)
+                    candidates = [
+                        t for t in positions
+                        if t not in target and bool(bullish_row.get(t, False))
+                    ]
+                    keep_set = set(candidates[:budget])
+
                 old_value = 0.0
                 for t in list(positions.keys()):
                     p = price_of(t)
                     if p is None:
                         continue
                     pos = positions[t]
-                    if t not in target or t in cooldown:
+                    if (t not in target and t not in keep_set) or t in cooldown:
                         fill = p * (1 - self.slippage_rate)
                         cash += self._sell(pos["shares"], fill)
                         cost_basis = pos["shares"] * pos["entry_price"]
@@ -259,7 +298,11 @@ class RotationBacktester:
                     else:
                         old_value += pos["shares"] * p
 
+                allowed_new = len(target) - sum(
+                    1 for t in positions if t in target or t in keep_set)
                 for t, w in target.items():
+                    if allowed_new <= 0:
+                        break
                     if t in cooldown or t in positions:
                         continue
                     p = price_of(t)
@@ -282,6 +325,8 @@ class RotationBacktester:
                         "entry_date": dt,
                         "sector": sector_of(t),
                     }
+                    allowed_new -= 1
+                last_target = dict(target)
 
                 new_value = sum(
                     (price_of(t) or 0.0) * pos["shares"]
@@ -300,6 +345,47 @@ class RotationBacktester:
                     "turnover_pct": round(turnover * 100, 2),
                     "n_stocks": len(target),
                 })
+
+            # ── 2b. Mid-cycle re-entry (trend re-establishment). ──────────
+            # Redeploy cash freed by stop/breakdown/trailing exits into
+            # not-yet-held members of the last target portfolio once they
+            # (re-)establish bullish alignment and clear the cooldown.
+            if self.reentry_enabled and last_target:
+                candidates = [
+                    t for t in last_target
+                    if t not in positions
+                    and i - last_exit_idx.get(t, -10**9) >= self.reentry_cooldown
+                    and bullish_row is not None
+                    and bool(bullish_row.get(t, False))
+                    and price_of(t) is not None
+                ]
+                for t in sorted(candidates, key=lambda x: -last_target[x]):
+                    equity_now = cash + sum(
+                        (price_of(tt) or pos["entry_price"]) * pos["shares"]
+                        for tt, pos in positions.items()
+                    )
+                    if cash < equity_now * 0.01:
+                        break
+                    p = price_of(t)
+                    if p is None:
+                        continue
+                    budget = equity_now * last_target[t]
+                    lots = int(budget / (p * (1 + self.slippage_rate)) // LOT_SIZE)
+                    buy_shares = lots * LOT_SIZE
+                    if buy_shares <= 0:
+                        continue
+                    fill = p * (1 + self.slippage_rate)
+                    cash -= self._buy_cost(buy_shares, fill)
+                    positions[t] = {
+                        "shares": buy_shares,
+                        "entry_price": fill,
+                        "entry_idx": i,
+                        "high_close": fill,
+                        "trailing": False,
+                        "fixed_stop": self._entry_stop(fill, dt, t, atr_panel),
+                        "entry_date": dt,
+                        "sector": sector_of(t),
+                    }
 
             # ── 3. Mark to market. ────────────────────────────────────────
             equity = cash + sum(
@@ -398,6 +484,9 @@ class RotationBacktester:
                     "trailing_activation_pct": TRAIL_ACTIVATION_PCT,
                     "trailing_giveback_pct": TRAIL_PCT,
                     "hard_stop_fallback_pct": STOP_LOSS_PCT,
+                    "keep_in_trend": self.keep_in_trend,
+                    "reentry_enabled": self.reentry_enabled,
+                    "reentry_cooldown": self.reentry_cooldown,
                 },
             },
         }
@@ -428,10 +517,14 @@ def run_and_store(
     top_n_per_sector: int = TOP_N_PER_SECTOR,
     max_weight: float = MAX_WEIGHT,
     use_fund_flow_factors: bool = True,
+    fund_flow_direction: int = 1,
     bars_limit: int = 1200,
     stop_mode: str = "fixed",
     atr_mult: float = 2.0,
     breakdown_buffer: float = 0.0,
+    keep_in_trend: bool = False,
+    reentry_enabled: bool = False,
+    reentry_cooldown: int = 5,
 ) -> dict:
     """Run the rotation backtest on the pool universe, store, return summary."""
     from . import rotation_service
@@ -450,11 +543,15 @@ def run_and_store(
         holding_period=holding_period,
         max_weight=max_weight,
         use_fund_flow_factors=use_fund_flow_factors,
+        fund_flow_direction=fund_flow_direction,
     )
     bt = RotationBacktester(
         stop_mode=stop_mode,
         atr_mult=atr_mult,
         breakdown_buffer=breakdown_buffer,
+        keep_in_trend=keep_in_trend,
+        reentry_enabled=reentry_enabled,
+        reentry_cooldown=reentry_cooldown,
     )
     out = bt.run(
         bars, membership, engine,

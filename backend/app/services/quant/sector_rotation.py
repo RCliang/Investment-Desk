@@ -301,6 +301,7 @@ class SectorRotationEngine:
         holding_period: int = HOLDING_PERIOD,
         max_weight: float = MAX_WEIGHT,
         use_fund_flow_factors: bool = True,
+        fund_flow_direction: int = 1,
         ic_window: int = 60,
         weighting_method: str = "icir",
     ):
@@ -311,6 +312,7 @@ class SectorRotationEngine:
         self.holding_period = holding_period
         self.max_weight = max_weight
         self.use_fund_flow_factors = use_fund_flow_factors
+        self.fund_flow_direction = fund_flow_direction
 
         factors = [
             PriceMomentum20(), PriceMomentum60(), TrendSlope(),
@@ -318,10 +320,16 @@ class SectorRotationEngine:
             TrendConsistency(),
         ]
         if use_fund_flow_factors:
-            factors += [
+            flow_factors = [
                 MainInflowMomentum20(), MainInflowPersistence(),
                 MainInflowAcceleration(),
             ]
+            # -1 flips all three main-force factors to contrarian
+            # (money chasing as a local-top signal) — experimental knob,
+            # justified when their IC regime is persistently negative.
+            for f in flow_factors:
+                f.direction = fund_flow_direction
+            factors += flow_factors
         self.mf = MultiFactorEngine(
             factors=factors,
             holding_period=holding_period,
@@ -422,6 +430,7 @@ class SectorRotationEngine:
                 "max_weight": self.max_weight,
                 "strength_window": STRENGTH_WINDOW,
                 "use_fund_flow_factors": self.use_fund_flow_factors,
+                "fund_flow_direction": self.fund_flow_direction,
                 "factors": [f.name for f in self.mf.factors],
             },
         }
