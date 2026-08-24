@@ -214,8 +214,12 @@ def load_seed_structural(session) -> dict:
                 name = c["name"]
 
                 if market_flag == "CN":
-                    listing_market = _derive_cn_market(raw_ticker)
-                    listing_ticker = raw_ticker
+                    # Strip exchange suffixes (seed stores a few verbatim,
+                    # e.g. 002594.SZ) — market-data tables use bare 6-digit
+                    # codes, so listing_ticker must match them for joins.
+                    bare = raw_ticker.split(".")[0]
+                    listing_market = _derive_cn_market(bare)
+                    listing_ticker = bare
                     is_reference = False
                 elif market_flag == "HK":
                     listing_market = "HK"
