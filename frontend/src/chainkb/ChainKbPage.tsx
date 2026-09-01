@@ -5,10 +5,12 @@ import LayerScreen from './LayerScreen';
 import FinanceScreen from './FinanceScreen';
 import SignalPanel from './SignalPanel';
 import RotationPanel from './RotationPanel';
+import BoardsPanel from './BoardsPanel';
+import EtfRotationPanel from './EtfRotationPanel';
 import DataFreshness from './components/DataFreshness';
 import { useFreshness } from './hooks/useChainKb';
 
-type TabKey = 'overview' | 'layers' | 'finance' | 'signals' | 'rotation';
+type TabKey = 'overview' | 'layers' | 'finance' | 'signals' | 'rotation' | 'boards' | 'etf';
 
 interface TabDef {
   key: TabKey;
@@ -24,6 +26,8 @@ const TABS: TabDef[] = [
   // 04 · 风险标记 — deferred (risk inference layer)
   { key: 'signals', label: '04 · 量化信号' },
   { key: 'rotation', label: '05 · 板块轮动' },
+  { key: 'boards', label: '06 · 市场冷热' },
+  { key: 'etf', label: '07 · ETF轮动' },
 ];
 
 export default function ChainKbPage() {
@@ -117,6 +121,8 @@ export default function ChainKbPage() {
         )}
         {activeTab === 'signals' && <SignalPanel />}
         {activeTab === 'rotation' && <RotationPanel />}
+        {activeTab === 'boards' && <BoardsPanel />}
+        {activeTab === 'etf' && <EtfRotationPanel />}
       </div>
     </div>
   );

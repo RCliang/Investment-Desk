@@ -1,0 +1,27 @@
+{
+  "cash_ticker": "511990",
+  "etfs": [
+    {"ticker": "510300", "name": "沪深300ETF", "asset_class": "宽基", "role": "risk"},
+    {"ticker": "510500", "name": "中证500ETF", "asset_class": "宽基", "role": "risk"},
+    {"ticker": "512100", "name": "中证1000ETF", "asset_class": "宽基", "role": "risk"},
+    {"ticker": "159915", "name": "创业板ETF", "asset_class": "宽基", "role": "risk"},
+    {"ticker": "588000", "name": "科创50ETF", "asset_class": "宽基", "role": "risk"},
+    {"ticker": "512880", "name": "证券ETF", "asset_class": "行业", "role": "risk"},
+    {"ticker": "512010", "name": "医药ETF", "asset_class": "行业", "role": "risk"},
+    {"ticker": "159928", "name": "消费ETF", "asset_class": "行业", "role": "risk"},
+    {"ticker": "512480", "name": "半导体ETF", "asset_class": "行业", "role": "risk"},
+    {"ticker": "512660", "name": "军工ETF", "asset_class": "行业", "role": "risk"},
+    {"ticker": "515030", "name": "新能源车ETF", "asset_class": "行业", "role": "risk"},
+    {"ticker": "512690", "name": "酒ETF", "asset_class": "行业", "role": "risk"},
+    {"ticker": "512800", "name": "银行ETF", "asset_class": "行业", "role": "risk"},
+    {"ticker": "515880", "name": "通信ETF", "asset_class": "行业", "role": "risk"},
+    {"ticker": "515980", "name": "人工智能ETF", "asset_class": "行业", "role": "risk"},
+    {"ticker": "159559", "name": "机器人ETF", "asset_class": "行业", "role": "risk"},
+    {"ticker": "159206", "name": "卫星ETF", "asset_class": "行业", "role": "risk"},
+    {"ticker": "561980", "name": "半导体设备ETF", "asset_class": "行业", "role": "risk"},
+    {"ticker": "511010", "name": "国债ETF", "asset_class": "防守", "role": "risk"},
+    {"ticker": "518880", "name": "黄金ETF", "asset_class": "防守", "role": "risk"},
+    {"ticker": "513100", "name": "纳指ETF", "asset_class": "防守", "role": "risk"},
+    {"ticker": "511990", "name": "华宝添益", "asset_class": "货币", "role": "cash"}
+  ]
+}

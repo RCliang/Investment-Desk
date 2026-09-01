@@ -65,6 +65,9 @@ Routers live in `app/routers/`, services in `app/services/`, ORM models in `app/
 - `tushare_service.py` — professional financial indicators via tushare (requires `TUSHARE_TOKEN`).
 - `astock_service.py` — real-time quotes, research reports, fund flow, concept sectors.
 
+### Market board heat (板块冷热全景)
+`services/quant/board_service.py` + `routers/boards.py` (`/api/quant/boards/*`) + frontend `chainkb/BoardsPanel.tsx` (tab 06 · 市场冷热). Nightly pipeline at 17:45 (APScheduler, after the 17:40 rotation scan): EM clist board snapshot (industry+concept, ~15 requests) → HS300 benchmark (Tencent) → THS hot themes (zero-auth) → heat recompute. Tables: `chain_board_meta/daily/heat`, `chain_theme_daily`. Heat = cross-sectional percentile blend (35% excess momentum / 30% main-inflow ratio / 20% breadth / 15% THS theme count) with lifecycle tags (mainline/starting/fading/cool). History bootstrap: `python scripts/backfill_em_boards.py` (push2his, resumable — EM IP-blocks intermittently and all-or-nothing; the script circuit-breaks and can be re-run to resume).
+
 ### Frontend structure
 - `src/pages/` — four page components matching backend features: `ChainPage`, `DataPage`, `ReportPage`, `PlanPage` (routes defined in `App.tsx`).
 - `src/services/api.ts` — axios client; base URL `/api` (proxied to backend in dev via Vite, in prod via nginx).

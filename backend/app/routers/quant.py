@@ -7,6 +7,10 @@ Endpoints under /api/quant/*:
     POST /scan                    — re-run scan_all (admin-gated)
     POST /backtest                — run a backtest for one ticker
     GET  /backtest/{run_id}       — fetch a stored backtest result
+    GET  /etf-rotation/scores     — ETF dual-momentum pool snapshot
+    GET  /etf-rotation/portfolio  — latest ETF target portfolio
+    POST /etf-rotation/scan       — re-run ETF scan (admin-gated)
+    POST /etf-rotation/backtest   — run the ETF dual-momentum backtest
 
 Scan/backtest mutate state so they require the X-Admin-Token header
 (shared with refresh/research/deep-analysis routers via app.auth).
@@ -65,9 +69,17 @@ def list_signals(
 
 
 @router.get("/signals/{ticker}")
-def get_signal(ticker: str, db: Session = Depends(get_db)):
-    """Latest signal for one ticker with full strategy detail + chain membership."""
-    result = signal_service.get_signal_detail(db, ticker)
+def get_signal(
+    ticker: str,
+    strategy_set: str = Query("v1_default"),
+    db: Session = Depends(get_db),
+):
+    """Latest signal for one ticker with full strategy detail + chain membership.
+
+    `strategy_set` should match the list the user is viewing (trend_follow
+    or v1_default) so the detail drawer shows the same score as the row.
+    """
+    result = signal_service.get_signal_detail(db, ticker, strategy_set=strategy_set)
     if result is None:
         raise HTTPException(404, f"No signal for ticker '{ticker}'")
     return result
@@ -404,6 +416,117 @@ def run_rotation_backtest(
             keep_in_trend=req.keep_in_trend,
             reentry_enabled=req.reentry_enabled,
             reentry_cooldown=req.reentry_cooldown,
+        )
+    except ValueError as e:
+        raise HTTPException(400, str(e))
+
+
+# ── ETF Momentum Rotation (ETF动量轮动策略) ──────────────────────────────────
+
+@router.get("/etf-rotation/scores")
+def get_etf_scores(db: Session = Depends(get_db)):
+    """Latest dual-momentum snapshot for the whole ETF pool.
+
+    Every risk ETF carries its blended momentum, vol-adjusted score,
+    cross-section rank and the absolute-momentum gate flag (120d return
+    vs the cash ETF); the cash ETF carries its parking weight.
+    """
+    from app.services.quant import etf_signal_service
+    return etf_signal_service.get_latest_scores(db)
+
+
+@router.get("/etf-rotation/portfolio")
+def get_etf_portfolio(db: Session = Depends(get_db)):
+    """Latest target ETF portfolio (Top-N risk ETFs + cash parking)."""
+    from app.services.quant import etf_signal_service
+    return etf_signal_service.get_latest_portfolio(db)
+
+
+@router.post("/etf-rotation/scan")
+def trigger_etf_scan(
+    top_n: int = Query(3, ge=1, le=6),
+    buffer_rank: int = Query(2, ge=0, le=6),
+    db: Session = Depends(get_db),
+    _: None = Depends(verify_admin_token),
+):
+    """Run the ETF dual-momentum scan NOW (admin-gated).
+
+    Normally triggered by the scheduler at 17:50 on trading days. Persists
+    chain_etf_signals for the latest bar date.
+    """
+    from app.services.quant import etf_signal_service
+    try:
+        return etf_signal_service.scan_etf_signals(
+            db, top_n=top_n, buffer_rank=buffer_rank)
+    except ValueError as e:
+        raise HTTPException(400, str(e))
+
+
+class EtfBacktestRequest(BaseModel):
+    """Request body for the ETF dual-momentum backtest.
+
+    use_abs_gate / use_buffer toggle the ablation axes from the design
+    doc (A1 relative-only vs A2 dual-momentum; A2 vs A3 buffer effect).
+    use_market_gate / rebalance_mode are the v3 knobs: regime filter and
+    event-driven rebalancing.
+    """
+    start_date: Optional[date] = None
+    end_date: Optional[date] = None
+    initial_capital: float = Field(1e6, gt=0, description="初始资金(元)")
+    top_n: int = Field(3, ge=1, le=6, description="持仓 ETF 数")
+    buffer_rank: int = Field(2, ge=0, le=6, description="排名缓冲带宽度")
+    holding_period: int = Field(5, ge=1, le=60, description="调仓周期(交易日, fixed 模式生效)")
+    use_abs_gate: bool = Field(
+        True, description="false=纯相对动量(消融A1) / true=双动量完整版")
+    use_buffer: bool = Field(
+        True, description="false=关闭排名缓冲带(消融对比)")
+    use_market_gate: bool = Field(
+        False, description="大盘MA择时: 510300跌破MA时屏蔽宽基+行业, 防守类可继续持有")
+    market_ma_window: int = Field(
+        200, ge=20, le=300, description="大盘择时均线窗口(交易日)")
+    rebalance_mode: str = Field(
+        "fixed", pattern="^(fixed|dynamic)$",
+        description="fixed=每holding_period日调仓 / dynamic=每日检查、持仓变化才交易")
+    weight_mode: str = Field(
+        "equal", pattern="^(equal|risk_parity)$",
+        description="equal=每槽等权 / risk_parity=逆波动率风险平价加权")
+    use_target_vol: bool = Field(
+        False, description="目标波动率仓位缩放: 组合估计波动超阈值时降仓, 释放份额停货币ETF")
+    target_vol: float = Field(
+        0.10, gt=0.02, le=0.30, description="目标年化波动率(如0.10=10%)")
+
+
+@router.post("/etf-rotation/backtest")
+def run_etf_backtest(
+    req: EtfBacktestRequest,
+    db: Session = Depends(get_db),
+):
+    """Run the ETF dual-momentum backtest.
+
+    Not admin-gated (read-only compute like /rotation/backtest): loads the
+    pool's hfq bars, runs the dual-momentum engine with the validated v2
+    exit rules (ATR stop + 3% breakdown buffer) and ETF costs (no stamp
+    duty), benchmarks against the pool equal-weight index. Full curve /
+    trades via GET /backtest/{run_id}.
+    """
+    from app.services.quant import etf_signal_service
+    try:
+        return etf_signal_service.run_backtest_and_store(
+            db,
+            start_date=req.start_date,
+            end_date=req.end_date,
+            initial_capital=req.initial_capital,
+            top_n=req.top_n,
+            buffer_rank=req.buffer_rank,
+            holding_period=req.holding_period,
+            use_abs_gate=req.use_abs_gate,
+            use_buffer=req.use_buffer,
+            use_market_gate=req.use_market_gate,
+            market_ma_window=req.market_ma_window,
+            rebalance_mode=req.rebalance_mode,
+            weight_mode=req.weight_mode,
+            use_target_vol=req.use_target_vol,
+            target_vol=req.target_vol,
         )
     except ValueError as e:
         raise HTTPException(400, str(e))

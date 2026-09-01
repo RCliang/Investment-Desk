@@ -1,9 +1,14 @@
 import axios from 'axios';
 
-// 生产环境使用相对路径（通过nginx代理），开发环境使用localhost:8000
+// 生产环境使用相对路径（通过nginx代理），开发环境默认连 localhost:8000。
+// 本地后端跑在其他端口时（如 8000 被占），在 frontend/.env.local 里设
+// VITE_API_BASE=http://localhost:8001 覆盖，无需改代码。
 const isDev = import.meta.env.DEV;
+export const API_BASE = isDev
+  ? (import.meta.env.VITE_API_BASE ?? 'http://localhost:8000')
+  : '';
 const api = axios.create({
-  baseURL: isDev ? 'http://localhost:8000' : ''
+  baseURL: API_BASE
 });
 
 // ── Admin auth helpers ─────────────────────────────────────────────
@@ -217,8 +222,7 @@ export async function streamAnalyze(
   callbacks: AnalyzeStreamCallbacks,
   options: { forceRefresh?: boolean } = {},
 ): Promise<void> {
-  const isDev = import.meta.env.DEV;
-  const base = isDev ? 'http://localhost:8000' : '';
+  const base = API_BASE;
   const params = new URLSearchParams({
     code,
     oss_keys: ossKeys.join(','),
@@ -343,9 +347,14 @@ export async function getSignals(filter: SignalFilter = {}): Promise<SignalListR
   return data;
 }
 
-export async function getSignalDetail(ticker: string): Promise<SignalDetailResponse | null> {
+export async function getSignalDetail(
+  ticker: string,
+  strategySet?: string,
+): Promise<SignalDetailResponse | null> {
   try {
-    const { data } = await api.get<SignalDetailResponse>(`/api/quant/signals/${ticker}`);
+    const { data } = await api.get<SignalDetailResponse>(`/api/quant/signals/${ticker}`, {
+      params: strategySet ? { strategy_set: strategySet } : undefined,
+    });
     return data;
   } catch (err: unknown) {
     if (err instanceof axios.AxiosError && err.response?.status === 404) return null;
@@ -435,6 +444,86 @@ export async function triggerRotationScan(
 ): Promise<RotationScanResult> {
   const { data } = await api.post<RotationScanResult>('/api/quant/rotation/scan', null, {
     params: { top_k: topK, top_n_per_sector: topNPerSector },
+  });
+  return data;
+}
+
+// ── Market board heat (/api/quant/boards/*) ────────────────────────────
+
+import type {
+  BoardsOverviewResponse,
+  BoardsHeatmapResponse,
+  BoardDetailResponse,
+  ThemeTrendsResponse,
+  BoardsRefreshResult,
+} from '../types/boards';
+
+export async function getBoardsOverview(days = 20): Promise<BoardsOverviewResponse> {
+  const { data } = await api.get<BoardsOverviewResponse>('/api/quant/boards/overview', {
+    params: { days },
+  });
+  return data;
+}
+
+export async function getBoardsHeatmap(days = 30): Promise<BoardsHeatmapResponse> {
+  const { data } = await api.get<BoardsHeatmapResponse>('/api/quant/boards/heatmap', {
+    params: { days },
+  });
+  return data;
+}
+
+export async function getBoardDetail(bkCode: string, days = 100): Promise<BoardDetailResponse> {
+  const { data } = await api.get<BoardDetailResponse>(
+    `/api/quant/boards/${bkCode}/detail`, { params: { days } });
+  return data;
+}
+
+export async function getThemeTrends(days = 20): Promise<ThemeTrendsResponse> {
+  const { data } = await api.get<ThemeTrendsResponse>('/api/quant/boards/themes', {
+    params: { days },
+  });
+  return data;
+}
+
+export async function triggerBoardsRefresh(): Promise<BoardsRefreshResult> {
+  const { data } = await api.post<BoardsRefreshResult>('/api/quant/boards/refresh');
+  return data;
+}
+
+// ── ETF momentum rotation (/api/quant/etf-rotation/*) ─────────────────
+
+import type {
+  EtfScoresResponse,
+  EtfPortfolioResponse,
+  EtfBacktestSummary,
+  EtfBacktestRequest,
+  EtfScanResult,
+} from '../types/etf-rotation';
+
+export async function getEtfScores(): Promise<EtfScoresResponse> {
+  const { data } = await api.get<EtfScoresResponse>('/api/quant/etf-rotation/scores');
+  return data;
+}
+
+export async function getEtfPortfolio(): Promise<EtfPortfolioResponse> {
+  const { data } = await api.get<EtfPortfolioResponse>('/api/quant/etf-rotation/portfolio');
+  return data;
+}
+
+export async function runEtfBacktest(
+  req: EtfBacktestRequest = {},
+): Promise<EtfBacktestSummary> {
+  const { data } = await api.post<EtfBacktestSummary>(
+    '/api/quant/etf-rotation/backtest', req);
+  return data;
+}
+
+export async function triggerEtfScan(
+  topN = 3,
+  bufferRank = 2,
+): Promise<EtfScanResult> {
+  const { data } = await api.post<EtfScanResult>('/api/quant/etf-rotation/scan', null, {
+    params: { top_n: topN, buffer_rank: bufferRank },
   });
   return data;
 }

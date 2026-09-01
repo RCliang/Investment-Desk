@@ -22,7 +22,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-from app.routers import chain, data, report, plan, chainkb, refresh, research, deep_analysis, quant
+from app.routers import chain, data, report, plan, chainkb, refresh, research, deep_analysis, quant, boards
 app.include_router(chain.router)
 app.include_router(data.router)
 app.include_router(report.router)
@@ -32,6 +32,7 @@ app.include_router(refresh.router)
 app.include_router(research.router)
 app.include_router(deep_analysis.router)
 app.include_router(quant.router)
+app.include_router(boards.router)
 
 
 def _run_migrations(conn):

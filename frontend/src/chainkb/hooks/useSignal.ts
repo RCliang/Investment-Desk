@@ -41,11 +41,12 @@ export function useStrategies() {
   return state;
 }
 
-/** Filtered signal list. Refetches whenever the filter object reference changes. */
-export function useSignals(filter: SignalFilter) {
+/** Filtered signal list. Refetches whenever the filter object reference
+ * changes, or when `refreshKey` is bumped (e.g. after a manual rescan). */
+export function useSignals(filter: SignalFilter, refreshKey?: number) {
   const [state, setState] = useState<FetchState<SignalListResponse>>(initial());
   // Stable string key so identical filter values don't refetch.
-  const key = JSON.stringify(filter);
+  const key = JSON.stringify([filter, refreshKey]);
   useEffect(() => {
     let cancelled = false;
     setState({ data: null, loading: true, error: null });
@@ -61,8 +62,9 @@ export function useSignals(filter: SignalFilter) {
   return state;
 }
 
-/** Detail for one ticker (null skip when ticker is null). */
-export function useSignalDetail(ticker: string | null) {
+/** Detail for one ticker (null skip when ticker is null). Refetches when
+ * the strategy set changes so the drawer matches the list the user sees. */
+export function useSignalDetail(ticker: string | null, strategySet?: string) {
   const [state, setState] = useState<FetchState<SignalDetailResponse>>(initial());
   useEffect(() => {
     if (!ticker) {
@@ -71,14 +73,14 @@ export function useSignalDetail(ticker: string | null) {
     }
     let cancelled = false;
     setState({ data: null, loading: true, error: null });
-    getSignalDetail(ticker)
+    getSignalDetail(ticker, strategySet)
       .then((d) => !cancelled && setState({ data: d, loading: false, error: null }))
       .catch((e: unknown) => !cancelled && setState({
         data: null, loading: false,
         error: e instanceof Error ? e.message : String(e),
       }));
     return () => { cancelled = true; };
-  }, [ticker]);
+  }, [ticker, strategySet]);
   return state;
 }
 

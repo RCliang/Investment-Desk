@@ -65,6 +65,21 @@ _MF_SCAN_TRIGGER = CronTrigger(day_of_week="mon-fri", hour="17", minute="30",
 # rotation portfolio for the pool universe.
 _ROTATION_SCAN_TRIGGER = CronTrigger(day_of_week="mon-fri", hour="17", minute="40",
                                      timezone="Asia/Shanghai")
+# Market board heat refresh: after the rotation scan, snapshots every EM
+# industry/concept board (clist ×3 fs, ~15 requests) + HS300 benchmark
+# (Tencent) + THS hot themes, then recomputes the heat composite and
+# lifecycle tags. Aborts loudly if EM is IP-blocked; nothing degrades.
+_BOARDS_REFRESH_TRIGGER = CronTrigger(day_of_week="mon-fri", hour="17", minute="45",
+                                      timezone="Asia/Shanghai")
+# ETF kline incremental refresh: after the stock daily bars land (16:30),
+# pulls the pool's ~17 hfq bars from EM push2his (throttled, one request
+# per ETF — tiny volume, far below the IP-block thresholds).
+_ETF_KLINES_TRIGGER = CronTrigger(day_of_week="mon-fri", hour="16", minute="35",
+                                  timezone="Asia/Shanghai")
+# ETF dual-momentum scan: after all evening scans, persists the pool's
+# momentum ranking + target portfolio into chain_etf_signals.
+_ETF_SCAN_TRIGGER = CronTrigger(day_of_week="mon-fri", hour="17", minute="50",
+                                timezone="Asia/Shanghai")
 _FINANCE_TRIGGER = CronTrigger(day_of_week="sun", hour="3",
                                timezone="Asia/Shanghai")
 _REPORTS_TRIGGER = CronTrigger(day_of_week="sun", hour="4",
@@ -144,6 +159,46 @@ def _run_rotation_scan() -> None:
         session.close()
 
 
+def _run_boards_refresh() -> None:
+    """Job wrapper: run the market board heat pipeline.
+
+    EM clist snapshot + Tencent benchmark + THS themes + heat recompute
+    into chain_board_meta/daily/heat + chain_theme_daily. Raises through
+    BoardSourceError when EM is blocked (logged, retried next night).
+    """
+    session = SessionLocal()
+    try:
+        from app.services.quant import board_service
+        result = board_service.refresh_boards_daily(session)
+        log.info("scheduled boards refresh: date=%s, boards=%d, tags=%d, %.1fs",
+                 result["date"], result["boards"], result["theme_tags"],
+                 result["elapsed_s"])
+    except Exception:
+        log.exception("scheduled boards refresh failed")
+    finally:
+        session.close()
+
+
+def _run_etf_scan() -> None:
+    """Job wrapper: run the ETF dual-momentum scan.
+
+    Computes the pool's blended/vol-adjusted momentum ranking, applies the
+    absolute-momentum gate + rank buffer, and persists the target portfolio
+    into chain_etf_signals.
+    """
+    session = SessionLocal()
+    try:
+        from app.services.quant import etf_signal_service
+        result = etf_signal_service.scan_etf_signals(session)
+        log.info("scheduled ETF rotation scan: date=%s, selected=%d, "
+                 "cash=%.0f%%, %.1fs", result["date"], result["selected"],
+                 result["cash_weight"] * 100, result["elapsed_s"])
+    except Exception:
+        log.exception("scheduled ETF rotation scan failed")
+    finally:
+        session.close()
+
+
 def start_scheduler() -> None:
     """Idempotent: safe to call multiple times."""
     global _scheduler
@@ -170,6 +225,7 @@ def start_scheduler() -> None:
     for type_name, trig in [
         ("margin",         _MARGIN_TRIGGER),
         ("quotes_history", _QUOTES_HISTORY_TRIGGER),
+        ("etf_klines",     _ETF_KLINES_TRIGGER),
         ("fund_flow",      _FUND_FLOW_TRIGGER),
         ("finance",        _FINANCE_TRIGGER),
         ("reports",        _REPORTS_TRIGGER),
@@ -199,6 +255,18 @@ def start_scheduler() -> None:
     _scheduler.add_job(
         _run_rotation_scan, _ROTATION_SCAN_TRIGGER,
         id="rotation_scan", replace_existing=True,
+    )
+
+    # Market board heat pipeline (板块冷热全景).
+    _scheduler.add_job(
+        _run_boards_refresh, _BOARDS_REFRESH_TRIGGER,
+        id="boards_refresh", replace_existing=True,
+    )
+
+    # ETF dual-momentum scan (混合池双动量轮动).
+    _scheduler.add_job(
+        _run_etf_scan, _ETF_SCAN_TRIGGER,
+        id="etf_scan", replace_existing=True,
     )
 
     _scheduler.start()

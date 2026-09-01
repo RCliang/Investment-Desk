@@ -360,6 +360,9 @@ export default function SignalPanel() {
   const [selectedTicker, setSelectedTicker] = useState<string | null>(null);
   const [backtestResult, setBacktestResult] = useState<BacktestDetail | null>(null);
   const [chartZoom, setChartZoom] = useState(false);
+  // Bumped after a manual rescan so useSignals refetches the list.
+  const [refreshKey, setRefreshKey] = useState(0);
+  const [scanSummary, setScanSummary] = useState<string | null>(null);
 
   const filter: SignalFilter = useMemo(() => ({
     action: action === 'ALL' ? undefined : action,
@@ -368,10 +371,21 @@ export default function SignalPanel() {
     limit: 100,
   }), [action, layer, strategySet]);
 
-  const { data: signals, loading, error } = useSignals(filter);
+  const { data: signals, loading, error } = useSignals(filter, refreshKey);
   const { data: strategiesData } = useStrategies();
-  const { data: detail } = useSignalDetail(selectedTicker);
+  const { data: detail } = useSignalDetail(selectedTicker, strategySet);
   const actions = useQuantActions();
+
+  /** One-click rescan: recompute signals for the selected strategy set,
+   * then refetch the list. ~10-30s full-market run; button locks meanwhile. */
+  const handleRescan = async () => {
+    setScanSummary(null);
+    const r = await actions.scan(strategySet);
+    if (r) {
+      setScanSummary(`✓ ${r.date} · BUY ${r.BUY} / SELL ${r.SELL} / HOLD ${r.HOLD}（${r.elapsed_s}s）`);
+      setRefreshKey((k) => k + 1);
+    }
+  };
 
   const handleRunBacktest = async (ticker: string) => {
     setBacktestResult(null);
@@ -426,6 +440,20 @@ export default function SignalPanel() {
           <div className="filter-meta">
             {signals?.date && <span>数据日期 {signals.date}</span>}
             <span>共 {signals?.total ?? 0} 条</span>
+            <button
+              className="mini-btn"
+              disabled={actions.scanning}
+              onClick={handleRescan}
+              title="重新扫描全市场，按当前策略集重算最新买卖信号（约10-30秒）"
+            >
+              {actions.scanning ? '扫描中…' : '⟳ 重算信号'}
+            </button>
+            {actions.scanError && (
+              <span className="scan-status error">重算失败: {actions.scanError}</span>
+            )}
+            {!actions.scanError && scanSummary && (
+              <span className="scan-status">{scanSummary}</span>
+            )}
           </div>
         </div>
         {/* Distribution KPIs */}

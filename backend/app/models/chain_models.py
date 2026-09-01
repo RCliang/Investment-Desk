@@ -561,6 +561,156 @@ class RotationSignal(Base):
     created_at = Column(DateTime, nullable=False, server_default=func.now())
 
 
+# ── Quant: ETF dual-momentum rotation (ETF动量轮动) ─────────────────────────
+
+class EtfSignal(Base):
+    """Daily per-ETF dual-momentum signal for the ETF pool universe.
+
+    One row per (date, ticker) for every pool ETF (selected or not) so the
+    frontend can show the full momentum ranking. Selected rows carry the
+    target weight; the cash ETF carries the parking weight when absolute
+    momentum leaves Top-N slots unfilled.
+
+    Prices feeding this table are dividend-adjusted (hfq) — see
+    scripts/backfill_etf_klines.py; scores/stops are computed on the
+    adjusted series.
+    """
+    __tablename__ = "chain_etf_signals"
+    __table_args__ = (
+        UniqueConstraint("date", "ticker", name="uq_etf_signal"),
+        Index("ix_etf_signal_date_sel", "date", "is_selected"),
+    )
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    date = Column(Date, nullable=False, index=True)
+    ticker = Column(String(16), nullable=False, index=True)
+    name = Column(String(32), nullable=False, default="")
+    asset_class = Column(String(16), nullable=False, default="")     # 宽基/行业/防守/货币
+    momentum_raw = Column(Float)                                     # 复合动量(未除波动率)
+    momentum_score = Column(Float)                                   # 动量/年化波动率
+    momentum_rank = Column(Integer)                                  # 截面排名 (1=最强, 仅风险资产)
+    abs_momentum_pass = Column(Boolean, default=False)               # 120日收益 ≥ 货币ETF
+    is_selected = Column(Boolean, default=False, index=True)
+    weight = Column(Float, default=0.0)                              # 目标权重(含货币ETF停泊位)
+    stop_price = Column(Float)                                       # 收盘−2×ATR14 参考止损
+    detail_json = Column(Text, default="")                           # {r20,r60,r120,vol,cash_ret}
+    created_at = Column(DateTime, nullable=False, server_default=func.now())
+
+
+# ── Quant: market board heat (板块冷热全景) ────────────────────────────────
+
+class BoardMeta(Base):
+    """Registry of EM market boards (BK codes): industry / concept / region.
+
+    Populated by the nightly board snapshot job (EM clist m:90+t:1/2/3 —
+    the fs↔type mapping has drifted across EM revisions, so bk_type is
+    resolved via a chain_concepts name cross-check + suffix heuristics at
+    ingest time, not trusted from the fs parameter).
+
+    member_hint = peak observed (up_cnt + down_cnt), a proxy for member
+    count used by the zombie-concept filter. Region/index boards are
+    retained for reference but excluded from heat computation.
+    """
+    __tablename__ = "chain_board_meta"
+
+    bk_code = Column(String(16), primary_key=True)                     # BK0447 / 000300(基准)
+    name = Column(String(64), nullable=False, index=True)
+    bk_type = Column(String(16), nullable=False, index=True)           # industry/concept/region/index/benchmark
+    member_hint = Column(Integer)
+    first_seen = Column(Date)
+    last_seen = Column(Date)
+    is_active = Column(Boolean, default=True, index=True)
+    updated_at = Column(DateTime, nullable=False,
+                        server_default=func.now(), onupdate=func.now())
+
+
+class BoardDaily(Base):
+    """Daily board snapshot from EM clist: quote + fund flow + breadth.
+
+    One row per (date, bk_code). Monetary fields in yuan (f62/f66/f72).
+    The HS300 benchmark is stored as bk_code='000300' (bk_type benchmark)
+    so excess-return joins stay in one table.
+
+    Historical rows (backfill via push2his) carry change_pct/turnover/
+    fund-flow only; up/down counts and leaders are snapshot-only fields.
+    """
+    __tablename__ = "chain_board_daily"
+    __table_args__ = (
+        UniqueConstraint("date", "bk_code", name="uq_board_daily"),
+        Index("ix_board_daily_code_date", "bk_code", "date"),
+    )
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    date = Column(Date, nullable=False, index=True)
+    bk_code = Column(String(16), nullable=False)
+    change_pct = Column(Float)                                         # 当日涨跌幅%
+    turnover_yi = Column(Float)                                        # 成交额 (亿)
+    turnover_rate = Column(Float)                                      # 换手率%
+    main_net = Column(Float)                                           # 主力净流入 (元)
+    super_net = Column(Float)                                          # 超大单净流入 (元)
+    large_net = Column(Float)                                          # 大单净流入 (元)
+    up_cnt = Column(Integer)                                           # 上涨家数
+    down_cnt = Column(Integer)                                         # 下跌家数
+    leader_name = Column(String(32))                                   # 领涨股名
+    leader_code = Column(String(16))                                   # 领涨股代码
+    leader_change = Column(Float)                                      # 领涨股涨幅%
+    fetched_at = Column(DateTime, nullable=False, server_default=func.now())
+    source = Column(String(32), default="eastmoney_clist")
+
+
+class BoardHeat(Base):
+    """Daily board heat composite + lifecycle tag (主线/启动/退潮/冷却).
+
+    One row per (date, bk_code) for heat-eligible boards (industry +
+    concept, benchmark/region excluded). heat ∈ [0,100] is the weighted
+    cross-sectional percentile blend of momentum/flow/breadth/theme;
+    heat_ema is its 5-day EMA. turnover_avg_20d is stored here so the
+    zombie-concept filter can run without re-aggregating BoardDaily.
+    """
+    __tablename__ = "chain_board_heat"
+    __table_args__ = (
+        UniqueConstraint("date", "bk_code", name="uq_board_heat"),
+        Index("ix_board_heat_date", "date"),
+        Index("ix_board_heat_tag", "date", "tag"),
+    )
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    date = Column(Date, nullable=False, index=True)
+    bk_code = Column(String(16), nullable=False)
+    mom_excess_20d = Column(Float)                                     # 20日累计超额收益%
+    flow_ratio_20d = Column(Float)                                     # 20日主力净流入/成交额
+    breadth_20d = Column(Float)                                        # 20日均上涨家数占比 [0,1]
+    turnover_avg_20d = Column(Float)                                   # 20日均成交额 (亿)
+    theme_cnt = Column(Integer, default=0)                             # THS 强势股题材匹配数
+    heat = Column(Float, nullable=False)                               # 综合热度 [0,100]
+    heat_ema = Column(Float)                                           # 热度5日EMA
+    tag = Column(String(16), index=True)                               # mainline/starting/fading/cool
+    heat_rank = Column(Integer)                                        # 当日热度排名 (1=最热)
+    created_at = Column(DateTime, nullable=False, server_default=func.now())
+
+
+class ThemeDaily(Base):
+    """Daily THS hot-theme strong-stock counts (同花顺强势股题材计数).
+
+    One row per (date, tag). Tags are split from the THS 'reason' field
+    ('+'-separated); tag_type separates thematic tags (创新药/AI应用...)
+    from earnings-style tags (半年报增长/中报扭亏...) so the latter don't
+    pollute board matching.
+    """
+    __tablename__ = "chain_theme_daily"
+    __table_args__ = (
+        UniqueConstraint("date", "tag", name="uq_theme_daily"),
+        Index("ix_theme_date", "date"),
+    )
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    date = Column(Date, nullable=False, index=True)
+    tag = Column(String(64), nullable=False)
+    tag_type = Column(String(8), nullable=False, default="theme")      # theme / perf
+    strong_cnt = Column(Integer, nullable=False, default=0)
+    created_at = Column(DateTime, nullable=False, server_default=func.now())
+
+
 __all__ = [
     # Static entities
     "Layer", "SubIndustry", "Company", "Concept",
@@ -574,6 +724,8 @@ __all__ = [
     # Quant
     "DailyBar", "Signal", "BacktestRun", "MfSignal",
     "SectorScore", "RotationSignal",
+    # Market board heat
+    "BoardMeta", "BoardDaily", "BoardHeat", "ThemeDaily",
     # Constants
     "LIFECYCLE_CANONICAL", "LIFECYCLE_GENERATED", "LIFECYCLE_DEPRECATED",
 ]

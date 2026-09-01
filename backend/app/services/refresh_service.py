@@ -39,7 +39,8 @@ SCRIPTS_DIR = BACKEND_DIR / "scripts"
 
 RefreshType = Literal[
     "quotes", "finance", "reports", "concepts",
-    "lockup", "holders", "margin", "quotes_history", "fund_flow", "all",
+    "lockup", "holders", "margin", "quotes_history", "fund_flow",
+    "etf_klines", "all",
 ]
 Trigger = Literal["manual", "scheduler", "cli"]
 
@@ -57,6 +58,7 @@ _TYPE_MAP: dict[str, tuple[str, str, list[str]]] = {
     "margin":         ("backfill_em_margin_trading.py",  "load_margin",      []),
     "quotes_history": ("backfill_mootdx_klines.py",      "load_daily_bars",  ["--incremental"]),
     "fund_flow":      ("backfill_em_fund_flow.py",       "load_fund_flow",   ["--incremental"]),
+    "etf_klines":     ("backfill_etf_klines.py",         "load_etf_daily_bars", ["--incremental"]),
 }
 
 # Per-type subprocess timeout (seconds). Generous upper bound; scripts
@@ -68,6 +70,8 @@ _TIMEOUTS: dict[str, int] = {
     "quotes_history": 300,
     # push2his, ~70 pool tickers × 1.7s throttle = ~2 min + retries.
     "fund_flow": 600,
+    # push2his kline, ~17 ETFs × ~1.3s throttle ≈ 25s; buffer for retries.
+    "etf_klines": 300,
 }
 
 
@@ -281,6 +285,14 @@ def refresh_fund_flow(session: Session, trigger: Trigger = "manual") -> ChainRef
     """
     return _run_one(session, "fund_flow", trigger)
 
+def refresh_etf_klines(session: Session, trigger: Trigger = "manual") -> ChainRefreshLog:
+    """ETF pool daily bars via EM push2his (--incremental flag, hfq).
+
+    Incremental grabs the last ~30 bars per ETF; the full listing history
+    is a one-off via `python scripts/backfill_etf_klines.py`.
+    """
+    return _run_one(session, "etf_klines", trigger)
+
 def refresh_all(session: Session, trigger: Trigger = "manual") -> list[ChainRefreshLog]:
     """Sequentially run all refreshes in order: fast → slow.
 
@@ -312,6 +324,7 @@ _REFRESH_FUNCTIONS = {
     "margin": refresh_margin,
     "quotes_history": refresh_quotes_history,
     "fund_flow": refresh_fund_flow,
+    "etf_klines": refresh_etf_klines,
     "all": refresh_all,
 }
 

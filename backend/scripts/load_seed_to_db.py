@@ -595,6 +595,43 @@ def _safe_float(v):
         return None
 
 
+def load_etf_daily_bars(session, batch_size: int = 5000) -> int:
+    """backfill_etf_klines.json → DailyBar (hfq, source='em_etf').
+
+    Same upsert mechanics as load_daily_bars, different input file and
+    source tag. Closes are dividend-ADJUSTED (后复权) — momentum/ATR must
+    be computed on this series; they are NOT comparable to the stock
+    pipeline's unadjusted + adj_factor semantics, and nothing crosses
+    the two. Idempotent via (ticker, date) unique constraint.
+    """
+    data = _load("backfill_etf_klines.json")
+    all_bars = data.get("bars", {})
+    if not all_bars:
+        return 0
+
+    total = 0
+    batch: list[dict] = []
+    for ticker, bars in all_bars.items():
+        for b in bars:
+            batch.append({
+                "ticker": ticker,
+                "date": _to_date(b.get("date")),
+                "open": _safe_float(b.get("open")),
+                "high": _safe_float(b.get("high")),
+                "low": _safe_float(b.get("low")),
+                "close": _safe_float(b.get("close")),
+                "volume": _safe_float(b.get("volume")),   # 份
+                "amount": _safe_float(b.get("amount")),   # CNY
+                "source": "em_etf",
+            })
+            if len(batch) >= batch_size:
+                total += _upsert_many(session, DailyBar, batch, ["ticker", "date"])
+                batch.clear()
+    if batch:
+        total += _upsert_many(session, DailyBar, batch, ["ticker", "date"])
+    return total
+
+
 def _to_date(v):
     """Accept 'YYYY-MM-DD' / 'YYYY-MM-DDTHH:MM:SS' / datetime / date / '' → date | None."""
     if v is None or v == "":

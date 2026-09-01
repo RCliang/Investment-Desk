@@ -66,6 +66,7 @@ export interface SignalListResponse {
 /** Full detail for one ticker's latest signal. */
 export interface SignalDetailResponse {
   ticker: string;
+  strategy_set?: string;
   name: string;
   market: string | null;
   date: string;

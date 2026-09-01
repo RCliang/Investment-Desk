@@ -341,6 +341,7 @@ def get_signal_detail(db: Session, ticker: str,
 
     return {
         "ticker": ticker,
+        "strategy_set": row.strategy_set,
         "name": company.name_zh if company else "",
         "market": company.listing_market if company else None,
         "date": str(row.date),
