@@ -2,9 +2,8 @@ node_modules/
 dist/
 *.pyc
 __pycache__/
-backend/data/
 *.DS_Store
-*.db
+
 
 # Environment variables (keep .env.example tracked)
 .env
