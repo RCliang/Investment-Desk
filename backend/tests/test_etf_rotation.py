@@ -95,22 +95,41 @@ class TestPoolConfig:
 class TestMomentumPanels:
 
     def test_blended_formula(self):
+        # Explicit params: the module defaults were retuned by the 2026-09
+        # grid search — this test pins the FORMULA, not the defaults.
         df = make_etf_bars(n=200, seed=3)
         close = df.set_index("date")["close"].to_frame("600001")
-        panels = compute_momentum_panels(close)
+        windows, weights, vw = (20, 60, 120), (0.2, 0.3, 0.5), 60
+        panels = compute_momentum_panels(close, windows, weights, vw)
         c = close["600001"]
         manual_raw = (0.2 * (c / c.shift(20) - 1)
                       + 0.3 * (c / c.shift(60) - 1)
                       + 0.5 * (c / c.shift(120) - 1))
-        assert panels["raw"]["600001"].dropna().equals(
-            manual_raw.dropna()) or np.allclose(
-            panels["raw"]["600001"].dropna(), manual_raw.dropna())
+        assert np.allclose(panels["raw"]["600001"].dropna(),
+                           manual_raw.dropna())
         ret = close.pct_change(fill_method=None)["600001"]
-        manual_vol = ret.rolling(60).std() * np.sqrt(252)
+        manual_vol = ret.rolling(vw).std() * np.sqrt(252)
         assert np.allclose(panels["vol"]["600001"].dropna(),
                            manual_vol.dropna())
         assert np.allclose(panels["score"]["600001"].dropna(),
                            (manual_raw / manual_vol).dropna())
+
+    def test_tuned_defaults_freeze(self):
+        # Grid-search landing (docs/etf-rotation-grid-search-plan.md 落地记录):
+        # the TOP1 cell by decision — classic 3/6/12m windows, 70% on the
+        # 12m leg, fast 20d vol estimator, monthly cadence, 180d absolute
+        # gate, buffer 3, 12% target vol, 4×ATR disaster brake.
+        import app.services.quant.etf_rotation as er
+        assert er.TOP_N == 2
+        assert er.BUFFER_RANK == 3
+        assert er.MOMENTUM_WINDOWS == (60, 120, 250)
+        assert er.MOMENTUM_WEIGHTS == (0.15, 0.15, 0.7)
+        assert er.VOL_WINDOW == 20
+        assert er.ABS_WINDOW == 180
+        assert er.HOLDING_PERIOD == 20
+        from app.services.quant import etf_signal_service as svc
+        assert svc.ATR_MULT == 4.0
+        assert svc.USE_TARGET_VOL is True and svc.TARGET_VOL == 0.12
 
     def test_cash_zero_vol_scores_nan(self):
         df = make_etf_bars(n=200, drift=7e-5, vol=0.0, seed=1)

@@ -45,10 +45,16 @@ ETF_COMMISSION_RATE = 0.0001
 ETF_COMMISSION_MIN = 5.0
 ETF_STAMP_DUTY_RATE = 0.0
 ETF_SLIPPAGE_RATE = 0.001
-# Validated v2 exit-rule defaults (design doc §策略逻辑).
+# Exit rules + vol targeting, tuned 2026-09-02 by the grid search
+# (docs/etf-rotation-grid-search-plan.md 落地记录): loose ATR stop
+# (4×ATR14 — the momentum/absolute gates own the exits, the stop is a
+# disaster brake) and a 12% target-vol overlay riding the engine's fast
+# 20d covariance estimator. (TOP1 cell per decision.)
 STOP_MODE = "atr"
-ATR_MULT = 2.0
+ATR_MULT = 4.0
 BREAKDOWN_BUFFER = 0.03
+USE_TARGET_VOL = True
+TARGET_VOL = 0.12
 
 
 # ── Data loading ────────────────────────────────────────────────────────────
@@ -92,7 +98,8 @@ def scan_etf_signals(
 
     engine = EtfRotationEngine(
         cash_ticker=etf_pool.get_cash_ticker(),
-        top_n=top_n, buffer_rank=buffer_rank, holding_period=holding_period)
+        top_n=top_n, buffer_rank=buffer_rank, holding_period=holding_period,
+        use_target_vol=USE_TARGET_VOL, target_vol=TARGET_VOL)
     model = engine.run(bars)
 
     latest = model["latest"]["date"]
@@ -206,8 +213,8 @@ def run_backtest_and_store(
     market_ma_window: int = 200,
     rebalance_mode: str = "fixed",
     weight_mode: str = "equal",
-    use_target_vol: bool = False,
-    target_vol: float = 0.10,
+    use_target_vol: bool = USE_TARGET_VOL,
+    target_vol: float = TARGET_VOL,
     bars_limit: int = 1200,
 ) -> dict:
     """Run the ETF dual-momentum backtest, store, return summary.

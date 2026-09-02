@@ -9,14 +9,16 @@ export interface EtfScoreItem {
   momentum_raw: number | null;   // 复合动量 (未除波动率)
   momentum_score: number | null; // 动量 / 年化波动率
   momentum_rank: number | null;  // 截面排名 (1=最强, 货币ETF=null)
-  abs_momentum_pass: boolean;    // 120日收益 ≥ 货币ETF
+  abs_momentum_pass: boolean;    // 180日收益 ≥ 货币ETF(TOP1方案门槛窗)
   is_selected: boolean;
   weight: number;
   stop_price: number | null;
   detail: {
-    r20?: number | null;
-    r60?: number | null;
-    r120?: number | null;
+    r20?: number | null;    // 旧窗口方案遗留
+    r60?: number | null;    // ≈3月
+    r120?: number | null;   // ≈6月
+    r180?: number | null;   // 绝对动量门槛窗
+    r250?: number | null;   // ≈12月
   };
 }
 

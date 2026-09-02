@@ -1,14 +1,14 @@
 """ETF dual-momentum rotation engine (混合池双动量).
 
-Signal stack, per rebalance date (weekly by default, T-close data →
+Signal stack, per rebalance date (monthly by default, T-close data →
 T-close fills — the same convention as the sector-rotation engine):
 
   1. Relative momentum — blended multi-window return
-     (0.2×R20 + 0.3×R60 + 0.5×R120) divided by annualized 60d volatility
+     (0.25×R60 + 0.25×R120 + 0.5×R250) divided by annualized 20d volatility
      (Sharpe-style ranking; the vol division is also the first line of
      defence against momentum crashes).
-  2. Absolute momentum — an ETF's 120d return must beat the CASH ETF's
-     own 120d return to be eligible. Unfilled Top-N slots park in the
+  2. Absolute momentum — an ETF's 180d return must beat the CASH ETF's
+     own 180d return to be eligible. Unfilled Top-N slots park in the
      cash ETF instead of back-filling weak names; all-fail → 100% cash.
   3. Rank buffer — holdings are sticky: a held ETF stays while it still
      ranks ≤ top_n + buffer_rank and passes the gate (retention takes
@@ -58,13 +58,18 @@ from .factors import build_close_panel
 log = logging.getLogger(__name__)
 
 # ── Defaults (all overridable; mirrored by the API/backtest params) ────────
-TOP_N = 3               # risk ETFs held
-BUFFER_RANK = 2         # holding retained while rank ≤ TOP_N + 2
-MOMENTUM_WINDOWS = (20, 60, 120)
-MOMENTUM_WEIGHTS = (0.2, 0.3, 0.5)
-VOL_WINDOW = 60         # volatility estimator window (days)
-ABS_WINDOW = 120        # absolute-momentum lookback (days)
-HOLDING_PERIOD = 5      # rebalance cadence in trading days (weekly)
+# Tuned 2026-09-02 by the 3-layer grid search, then switched to the TOP1
+# cell by decision (docs/etf-rotation-grid-search-plan.md 落地记录):
+# classic 3/6/12-month dual-momentum windows with 70% weight on the 12m
+# leg, fast (20d) vol estimator — it drives BOTH the score denominator
+# and the target-vol covariance, i.e. quick de-risking in vol spikes.
+TOP_N = 2                  # risk ETFs held (concentration beat 3/4 in search)
+BUFFER_RANK = 3            # holding retained while rank ≤ TOP_N + 3
+MOMENTUM_WINDOWS = (60, 120, 250)     # ≈ 3m / 6m / 12m
+MOMENTUM_WEIGHTS = (0.15, 0.15, 0.7)  # long-window leg dominates (TOP1)
+VOL_WINDOW = 20            # volatility estimator window (days)
+ABS_WINDOW = 180           # absolute-momentum lookback (days)
+HOLDING_PERIOD = 20        # rebalance cadence in trading days (monthly)
 
 
 def compute_momentum_panels(

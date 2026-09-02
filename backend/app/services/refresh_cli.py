@@ -22,7 +22,8 @@ from app.services import refresh_service
 
 
 VALID_TYPES = ["quotes", "finance", "reports", "concepts",
-               "lockup", "holders", "margin", "all"]
+               "lockup", "holders", "margin", "quotes_history",
+               "fund_flow", "etf_klines", "all"]
 
 
 def cmd_run(refresh_type: str) -> int:

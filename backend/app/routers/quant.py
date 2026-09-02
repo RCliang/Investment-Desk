@@ -473,9 +473,9 @@ class EtfBacktestRequest(BaseModel):
     start_date: Optional[date] = None
     end_date: Optional[date] = None
     initial_capital: float = Field(1e6, gt=0, description="初始资金(元)")
-    top_n: int = Field(3, ge=1, le=6, description="持仓 ETF 数")
-    buffer_rank: int = Field(2, ge=0, le=6, description="排名缓冲带宽度")
-    holding_period: int = Field(5, ge=1, le=60, description="调仓周期(交易日, fixed 模式生效)")
+    top_n: int = Field(2, ge=1, le=6, description="持仓 ETF 数")
+    buffer_rank: int = Field(3, ge=0, le=6, description="排名缓冲带宽度")
+    holding_period: int = Field(20, ge=1, le=60, description="调仓周期(交易日, fixed 模式生效)")
     use_abs_gate: bool = Field(
         True, description="false=纯相对动量(消融A1) / true=双动量完整版")
     use_buffer: bool = Field(
@@ -491,9 +491,9 @@ class EtfBacktestRequest(BaseModel):
         "equal", pattern="^(equal|risk_parity)$",
         description="equal=每槽等权 / risk_parity=逆波动率风险平价加权")
     use_target_vol: bool = Field(
-        False, description="目标波动率仓位缩放: 组合估计波动超阈值时降仓, 释放份额停货币ETF")
+        True, description="目标波动率仓位缩放: 组合估计波动超阈值时降仓, 释放份额停货币ETF")
     target_vol: float = Field(
-        0.10, gt=0.02, le=0.30, description="目标年化波动率(如0.10=10%)")
+        0.12, gt=0.02, le=0.30, description="目标年化波动率(如0.12=12%)")
 
 
 @router.post("/etf-rotation/backtest")

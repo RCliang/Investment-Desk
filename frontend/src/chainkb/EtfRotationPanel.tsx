@@ -1,12 +1,16 @@
 /**
- * ETF 动量轮动策略面板 (混合池双动量).
+ * ETF 动量轮动策略面板 (混合池双动量 · 网格TOP1方案).
+ *
+ * 运行配置 = 2026-09 网格搜索 TOP1（top2 · 月度调仓 · 3/6/12月窗口
+ * lw0.7 · 快速波动率20日 · 目标波动12% · ATR 4×），后端扫描/回测默认值
+ * 与本面板一致，详见 docs/etf-rotation-grid-search-plan.md。
  *
  * Layout:
  *   1. Momentum ranking — whole pool with blended/vol-adjusted momentum,
  *      per-window returns, absolute-momentum gate flag and target weight.
  *   2. Target portfolio — Top-N risk ETFs + cash parking, ATR stop refs.
- *   3. Backtest — dual momentum vs relative-only (ablation A1) toggle,
- *      strategy vs pool equal-weight benchmark curve, asset-class PnL.
+ *   3. Backtest — runs the TOP1 defaults; toggles expose the ablation
+ *      axes (A1 gate-off, market timing, rebalance mode, weighting).
  */
 import { useCallback, useEffect, useState } from 'react';
 import SketchPanel from './components/SketchPanel';
@@ -34,6 +38,13 @@ const CLASS_COLOR: Record<string, string> = {
 function pct(v: number | null | undefined, digits = 1): string {
   return v == null ? '—' : `${(v * 100).toFixed(digits)}%`;
 }
+
+/** The grid-search TOP1 scheme this panel runs on (backend defaults). */
+const TOP1 = {
+  badge: '方案 · 网格TOP1',
+  params: 'top2 · 月度调仓 · 窗口(60,120,250)×(0.15,0.15,0.70) · 波动率窗20日 · 绝对动量180日 · 缓冲带3 · 目标波动12% · ATR止损4×ATR14 · 破位缓冲3%',
+  ref: '网格回测参考（2021-09→2026-09，含成本）：总收益 65.5% · 回撤 11.2% · 夏普 1.222 · 验证期夏普 1.81',
+};
 
 function CurveChart({ strategy, benchmark }: {
   strategy: { date: string; equity: number }[];
@@ -73,7 +84,7 @@ export default function EtfRotationPanel() {
   const [useMarketGate, setUseMarketGate] = useState(false);
   const [rebalanceMode, setRebalanceMode] = useState<'fixed' | 'dynamic'>('fixed');
   const [weightMode, setWeightMode] = useState<'equal' | 'risk_parity'>('equal');
-  const [useTargetVol, setUseTargetVol] = useState(false);
+  const [useTargetVol, setUseTargetVol] = useState(true);
 
   const loadAll = useCallback(() => {
     setScores((s) => ({ ...s, loading: true }));
@@ -122,6 +133,21 @@ export default function EtfRotationPanel() {
 
   return (
     <div style={{ display: 'grid', gap: 18 }}>
+      {/* 0. Active scheme banner (grid-search TOP1) */}
+      <div style={{
+        display: 'grid', gap: 2, fontSize: 12, color: 'var(--pencil)',
+        border: '1.5px solid var(--marker-red)', borderRadius: 6,
+        padding: '8px 12px',
+      }}>
+        <div>
+          <span style={{ color: 'var(--marker-red)', fontWeight: 600 }}>
+            ★ {TOP1.badge}
+          </span>
+          <span style={{ marginLeft: 10 }}>{TOP1.params}</span>
+        </div>
+        <div>{TOP1.ref}</div>
+      </div>
+
       {/* 1. Momentum ranking */}
       <SketchPanel title="动量排名" mono={`DUAL MOMENTUM · ${scores.data?.date ?? '—'}`}>
         {scores.error && <div style={{ color: 'var(--marker-red)' }}>{scores.error}</div>}
@@ -135,7 +161,7 @@ export default function EtfRotationPanel() {
             <thead>
               <tr>
                 <th>#</th><th>代码</th><th>名称</th><th>类别</th>
-                <th>R20</th><th>R60</th><th>R120</th><th>得分</th>
+                <th>R60</th><th>R120</th><th>R250</th><th>得分</th>
                 <th>绝对动量</th><th>权重</th><th>止损参考</th>
               </tr>
             </thead>
@@ -154,14 +180,14 @@ export default function EtfRotationPanel() {
                     </span>
                   </td>
                   <td className="num" style={{
-                    color: (e.detail.r20 ?? 0) >= 0 ? 'var(--marker-green)' : 'var(--marker-red)',
-                  }}>{pct(e.detail.r20)}</td>
-                  <td className="num" style={{
                     color: (e.detail.r60 ?? 0) >= 0 ? 'var(--marker-green)' : 'var(--marker-red)',
                   }}>{pct(e.detail.r60)}</td>
                   <td className="num" style={{
                     color: (e.detail.r120 ?? 0) >= 0 ? 'var(--marker-green)' : 'var(--marker-red)',
                   }}>{pct(e.detail.r120)}</td>
+                  <td className="num" style={{
+                    color: (e.detail.r250 ?? 0) >= 0 ? 'var(--marker-green)' : 'var(--marker-red)',
+                  }}>{pct(e.detail.r250)}</td>
                   <td className="num">
                     <span title={`复合动量 ${e.momentum_raw?.toFixed(3)}`}>
                       {e.momentum_score?.toFixed(2)}
@@ -192,8 +218,9 @@ export default function EtfRotationPanel() {
           </div>
         )}
         <div style={{ fontSize: 11, color: 'var(--pencil)', marginTop: 6 }}>
-          得分 = (0.2×R20 + 0.3×R60 + 0.5×R120) ÷ 年化波动率（后复权价）·
-          绝对动量 = R120 ≥ 货币ETF 同期 · 周度调仓 + 排名缓冲带（持仓保留至前 5 名）
+          得分 = (0.15×R60 + 0.15×R120 + 0.70×R250) ÷ 年化波动率（20日窗，后复权价）·
+          绝对动量 = R180 ≥ 货币ETF 同期 · 月度调仓 + 排名缓冲带（持仓保留至前 5 名）·
+          目标波动率 12% 超限时降仓停泊货币ETF
         </div>
       </SketchPanel>
 
@@ -223,7 +250,8 @@ export default function EtfRotationPanel() {
           <div style={{ color: 'var(--pencil)', padding: '8px 0' }}>暂无推荐持仓。</div>
         )}
         <div style={{ fontSize: 11, color: 'var(--pencil)', marginTop: 6 }}>
-          Top-3 等权（每槽 1/3，未过闸槽位停泊货币ETF）· 持有期每日检查 ATR 止损（2×ATR14）与 MA20 破位（3% 缓冲带）。
+          Top-2 每槽 1/2（未过闸槽位与波动超限释放的份额停泊货币ETF）·
+          持有期每日检查 ATR 灾难止损（4×ATR14）与 MA20 破位（3% 缓冲带）。
         </div>
       </SketchPanel>
 
@@ -244,7 +272,7 @@ export default function EtfRotationPanel() {
             调仓模式
             <select value={rebalanceMode}
                     onChange={(e) => setRebalanceMode(e.target.value as 'fixed' | 'dynamic')}>
-              <option value="fixed">固定周期（每周）</option>
+              <option value="fixed">固定周期（默认每月）</option>
               <option value="dynamic">动态调仓（每日检查、变化才交易）</option>
             </select>
           </label>
@@ -259,10 +287,10 @@ export default function EtfRotationPanel() {
           <label style={{ fontSize: 13, display: 'flex', gap: 6, alignItems: 'center' }}>
             <input type="checkbox" checked={useTargetVol}
                    onChange={(e) => setUseTargetVol(e.target.checked)} />
-            目标波动率 10%（组合波动超阈值时降仓，释放份额停货币ETF）
+            目标波动率 12%（组合波动超阈值时降仓，释放份额停货币ETF）
           </label>
           <button className="btn" onClick={runBacktestNow} disabled={btRunning}>
-            {btRunning ? '回测中…' : '运行回测'}
+            {btRunning ? '回测中…' : '运行回测（TOP1 默认参数）'}
           </button>
           {btError && <span style={{ color: 'var(--marker-red)' }}>{btError}</span>}
         </div>
