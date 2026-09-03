@@ -253,6 +253,90 @@ class TestSelection:
         assert w[CASH] == pytest.approx(2 / 5)  # 3 of 5 slots filled
 
 
+# ── 4b. Event-driven replacement (exit → same-day refill) ──────────────────
+
+class TestPickReplacement:
+
+    def test_replacement_rules(self):
+        """Rank/band/gate/exclusion rules of the mid-cycle refill."""
+        dt = pd.Timestamp("2026-09-01")
+        tickers = ["A", "B", "C", "D", "E", "F"]
+        score = pd.DataFrame(
+            [[6.0, 5.0, 4.0, 3.0, 2.0, 1.0]], index=[dt], columns=tickers)
+        abs_ret = pd.DataFrame(
+            [[0.05, 0.05, 0.05, 0.005, 0.05, 0.05, 0.01],
+             [0.05, 0.05, 0.05, 0.005, 0.05, 0.05, 0.01]],
+            index=[dt, dt - pd.Timedelta(days=1)],
+            columns=tickers + [CASH])
+        engine = EtfRotationEngine(cash_ticker=CASH, top_n=2, buffer_rank=3)
+        engine._repl_ctx = (score, abs_ret, None, None)
+
+        # A exited today, B held: replacement = C (rank 3 ≤ band 5, passes
+        # gate). D (rank 4) is gated out (0.005 < cash 0.01); A excluded.
+        picks = engine.pick_replacement(dt, ["B"], {"A"})
+        assert list(picks) == ["C"]
+        assert 0 < picks["C"] <= 0.5  # ≤ 1/top_n (vol-scaled)
+
+        # No exit today → no refill.
+        assert engine.pick_replacement(dt, ["A", "B"], set()) == {}
+
+        # Cash-only exit → no refill.
+        assert engine.pick_replacement(dt, ["A", "B"], {CASH}) == {}
+
+        # Portfolio already full → no refill.
+        assert engine.pick_replacement(dt, ["B", "C"], {"A"}) == {}
+
+        # C gated out too → E (rank 5, exactly at band edge) steps in.
+        abs_ret.loc[dt, "C"] = 0.005
+        assert list(engine.pick_replacement(dt, ["B"], {"A"})) == ["E"]
+
+        # All band candidates gated → no refill (F rank 6 is outside band).
+        abs_ret.loc[dt, "E"] = 0.005
+        assert engine.pick_replacement(dt, ["B"], {"A"}) == {}
+
+    def test_defensive_replacement_universe(self):
+        """replacement_tickers: designated parking universe — best
+        gate-passer from the set regardless of cross-sectional rank."""
+        dt = pd.Timestamp("2026-09-01")
+        tickers = ["A", "B", "C", "D", "E", "F"]
+        score = pd.DataFrame(
+            [[6.0, 5.0, 4.0, 3.0, 2.0, 1.0]], index=[dt], columns=tickers)
+        abs_ret = pd.DataFrame(
+            [[0.05, 0.05, 0.05, 0.05, 0.05, 0.005, 0.01]],
+            index=[dt], columns=tickers + [CASH])
+        engine = EtfRotationEngine(cash_ticker=CASH, top_n=2, buffer_rank=3,
+                                   replacement_tickers={"E", "F"})
+        engine._repl_ctx = (score, abs_ret, None, None)
+
+        # F is rank 6 (way outside band) but the designated universe picks
+        # by score — except F fails the cash-hurdle gate → E picked.
+        picks = engine.pick_replacement(dt, ["A"], {"B"})
+        assert list(picks) == ["E"]
+        # E gated too → no refill (stay cash).
+        abs_ret.loc[dt, "E"] = 0.005
+        assert engine.pick_replacement(dt, ["A"], {"B"}) == {}
+
+    def test_replacement_buys_off_rebalance_grid(self):
+        """Integration: with the hook on, entries appear on non-grid dates."""
+        bars = make_universe()
+        engine = EtfRotationEngine(cash_ticker=CASH, top_n=2, holding_period=20)
+        membership = {t: ["ETF"] for t in bars}
+        base = RotationBacktester(stamp_duty_rate=0.0, stop_mode="atr",
+                                  atr_mult=4.0, breakdown_buffer=0.03)
+        out0 = base.run(bars, membership, engine, initial_capital=1e6)
+        repl = RotationBacktester(stamp_duty_rate=0.0, stop_mode="atr",
+                                  atr_mult=4.0, breakdown_buffer=0.03,
+                                  replacement_fn=engine.pick_replacement)
+        out1 = repl.run(bars, membership, engine, initial_capital=1e6)
+        dates = list(pd.Series({p["date"]: p["equity"]
+                                for p in out0["result"]["equity_curve"]}).index)
+        grid = set(dates[::20])
+        off_grid = [t for t in out1["result"]["trades"]
+                    if t["entry_date"] not in grid]
+        assert off_grid, "expected same-day replacement entries off the grid"
+        assert out1["result"]["trade_count"] >= out0["result"]["trade_count"]
+
+
 # ── 5. Engine + backtester smoke ────────────────────────────────────────────
 
 class TestBacktestSmoke:

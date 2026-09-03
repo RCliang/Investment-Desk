@@ -26,7 +26,7 @@ import logging
 import math
 from dataclasses import dataclass, asdict
 from datetime import date
-from typing import Optional
+from typing import Callable, Optional
 
 import numpy as np
 import pandas as pd
@@ -83,6 +83,13 @@ class RotationBacktester:
                         (re-)establish bullish alignment.
       reentry_cooldown: min trading days between a stop/breakdown/trailing
                         exit and a re-entry buy of the same ticker.
+      replacement_fn:  optional hook (dt, held_tickers, exited_today) →
+                        {ticker: weight} for event-driven slot refills:
+                        when a position exits mid-cycle, buy the returned
+                        next-best candidates the same day instead of
+                        idling in cash until the next rebalance. The ETF
+                        strategy supplies EtfRotationEngine.pick_replacement;
+                        None (default) keeps the stock-strategy behavior.
     """
 
     def __init__(
@@ -97,6 +104,7 @@ class RotationBacktester:
         keep_in_trend: bool = False,
         reentry_enabled: bool = False,
         reentry_cooldown: int = 5,
+        replacement_fn: Optional[Callable] = None,
     ):
         self.commission_rate = commission_rate
         self.commission_min = commission_min
@@ -110,6 +118,7 @@ class RotationBacktester:
         self.keep_in_trend = keep_in_trend
         self.reentry_enabled = reentry_enabled
         self.reentry_cooldown = reentry_cooldown
+        self.replacement_fn = replacement_fn
 
     def _entry_stop(
         self,
@@ -370,6 +379,44 @@ class RotationBacktester:
                     if p is None:
                         continue
                     budget = equity_now * last_target[t]
+                    lots = int(budget / (p * (1 + self.slippage_rate)) // LOT_SIZE)
+                    buy_shares = lots * LOT_SIZE
+                    if buy_shares <= 0:
+                        continue
+                    fill = p * (1 + self.slippage_rate)
+                    cash -= self._buy_cost(buy_shares, fill)
+                    positions[t] = {
+                        "shares": buy_shares,
+                        "entry_price": fill,
+                        "entry_idx": i,
+                        "high_close": fill,
+                        "trailing": False,
+                        "fixed_stop": self._entry_stop(fill, dt, t, atr_panel),
+                        "entry_date": dt,
+                        "sector": sector_of(t),
+                    }
+
+            # ── 2c. Event-driven replacement (ETF strategy hook). ────────
+            # After an exit, redeploy the freed slot into the engine's
+            # next-best pick the same day (rank+gate decided engine-side)
+            # instead of parking in cash until the next rebalance. Runs
+            # after the rebalance section so scheduled dates reconcile
+            # first and this only fires for genuinely open slots.
+            if self.replacement_fn is not None and cooldown:
+                picks = self.replacement_fn(
+                    dt, list(positions.keys()), set(cooldown))
+                for t, w in picks.items():
+                    if t in positions or t in cooldown:
+                        continue
+                    if i - last_exit_idx.get(t, -10**9) < self.reentry_cooldown:
+                        continue
+                    p = price_of(t)
+                    if p is None:
+                        continue
+                    equity_now = cash + sum(
+                        (price_of(tt) or pos["entry_price"]) * pos["shares"]
+                        for tt, pos in positions.items())
+                    budget = equity_now * w
                     lots = int(budget / (p * (1 + self.slippage_rate)) // LOT_SIZE)
                     buy_shares = lots * LOT_SIZE
                     if buy_shares <= 0:

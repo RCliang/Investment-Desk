@@ -80,6 +80,7 @@ export interface EtfBacktestRequest {
   weight_mode?: 'equal' | 'risk_parity'; // risk_parity = 逆波动率加权
   use_target_vol?: boolean;       // 目标波动率降仓, 释放份额停货币ETF
   target_vol?: number;            // 目标年化波动率 (0.10 = 10%)
+  exit_replacement?: boolean;     // true(默认) = 退出后当日防守类补位(国债/黄金/红利)
 }
 
 /** Scan summary (admin-triggered POST /etf-rotation/scan). */

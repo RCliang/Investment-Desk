@@ -90,21 +90,20 @@ def market_code_for(code: str) -> int:
 
 
 def fetch_klines(code: str, incremental: bool = False) -> list[dict]:
-    """One ETF's daily hfq bars. Full mode spans listing→today in ONE
-    request; incremental caps at the last `lmt` bars (beg/end dropped —
-    EM ignores lmt when they are present)."""
+    """One ETF's daily hfq bars, listing→today in ONE request.
+
+    incremental keeps the same proven beg/end form (the lmt-only variant
+    was never verified against EM and saves nothing — it is still one
+    request per ticker; the upsert is idempotent either way).
+    """
     params = {
         "secid": f"{market_code_for(code)}.{code}",
         "klt": "101",            # daily
         "fqt": "2",              # 后复权 (dividend-adjusted)
+        "beg": "0", "end": "20500101",
         "fields1": "f1,f2,f3,f4,f5,f6",
         "fields2": "f51,f52,f53,f54,f55,f56,f57,f58,f59,f60,f61",
     }
-    if incremental:
-        params["lmt"] = "30"
-    else:
-        params["beg"] = "0"
-        params["end"] = "20500101"
 
     if _em_fail_streak[0] >= _EM_FAIL_STREAK_LIMIT:
         raise RuntimeError("EM circuit open (consecutive failures) — "
@@ -160,20 +159,23 @@ def main():
     if args.limit:
         tickers = tickers[: args.limit]
 
-    # Missing-first ordering: the #18 block tends to cut the connection
+    # Stale-first ordering: the #18 block tends to cut the connection
     # after a burst of requests, stranding the pool's tail. Re-runs start
-    # from whatever is still absent in the previous output so each window
-    # of availability makes maximal progress (merge semantics below keep
-    # the old bars for whoever fails again).
+    # from the STALEST tickers (oldest last-bar first — pure-missing have
+    # no bars at all so they sort first) so each window of availability
+    # makes maximal progress (merge semantics below keep the old bars for
+    # whoever fails again).
     if OUT_PATH.exists():
         try:
-            have = set(json.loads(
-                OUT_PATH.read_text(encoding="utf-8")).get("bars", {}))
+            prev_bars = json.loads(
+                OUT_PATH.read_text(encoding="utf-8")).get("bars", {})
         except (ValueError, OSError):
-            have = set()
-        if have:
-            tickers = sorted(set(tickers) - have) + [
-                t for t in tickers if t in have]
+            prev_bars = {}
+        if prev_bars:
+            def _last_date(t: str) -> str:
+                b = prev_bars.get(t)
+                return b[-1]["date"] if b else ""
+            tickers = sorted(set(tickers), key=_last_date)
 
     print(f"Backfilling {'recent' if args.incremental else 'full history'} "
           f"hfq bars for {len(tickers)} ETFs via EM push2his (throttled) ...")

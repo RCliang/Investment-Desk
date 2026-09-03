@@ -199,6 +199,7 @@ class EtfRotationEngine:
         market_ticker: str = "510300",
         market_ma_window: int = 200,
         market_gate_tickers: Optional[set[str]] = None,
+        replacement_tickers: Optional[set[str]] = None,
         rebalance_mode: str = "fixed",
         weight_mode: str = "equal",
         use_target_vol: bool = False,
@@ -230,8 +231,15 @@ class EtfRotationEngine:
         self.market_ticker = market_ticker
         self.market_ma_window = market_ma_window
         # None → gate every non-cash ticker; the service passes the
-        # equity-like subset (宽基+行业) so 防守 (国债/黄金/纳指) stay rankable.
+        # equity-like subset (宽基+行业) so 防守 (国债/黄金/红利) stay rankable.
         self.market_gate_tickers = market_gate_tickers
+        # Mid-cycle replacement candidate restriction (None = whole pool
+        # with band rules). When set (e.g. the defensive class), the
+        # refill semantics change to "upgraded cash parking": the best
+        # gate-passing member of the set by score, regardless of overall
+        # cross-sectional rank — the freed slot parks in defense instead
+        # of the money ETF, not a bet on rotation rank.
+        self.replacement_tickers = replacement_tickers
         self.rebalance_mode = rebalance_mode
         self.weight_mode = weight_mode
         self.use_target_vol = use_target_vol
@@ -333,6 +341,9 @@ class EtfRotationEngine:
             close, self.windows, self.weights, self.vol_window)
         abs_ret = panels[f"r{self.abs_window}"]
         daily_ret = close.pct_change(fill_method=None)  # for target-vol cov
+        # Kept for pick_replacement(): mid-cycle slot refills after exits
+        # (fixed cadence + event-driven replacement — see service layer).
+        self._repl_ctx = (panels["score"], abs_ret, daily_ret, panels["vol"])
 
         # Market-timing gate: a boolean per-date Series from the market
         # proxy's close vs its own SMA. Below-MA dates block the
@@ -454,3 +465,79 @@ class EtfRotationEngine:
                 "cash_ticker": self.cash_ticker,
             },
         }
+
+    def pick_replacement(
+        self,
+        dt,
+        held_positions: list[str],
+        exited_today: set[str],
+    ) -> dict[str, float]:
+        """Event-driven slot refill: after a risk ETF exits mid-cycle, pick
+        the next-best eligible replacement the SAME day instead of parking
+        in cash until the next scheduled rebalance.
+
+        Rules mirror the monthly selection (same gate + band semantics):
+        candidates must (a) not be held, (b) not have exited today, (c)
+        rank ≤ top_n + buffer (band width — a slot opened by an exit, so
+        band-level entrants are consistent with the sticky buffer), and
+        (d) pass the absolute-momentum gate. With replacement_tickers
+        set (defensive parking), (c) is dropped and candidates come only
+        from that set — best gate-passer by score, "upgraded cash
+        parking" semantics. Buys are sized at 1/top_n per slot, then
+        target-vol scaled like a normal rebalance. Cash exits don't
+        trigger refills; market-gate overlay not applied (strategy runs
+        with it off).
+
+        Called by RotationBacktester's replacement_fn hook; requires
+        run() to have been called first (panel context).
+        """
+        if not hasattr(self, "_repl_ctx"):
+            return {}
+        score, abs_ret, daily_ret, vol_panel = self._repl_ctx
+        exited_risk = {t for t in exited_today if t != self.cash_ticker}
+        if not exited_risk:
+            return {}
+        held = [t for t in held_positions if t != self.cash_ticker]
+        n_slots = self.top_n - len(held)
+        if n_slots <= 0 or dt not in score.index or dt not in abs_ret.index:
+            return {}
+
+        score_row = score.loc[dt].dropna()
+        if score_row.empty:
+            return {}
+        ranked = score_row.sort_values(ascending=False, kind="mergesort")
+        ranks = {t: i + 1 for i, t in enumerate(ranked.index)}
+        abs_row = abs_ret.loc[dt]
+        cash_ret = abs_row.get(self.cash_ticker)
+
+        exclude = set(held) | exited_risk | {self.cash_ticker}
+        gate_pass = lambda t: (  # noqa: E731 — gate with cash-hurdle fallback
+            pd.notna(abs_row.get(t))
+            and (not self.use_abs_gate
+                 or (cash_ret is not None and pd.notna(cash_ret)
+                     and float(abs_row[t]) >= float(cash_ret))))
+
+        if self.replacement_tickers is not None:
+            # Designated parking universe ("upgraded cash parking"): the
+            # best gate-passing member by score, regardless of overall
+            # rank — the slot parks in defense, not a rank bet.
+            picks = [t for t in ranked.index
+                     if t in self.replacement_tickers
+                     and t not in exclude and gate_pass(t)][:n_slots]
+        else:
+            band = (self.top_n + self.buffer_rank
+                    if self.use_buffer else self.top_n)
+            picks = [t for t in ranked.index
+                     if t not in exclude and ranks[t] <= band
+                     and gate_pass(t)][:n_slots]
+        if not picks:
+            return {}
+
+        # Size like a normal rebalance: full would-be portfolio at 1/top_n
+        # per slot, then target-vol / weight-mode scaling on the whole.
+        weights = {t: 1.0 / self.top_n for t in held + picks}
+        detail = {"selected": held + picks}
+        weights = self._apply_weight_mode(dt, weights, detail,
+                                          daily_ret, vol_panel)
+        # Return only the additions, at their scaled weights.
+        return {t: weights[t] for t in picks if weights.get(t, 0) > 0}

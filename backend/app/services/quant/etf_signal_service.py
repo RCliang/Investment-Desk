@@ -215,6 +215,7 @@ def run_backtest_and_store(
     weight_mode: str = "equal",
     use_target_vol: bool = USE_TARGET_VOL,
     target_vol: float = TARGET_VOL,
+    exit_replacement: bool = True,
     bars_limit: int = 1200,
 ) -> dict:
     """Run the ETF dual-momentum backtest, store, return summary.
@@ -242,6 +243,10 @@ def run_backtest_and_store(
     # 纳指) and the cash ETF remain rankable in weak regimes.
     classes = etf_pool.get_asset_classes()
     equity_like = {t for t, c in classes.items() if c in ("宽基", "行业")}
+    # Defensive replacement universe (multi-phase validated 2026-09-03):
+    # an exit mid-cycle parks the freed slot in the best gate-passing
+    # defensive ETF (upgraded cash parking), not a rotation-rank bet.
+    defensive = {t for t, c in classes.items() if c == "防守"}
 
     engine = EtfRotationEngine(
         cash_ticker=etf_pool.get_cash_ticker(),
@@ -250,6 +255,7 @@ def run_backtest_and_store(
         use_market_gate=use_market_gate,
         market_ma_window=market_ma_window,
         market_gate_tickers=equity_like,
+        replacement_tickers=defensive if exit_replacement else None,
         rebalance_mode=rebalance_mode,
         weight_mode=weight_mode,
         use_target_vol=use_target_vol,
@@ -264,6 +270,9 @@ def run_backtest_and_store(
         stop_mode=STOP_MODE,
         atr_mult=ATR_MULT,
         breakdown_buffer=BREAKDOWN_BUFFER,
+        # Event-driven slot refill: replace an exited ETF with the
+        # next-best ranked pick the same day (engine-side rules).
+        replacement_fn=engine.pick_replacement if exit_replacement else None,
     )
     out = bt.run(
         bars, membership, engine,

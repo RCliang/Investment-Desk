@@ -494,6 +494,8 @@ class EtfBacktestRequest(BaseModel):
         True, description="目标波动率仓位缩放: 组合估计波动超阈值时降仓, 释放份额停货币ETF")
     target_vol: float = Field(
         0.12, gt=0.02, le=0.30, description="目标年化波动率(如0.12=12%)")
+    exit_replacement: bool = Field(
+        True, description="退出即防守补位: 触发退出规则清仓后, 当日买入过闸的最优防守类ETF(国债/黄金/红利)而非持币等月度调仓")
 
 
 @router.post("/etf-rotation/backtest")
@@ -527,6 +529,7 @@ def run_etf_backtest(
             weight_mode=req.weight_mode,
             use_target_vol=req.use_target_vol,
             target_vol=req.target_vol,
+            exit_replacement=req.exit_replacement,
         )
     except ValueError as e:
         raise HTTPException(400, str(e))

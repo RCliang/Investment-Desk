@@ -41,9 +41,9 @@ function pct(v: number | null | undefined, digits = 1): string {
 
 /** The grid-search TOP1 scheme this panel runs on (backend defaults). */
 const TOP1 = {
-  badge: '方案 · 网格TOP1',
-  params: 'top2 · 月度调仓 · 窗口(60,120,250)×(0.15,0.15,0.70) · 波动率窗20日 · 绝对动量180日 · 缓冲带3 · 目标波动12% · ATR止损4×ATR14 · 破位缓冲3%',
-  ref: '网格回测参考（2021-09→2026-09，含成本）：总收益 65.5% · 回撤 11.2% · 夏普 1.222 · 验证期夏普 1.81',
+  badge: '方案 · 网格TOP1 + 防守补位',
+  params: 'top2 · 月度调仓 · 窗口(60,120,250)×(0.15,0.15,0.70) · 波动率窗20日 · 绝对动量180日 · 缓冲带3 · 目标波动12% · ATR止损4×ATR14 · 破位缓冲3% · 退出后防守类当日补位(国债/黄金/红利)',
+  ref: '网格回测参考（2021-09→2026-09，含成本，多相位平均）：总收益 ~62% · 回撤 ~12% · 夏普 ~1.13 · 验证期夏普 ~1.77',
 };
 
 function CurveChart({ strategy, benchmark }: {
@@ -85,6 +85,7 @@ export default function EtfRotationPanel() {
   const [rebalanceMode, setRebalanceMode] = useState<'fixed' | 'dynamic'>('fixed');
   const [weightMode, setWeightMode] = useState<'equal' | 'risk_parity'>('equal');
   const [useTargetVol, setUseTargetVol] = useState(true);
+  const [exitReplacement, setExitReplacement] = useState(true);
 
   const loadAll = useCallback(() => {
     setScores((s) => ({ ...s, loading: true }));
@@ -109,6 +110,7 @@ export default function EtfRotationPanel() {
         rebalance_mode: rebalanceMode,
         weight_mode: weightMode,
         use_target_vol: useTargetVol,
+        exit_replacement: exitReplacement,
       });
       setBtSummary(summary);
       const detail = await getBacktest(summary.run_id);
@@ -118,7 +120,7 @@ export default function EtfRotationPanel() {
     } finally {
       setBtRunning(false);
     }
-  }, [useAbsGate, useMarketGate, rebalanceMode, weightMode, useTargetVol]);
+  }, [useAbsGate, useMarketGate, rebalanceMode, weightMode, useTargetVol, exitReplacement]);
 
   const emptyHint = !scores.loading && !scores.data?.etfs?.length;
   const ranked = scores.data?.etfs?.filter((e) => e.momentum_rank != null) ?? [];
@@ -288,6 +290,11 @@ export default function EtfRotationPanel() {
             <input type="checkbox" checked={useTargetVol}
                    onChange={(e) => setUseTargetVol(e.target.checked)} />
             目标波动率 12%（组合波动超阈值时降仓，释放份额停货币ETF）
+          </label>
+          <label style={{ fontSize: 13, display: 'flex', gap: 6, alignItems: 'center' }}>
+            <input type="checkbox" checked={exitReplacement}
+                   onChange={(e) => setExitReplacement(e.target.checked)} />
+            退出后防守类当日补位（国债/黄金/红利择优，关闭 = 持币等月度调仓）
           </label>
           <button className="btn" onClick={runBacktestNow} disabled={btRunning}>
             {btRunning ? '回测中…' : '运行回测（TOP1 默认参数）'}
