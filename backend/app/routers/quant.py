@@ -486,7 +486,10 @@ class EtfBacktestRequest(BaseModel):
         200, ge=20, le=300, description="大盘择时均线窗口(交易日)")
     rebalance_mode: str = Field(
         "fixed", pattern="^(fixed|dynamic)$",
-        description="fixed=每holding_period日调仓 / dynamic=每日检查、持仓变化才交易")
+        description="fixed=锚点日调仓 / dynamic=每日检查、持仓变化才交易")
+    rebalance_anchor: str = Field(
+        "calendar", pattern="^(calendar|grid)$",
+        description="锚点日历: calendar=每月首个交易日(实盘语义,无相位漂移) / grid=面板起点+holding_period(回测遗留)")
     weight_mode: str = Field(
         "equal", pattern="^(equal|risk_parity)$",
         description="equal=每槽等权 / risk_parity=逆波动率风险平价加权")
@@ -526,6 +529,7 @@ def run_etf_backtest(
             use_market_gate=req.use_market_gate,
             market_ma_window=req.market_ma_window,
             rebalance_mode=req.rebalance_mode,
+            rebalance_anchor=req.rebalance_anchor,
             weight_mode=req.weight_mode,
             use_target_vol=req.use_target_vol,
             target_vol=req.target_vol,

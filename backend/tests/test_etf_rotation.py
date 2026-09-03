@@ -337,6 +337,52 @@ class TestPickReplacement:
         assert out1["result"]["trade_count"] >= out0["result"]["trade_count"]
 
 
+# ── 4c. Calendar-anchored rebalancing (每月首个交易日) ─────────────────────
+
+class TestCalendarAnchor:
+
+    def test_anchor_dates_month_firsts(self):
+        engine = EtfRotationEngine(cash_ticker=CASH, rebalance_anchor="calendar")
+        dates = ["2026-08-03", "2026-08-04", "2026-08-29",
+                 "2026-09-01", "2026-09-02", "2026-10-09"]
+        assert engine._anchor_dates(dates) == \
+            ["2026-08-03", "2026-09-01", "2026-10-09"]
+
+    def test_calendar_start_inception(self):
+        # Months before the inception date get NO anchor; the inception
+        # month anchors on its first trading day ≥ inception.
+        engine = EtfRotationEngine(cash_ticker=CASH,
+                                   rebalance_anchor="calendar",
+                                   calendar_start="2026-09-03")
+        dates = ["2026-07-01", "2026-08-03", "2026-09-01", "2026-09-03",
+                 "2026-09-04", "2026-10-09"]
+        assert engine._anchor_dates(dates) == ["2026-09-03", "2026-10-09"]
+
+    def test_grid_anchor_unchanged(self):
+        engine = EtfRotationEngine(cash_ticker=CASH)  # default grid
+        dates = [str(i) for i in range(10)]
+        assert engine._anchor_dates(dates) == dates[::20]
+
+    def test_latest_frozen_between_anchors(self):
+        """Non-anchor days carry the last anchor's portfolio (backtest
+        parity: no mid-month re-selection)."""
+        bars = make_universe()
+        engine = EtfRotationEngine(cash_ticker=CASH, top_n=2,
+                                   rebalance_anchor="calendar")
+        model = engine.run(bars)
+        anchors = sorted(model["portfolios"])
+        latest = model["latest"]["date"]
+        if latest in model["portfolios"]:      # latest happens to be an anchor
+            assert model["latest"]["weights"] == model["portfolios"][latest]
+        else:
+            last_anchor = [a for a in anchors if a <= latest][-1]
+            assert model["latest"]["anchor"] == last_anchor
+            assert model["latest"]["weights"] == model["portfolios"][last_anchor]
+        # anchors are month-first business days
+        months = [a[:7] for a in anchors]
+        assert len(months) == len(set(months))
+
+
 # ── 5. Engine + backtester smoke ────────────────────────────────────────────
 
 class TestBacktestSmoke:
@@ -399,6 +445,11 @@ class TestScanService:
         monkeypatch.setattr(
             etf_pool, "get_asset_classes",
             lambda: {t: ("货币" if t == CASH else "宽基") for t in bars})
+        # Calendar anchors are gated on the real inception (2026-09-03);
+        # the synthetic universe lives in 2024-2025 — shift inception into
+        # its range so the scan has anchors.
+        monkeypatch.setattr(etf_signal_service, "STRATEGY_INCEPTION",
+                            bars[CASH]["date"].iloc[0])
 
         result = etf_signal_service.scan_etf_signals(db_session, top_n=2)
         assert result["scanned"] == len(risk)

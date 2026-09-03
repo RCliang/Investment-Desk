@@ -39,11 +39,11 @@ function pct(v: number | null | undefined, digits = 1): string {
   return v == null ? '—' : `${(v * 100).toFixed(digits)}%`;
 }
 
-/** The grid-search TOP1 scheme this panel runs on (backend defaults). */
+/** The active scheme this panel runs on (backend defaults). */
 const TOP1 = {
-  badge: '方案 · 网格TOP1 + 防守补位',
-  params: 'top2 · 月度调仓 · 窗口(60,120,250)×(0.15,0.15,0.70) · 波动率窗20日 · 绝对动量180日 · 缓冲带3 · 目标波动12% · ATR止损4×ATR14 · 破位缓冲3% · 退出后防守类当日补位(国债/黄金/红利)',
-  ref: '网格回测参考（2021-09→2026-09，含成本，多相位平均）：总收益 ~62% · 回撤 ~12% · 夏普 ~1.13 · 验证期夏普 ~1.77',
+  badge: '方案 · 网格TOP1 + 防守补位 · 日历锚定',
+  params: 'top2 · 每月首个交易日调仓 · 窗口(60,120,250)×(0.15,0.15,0.70) · 波动率窗20日 · 绝对动量180日 · 缓冲带3 · 目标波动12% · ATR止损4×ATR14 · 破位缓冲3% · 退出后防守类当日补位(国债/黄金/红利)',
+  ref: '锚点日历: 2026-09-03 首次调仓(09-04 建仓执行) · 下次 2026-10-09 · 非调仓日推荐冻结，仅退出/防守补位生效',
 };
 
 function CurveChart({ strategy, benchmark }: {
@@ -274,7 +274,7 @@ export default function EtfRotationPanel() {
             调仓模式
             <select value={rebalanceMode}
                     onChange={(e) => setRebalanceMode(e.target.value as 'fixed' | 'dynamic')}>
-              <option value="fixed">固定周期（默认每月）</option>
+              <option value="fixed">固定锚点（每月首个交易日）</option>
               <option value="dynamic">动态调仓（每日检查、变化才交易）</option>
             </select>
           </label>

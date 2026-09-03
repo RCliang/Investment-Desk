@@ -201,6 +201,8 @@ class EtfRotationEngine:
         market_gate_tickers: Optional[set[str]] = None,
         replacement_tickers: Optional[set[str]] = None,
         rebalance_mode: str = "fixed",
+        rebalance_anchor: str = "grid",
+        calendar_start: Optional[str] = None,
         weight_mode: str = "equal",
         use_target_vol: bool = False,
         target_vol: float = 0.10,
@@ -213,6 +215,8 @@ class EtfRotationEngine:
             weights = weights + (0.0,)
         if rebalance_mode not in ("fixed", "dynamic"):
             raise ValueError("rebalance_mode must be 'fixed' or 'dynamic'")
+        if rebalance_anchor not in ("grid", "calendar"):
+            raise ValueError("rebalance_anchor must be 'grid' or 'calendar'")
         if weight_mode not in ("equal", "risk_parity"):
             raise ValueError("weight_mode must be 'equal' or 'risk_parity'")
         if target_vol <= 0:
@@ -241,6 +245,12 @@ class EtfRotationEngine:
         # of the money ETF, not a bet on rotation rank.
         self.replacement_tickers = replacement_tickers
         self.rebalance_mode = rebalance_mode
+        self.rebalance_anchor = rebalance_anchor
+        # calendar anchors: first trading day of each month on/after this
+        # ISO date (strategy inception — the month of inception anchors on
+        # its first trading day ≥ inception, e.g. 2026-09-03). None → all
+        # months in the panel (backtest).
+        self.calendar_start = calendar_start
         self.weight_mode = weight_mode
         self.use_target_vol = use_target_vol
         self.target_vol = target_vol
@@ -311,6 +321,30 @@ class EtfRotationEngine:
                             weights.get(self.cash_ticker, 0.0)
                             + (1.0 - k) * risk_total)
         return weights
+
+    def _anchor_dates(self, all_dates: list) -> list:
+        """Rebalance dates for fixed mode.
+
+        "grid"     — every holding_period-th trading day from the panel
+                     start (legacy; phase drifts with the sliding data
+                     window, ±15pct full-window variance measured).
+        "calendar" — the FIRST TRADING DAY of each month: a stable,
+                     calendar-meaningful cadence ("rebalance on the first
+                     trading day of each month"), immune to window phase.
+                     calendar_start restricts anchors to months on/after
+                     the strategy inception date.
+        """
+        if self.rebalance_anchor != "calendar":
+            return all_dates[::self.holding_period]
+        anchors, last_month = [], None
+        for d in all_dates:
+            if self.calendar_start and d < self.calendar_start:
+                continue
+            month = d[:7]
+            if month != last_month:
+                anchors.append(d)
+                last_month = month
+        return anchors
 
     def run(
         self,
@@ -402,7 +436,7 @@ class EtfRotationEngine:
                     selection_detail[dt] = detail
                     prev_holdings = selected
         else:
-            for dt in all_dates[::self.holding_period]:
+            for dt in self._anchor_dates(all_dates):
                 weights, detail = select_portfolio_at(
                     dt, panels["score"], abs_ret, self.cash_ticker,
                     prev_holdings, top_n=self.top_n,
@@ -415,27 +449,42 @@ class EtfRotationEngine:
                 selection_detail[dt] = detail
                 prev_holdings = detail["selected"]
 
-        # Daily "what would we hold today" snapshot: select at the latest
-        # valid date using the holdings of the last recorded rebalance
-        # before it as the buffer state.
+        # Daily "what would we hold today" snapshot.
         valid = panels["score"].dropna(how="all").index
         latest = valid[-1] if len(valid) else None
         latest_snapshot: dict = {"date": None, "weights": {}, "detail": {}}
         if latest is not None:
-            prev_dates = [d for d in portfolios if d < latest]
-            prev = selection_detail[prev_dates[-1]]["selected"] \
-                if prev_dates else []
-            w_now, d_now = select_portfolio_at(
-                latest, panels["score"], abs_ret, self.cash_ticker, prev,
-                top_n=self.top_n, buffer_rank=self.buffer_rank,
-                use_abs_gate=self.use_abs_gate, use_buffer=self.use_buffer,
-                blocked=blocked_at(latest))
-            w_now = self._apply_weight_mode(
-                latest, w_now, d_now, daily_ret, panels["vol"])
-            latest_snapshot = {
-                "date": latest, "weights": w_now, "detail": d_now,
-                "prev_holdings": prev,
-            }
+            if (self.rebalance_anchor == "calendar"
+                    and latest not in portfolios):
+                # Calendar anchors freeze the portfolio between rebalance
+                # dates (backtest parity): the in-force recommendation on
+                # a non-anchor day is the last anchor's portfolio, NOT a
+                # fresh selection. Mid-month exits/defensive replacement
+                # are handled by the daily exit rules, not re-selection.
+                anchors_le = [d for d in portfolios if d <= latest]
+                if anchors_le:
+                    a = anchors_le[-1]
+                    latest_snapshot = {
+                        "date": latest, "anchor": a,
+                        "weights": portfolios[a],
+                        "detail": selection_detail[a],
+                        "prev_holdings": selection_detail[a]["selected"],
+                    }
+            else:
+                prev_dates = [d for d in portfolios if d < latest]
+                prev = selection_detail[prev_dates[-1]]["selected"] \
+                    if prev_dates else []
+                w_now, d_now = select_portfolio_at(
+                    latest, panels["score"], abs_ret, self.cash_ticker, prev,
+                    top_n=self.top_n, buffer_rank=self.buffer_rank,
+                    use_abs_gate=self.use_abs_gate, use_buffer=self.use_buffer,
+                    blocked=blocked_at(latest))
+                w_now = self._apply_weight_mode(
+                    latest, w_now, d_now, daily_ret, panels["vol"])
+                latest_snapshot = {
+                    "date": latest, "weights": w_now, "detail": d_now,
+                    "prev_holdings": prev,
+                }
 
         return {
             "panels": panels,
@@ -459,6 +508,8 @@ class EtfRotationEngine:
                 "market_ticker": self.market_ticker,
                 "market_ma_window": self.market_ma_window,
                 "rebalance_mode": self.rebalance_mode,
+                "rebalance_anchor": self.rebalance_anchor,
+                "calendar_start": self.calendar_start,
                 "weight_mode": self.weight_mode,
                 "use_target_vol": self.use_target_vol,
                 "target_vol": self.target_vol,

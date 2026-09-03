@@ -77,6 +77,7 @@ export interface EtfBacktestRequest {
   use_market_gate?: boolean;      // 大盘MA择时: 510300 跌破 MA 屏蔽宽基+行业
   market_ma_window?: number;      // 择时均线窗口 (交易日)
   rebalance_mode?: 'fixed' | 'dynamic';  // dynamic = 每日检查、持仓变化才交易
+  rebalance_anchor?: 'calendar' | 'grid'; // calendar(默认) = 每月首个交易日调仓
   weight_mode?: 'equal' | 'risk_parity'; // risk_parity = 逆波动率加权
   use_target_vol?: boolean;       // 目标波动率降仓, 释放份额停货币ETF
   target_vol?: number;            // 目标年化波动率 (0.10 = 10%)

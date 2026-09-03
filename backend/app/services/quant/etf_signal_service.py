@@ -55,6 +55,12 @@ ATR_MULT = 4.0
 BREAKDOWN_BUFFER = 0.03
 USE_TARGET_VOL = True
 TARGET_VOL = 0.12
+# Calendar-anchored rebalancing (2026-09-03 fix): selection re-runs on the
+# FIRST TRADING DAY of each month; between anchors the live recommendation
+# is frozen (exits / defensive replacement still act daily). Inception =
+# the first anchor: signal 2026-09-03 → execution 2026-09-04, next anchor
+# 2026-10-09 (first trading day after the National Day holiday).
+STRATEGY_INCEPTION = "2026-09-03"
 
 
 # ── Data loading ────────────────────────────────────────────────────────────
@@ -99,7 +105,8 @@ def scan_etf_signals(
     engine = EtfRotationEngine(
         cash_ticker=etf_pool.get_cash_ticker(),
         top_n=top_n, buffer_rank=buffer_rank, holding_period=holding_period,
-        use_target_vol=USE_TARGET_VOL, target_vol=TARGET_VOL)
+        use_target_vol=USE_TARGET_VOL, target_vol=TARGET_VOL,
+        rebalance_anchor="calendar", calendar_start=STRATEGY_INCEPTION)
     model = engine.run(bars)
 
     latest = model["latest"]["date"]
@@ -212,6 +219,7 @@ def run_backtest_and_store(
     use_market_gate: bool = False,
     market_ma_window: int = 200,
     rebalance_mode: str = "fixed",
+    rebalance_anchor: str = "calendar",
     weight_mode: str = "equal",
     use_target_vol: bool = USE_TARGET_VOL,
     target_vol: float = TARGET_VOL,
@@ -257,6 +265,7 @@ def run_backtest_and_store(
         market_gate_tickers=equity_like,
         replacement_tickers=defensive if exit_replacement else None,
         rebalance_mode=rebalance_mode,
+        rebalance_anchor=rebalance_anchor,
         weight_mode=weight_mode,
         use_target_vol=use_target_vol,
         target_vol=target_vol)
