@@ -488,8 +488,8 @@ class EtfBacktestRequest(BaseModel):
         "fixed", pattern="^(fixed|dynamic)$",
         description="fixed=锚点日调仓 / dynamic=每日检查、持仓变化才交易")
     rebalance_anchor: str = Field(
-        "calendar", pattern="^(calendar|grid)$",
-        description="锚点日历: calendar=每月首个交易日(实盘语义,无相位漂移) / grid=面板起点+holding_period(回测遗留)")
+        "calendar", pattern="^(calendar|grid|weekly)$",
+        description="锚点日历: calendar=每月首个交易日(中期版实盘语义) / weekly=每周最后一个交易日(短线版) / grid=面板起点+holding_period(回测遗留)")
     weight_mode: str = Field(
         "equal", pattern="^(equal|risk_parity)$",
         description="equal=每槽等权 / risk_parity=逆波动率风险平价加权")
@@ -499,6 +499,25 @@ class EtfBacktestRequest(BaseModel):
         0.12, gt=0.02, le=0.30, description="目标年化波动率(如0.12=12%)")
     exit_replacement: bool = Field(
         True, description="退出即防守补位: 触发退出规则清仓后, 当日买入过闸的最优防守类ETF(国债/黄金/红利)而非持币等月度调仓")
+    momentum_windows: list[int] = Field(
+        default=[60, 120, 250], min_length=1, max_length=6,
+        description="动量回看窗口(交易日); 默认=中期版60/120/250, 短线版=[20,60]")
+    momentum_weights: list[float] = Field(
+        default=[0.15, 0.15, 0.7],
+        description="动量窗口权重(与momentum_windows等长); 短线版=[0.6,0.4]")
+    vol_window: int = Field(
+        20, ge=5, le=120, description="波动率估计窗口(交易日)")
+    abs_window: int = Field(
+        180, ge=20, le=300,
+        description="绝对动量门槛回看窗口(交易日); 短线版=60")
+    use_trend_filter: bool = Field(
+        False, description="MA20趋势入场过滤: 收盘站上MA20且MA20向上才可入选(短线版预设)")
+    circuit_breaker_drawdown: float = Field(
+        0.0, ge=0.0, le=0.5,
+        description="组合熔断阈值(0=关闭): 净值自高点回撤超阈值时全清仓并冷却(研究开关)")
+    strategy_set: str = Field(
+        "etf_momentum_rotation",
+        description="落库标签: etf_momentum_rotation(中期版) / etf_short_rotation(短线版)")
 
 
 @router.post("/etf-rotation/backtest")
@@ -534,6 +553,13 @@ def run_etf_backtest(
             use_target_vol=req.use_target_vol,
             target_vol=req.target_vol,
             exit_replacement=req.exit_replacement,
+            momentum_windows=req.momentum_windows,
+            momentum_weights=req.momentum_weights,
+            vol_window=req.vol_window,
+            abs_window=req.abs_window,
+            use_trend_filter=req.use_trend_filter,
+            circuit_breaker_drawdown=req.circuit_breaker_drawdown,
+            strategy_set=req.strategy_set,
         )
     except ValueError as e:
         raise HTTPException(400, str(e))

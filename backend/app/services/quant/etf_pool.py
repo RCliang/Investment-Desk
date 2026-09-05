@@ -1,7 +1,9 @@
 """ETF watchlist pool for the dual-momentum rotation strategy.
 
-The pool is the hard-constrained universe of the ETF rotation strategy:
-5 宽基 + 8 行业 + 债/金/纳指 防守 + 货币ETF(空仓载体), 17 tickers total.
+The pool is the hard-constrained universe of the ETF rotation strategies:
+宽基 5 + 行业 18 (含 2026-09 扩入的周期资源类 有色/煤炭/钢铁/化工/房地产,
+修复动量池在周期行情的覆盖缺口) + 防守 3 (国债/黄金/红利) + 货币ETF(空仓载
+体), 27 tickers total.
 Defined in etf_pool.json next to this module (tracked source config — NOT
 in backend/data/, which is gitignored output territory).
 
@@ -11,7 +13,7 @@ position vehicle and the absolute-momentum hurdle).
 
 Pool hygiene (design doc §风险): annual review — drop anything with规模<10亿
 or 日均成交<5000万; liquidity numbers to be verified once the data pipeline
-is live.
+is live. The 2026-09 cyclical additions all clear 1.4亿+/日.
 """
 
 from __future__ import annotations

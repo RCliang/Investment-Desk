@@ -269,7 +269,7 @@ class TestPickReplacement:
             index=[dt, dt - pd.Timedelta(days=1)],
             columns=tickers + [CASH])
         engine = EtfRotationEngine(cash_ticker=CASH, top_n=2, buffer_rank=3)
-        engine._repl_ctx = (score, abs_ret, None, None)
+        engine._repl_ctx = (score, abs_ret, None, None, None)
 
         # A exited today, B held: replacement = C (rank 3 ≤ band 5, passes
         # gate). D (rank 4) is gated out (0.005 < cash 0.01); A excluded.
@@ -306,7 +306,7 @@ class TestPickReplacement:
             index=[dt], columns=tickers + [CASH])
         engine = EtfRotationEngine(cash_ticker=CASH, top_n=2, buffer_rank=3,
                                    replacement_tickers={"E", "F"})
-        engine._repl_ctx = (score, abs_ret, None, None)
+        engine._repl_ctx = (score, abs_ret, None, None, None)
 
         # F is rank 6 (way outside band) but the designated universe picks
         # by score — except F fails the cash-hurdle gate → E picked.
@@ -381,6 +381,215 @@ class TestCalendarAnchor:
         # anchors are month-first business days
         months = [a[:7] for a in anchors]
         assert len(months) == len(set(months))
+
+
+# ── 4d. Weekly-anchored rebalancing (短线版周频锚点) ─────────────────────────
+
+class TestWeeklyAnchor:
+
+    def test_anchor_dates_weekly_lasts(self):
+        # 2026-08-03 is a Monday: three partial/full ISO weeks, each
+        # anchoring on its LAST panel date (a Friday when the week is
+        # complete, mid-week when the tail is cut).
+        engine = EtfRotationEngine(cash_ticker=CASH, rebalance_anchor="weekly")
+        dates = ["2026-08-03", "2026-08-04", "2026-08-05", "2026-08-06",
+                 "2026-08-07", "2026-08-10", "2026-08-11", "2026-08-12",
+                 "2026-08-17", "2026-08-18"]
+        assert engine._anchor_dates(dates) == \
+            ["2026-08-07", "2026-08-12", "2026-08-18"]
+
+    def test_weekly_anchor_spans_year_boundary(self):
+        # 2024-12-30 (Mon), 12-31 and 2025-01-02, 01-03 share ISO week
+        # 2025-W1 (01-01 holiday) → exactly ONE anchor.
+        engine = EtfRotationEngine(cash_ticker=CASH, rebalance_anchor="weekly")
+        dates = ["2024-12-30", "2024-12-31", "2025-01-02", "2025-01-03"]
+        assert engine._anchor_dates(dates) == ["2025-01-03"]
+
+    def test_weekly_anchor_inception(self):
+        # Weeks entirely before the inception date get NO anchor; the
+        # inception week anchors on its last panel date.
+        engine = EtfRotationEngine(cash_ticker=CASH,
+                                   rebalance_anchor="weekly",
+                                   calendar_start="2026-08-10")
+        dates = ["2026-08-03", "2026-08-04", "2026-08-05", "2026-08-06",
+                 "2026-08-07", "2026-08-10", "2026-08-11", "2026-08-12"]
+        assert engine._anchor_dates(dates) == ["2026-08-12"]
+
+    def test_latest_frozen_between_weekly_anchors(self):
+        bars = make_universe()
+        engine = EtfRotationEngine(cash_ticker=CASH, top_n=2,
+                                   rebalance_anchor="weekly")
+        model = engine.run(bars)
+        anchors = sorted(model["portfolios"])
+        # exactly one anchor per ISO week
+        weeks = [date_cls.fromisoformat(d).isocalendar()[:2] for d in anchors]
+        assert len(weeks) == len(set(weeks))
+        latest = model["latest"]["date"]
+        if latest not in model["portfolios"]:
+            last_anchor = [a for a in anchors if a <= latest][-1]
+            assert model["latest"]["anchor"] == last_anchor
+            assert model["latest"]["weights"] == model["portfolios"][last_anchor]
+
+
+# ── 4e. MA20 trend-confirmation entry filter (短线版) ────────────────────────
+
+class TestTrendFilter:
+
+    def test_trend_filter_blocks_falling_ma20(self):
+        bars = make_universe()
+        # Force 600004 into a clean breakdown: strictly lower closes over
+        # the last 80 bars → below a falling MA20 at every late anchor.
+        df = bars["600004"]
+        n, tail = len(df), 80
+        base = df.iloc[n - tail - 1]["close"]
+        for k in range(tail):
+            df.loc[df.index[n - tail + k], "close"] = base * (1 - 0.004 * (k + 1))
+        kw = dict(cash_ticker=CASH, top_n=5, use_abs_gate=False,
+                  rebalance_anchor="grid", holding_period=5)
+        on = EtfRotationEngine(use_trend_filter=True, **kw)
+        late = [w for d, w in on.run(bars)["portfolios"].items()
+                if d >= bars[CASH]["date"].iloc[n - 40]]
+        assert late
+        for w in late:
+            assert "600004" not in w
+        # Filter off + relative-only + top_n=5 → every slot fills, the
+        # broken name included.
+        off = EtfRotationEngine(**kw)
+        late_off = [w for d, w in off.run(bars)["portfolios"].items()
+                    if d >= bars[CASH]["date"].iloc[n - 40]]
+        assert any("600004" in w for w in late_off)
+
+    def test_replacement_respects_trend_filter(self):
+        dt = pd.Timestamp("2026-09-01")
+        tickers = ["A", "B", "C", "D", "E", "F"]
+        score = pd.DataFrame(
+            [[6.0, 5.0, 4.0, 3.0, 2.0, 1.0]], index=[dt], columns=tickers)
+        abs_ret = pd.DataFrame(
+            [[0.05] * 6 + [0.01]], index=[dt], columns=tickers + [CASH])
+        trend_ok = pd.DataFrame(
+            [[True, True, False, True, True, True]],
+            index=[dt], columns=tickers)
+        engine = EtfRotationEngine(cash_ticker=CASH, top_n=2, buffer_rank=3,
+                                   use_trend_filter=True)
+        engine._repl_ctx = (score, abs_ret, None, None, trend_ok)
+        # C is the next-best by rank but below its MA20 → D steps in.
+        assert list(engine.pick_replacement(dt, ["B"], {"A"})) == ["D"]
+
+
+# ── 4f. Portfolio circuit breaker (研究开关) ─────────────────────────────────
+
+class TestCircuitBreaker:
+
+    def test_breaker_liquidates_bear_and_cools_down(self):
+        # Bear universe + relative-only selection keeps the book invested
+        # while it grinds down (-0.4%/day); per-position exits are
+        # disabled (huge ATR mult, huge breakdown buffer) so ONLY the
+        # breaker can act.
+        bars = {CASH: make_etf_bars(n=500, drift=7e-5, vol=0.0, seed=1)}
+        for i in range(4):
+            bars[f"60000{i}"] = make_etf_bars(n=500, drift=-0.004,
+                                              seed=30 + i)
+        engine = EtfRotationEngine(cash_ticker=CASH, top_n=2,
+                                   use_abs_gate=False)
+        membership = {t: ["ETF"] for t in bars}
+        bt = RotationBacktester(stamp_duty_rate=0.0, stop_mode="atr",
+                                atr_mult=100.0, breakdown_buffer=0.90,
+                                circuit_breaker_drawdown=0.20,
+                                circuit_breaker_cooldown=10)
+        out = bt.run(bars, membership, engine, initial_capital=1e6)
+        r = out["result"]
+        assert r["circuit_breaker_events"], "breaker never fired in a bear"
+        cb_trades = [t for t in r["trades"]
+                     if t["exit_reason"] == "circuit_breaker"]
+        assert cb_trades, "no circuit_breaker exits recorded"
+        # Finite completion + no re-trigger loop is implied by finishing.
+        assert np.isfinite(r["final_equity"]) and r["final_equity"] > 0
+
+    def test_breaker_off_by_default(self):
+        bars = make_bearish_universe(n=500)
+        engine = EtfRotationEngine(cash_ticker=CASH, top_n=2,
+                                   use_abs_gate=False)
+        membership = {t: ["ETF"] for t in bars}
+        bt = RotationBacktester(stamp_duty_rate=0.0, stop_mode="atr",
+                                atr_mult=100.0, breakdown_buffer=0.90)
+        out = bt.run(bars, membership, engine, initial_capital=1e6)
+        assert out["result"]["circuit_breaker_events"] == []
+
+
+# ── 4g. Market-gate numpy-bool regression + cash-proxy stop exemption ───────
+
+class TestMarketGateBool:
+
+    def test_open_gate_selects_equity_names(self):
+        # Regression: market_ok holds numpy.bool_ — a bare `ok is True`
+        # was False for np.True_, blocking equity-like names EVERY day
+        # the gate was enabled (first exposed by the short-rotation
+        # weekly backtest). Proxy in a steady uptrend → gate OPEN → the
+        # strong names must actually be selected.
+        bars = make_universe()
+        gated = {"600001", "600002", "600003", "600004", "600005"}
+        engine = EtfRotationEngine(
+            cash_ticker=CASH, top_n=2, use_market_gate=True,
+            market_ticker="600001", market_ma_window=200,
+            market_gate_tickers=gated)
+        weights = engine.run(bars)["latest"]["weights"]
+        risk_held = [t for t in weights if t != CASH]
+        assert risk_held, ("gate-open day selected nothing — "
+                           "numpy.bool_ regression is back")
+
+    def test_closed_gate_blocks_equity_names(self):
+        bars = make_universe()
+        gated = {"600001", "600002", "600003", "600004", "600005"}
+        engine = EtfRotationEngine(
+            cash_ticker=CASH, top_n=2, use_market_gate=True,
+            market_ticker="600004",  # strong downtrend → below MA200
+            market_ma_window=200, market_gate_tickers=gated)
+        weights = engine.run(bars)["latest"]["weights"]
+        assert weights == {CASH: 1.0}
+
+
+class TestCashProxyStopExemption:
+
+    @staticmethod
+    def _crashing_cash_universe(n=300):
+        """Bearish risk names + a 'money' ETF that gaps down 30% mid-
+        sample: with the exemption off the parked cash position gets
+        stopped out; with it on the parking is never risk-managed."""
+        bars = make_bearish_universe(n=n)
+        cash = make_etf_bars(n=n, drift=0.0, vol=0.0, seed=9)
+        for col in ("open", "high", "low", "close"):
+            cash.loc[cash.index >= 150, col] *= 0.7
+        bars[CASH] = cash
+        return bars
+
+    def test_cash_position_not_stopped(self):
+        bars = self._crashing_cash_universe()
+        engine = EtfRotationEngine(cash_ticker=CASH, top_n=2,
+                                   windows=(20, 60), weights=(0.6, 0.4),
+                                   abs_window=60, holding_period=5)
+        membership = {t: ["ETF"] for t in bars}
+        bt = RotationBacktester(stamp_duty_rate=0.0, stop_mode="atr",
+                                atr_mult=1.0, breakdown_buffer=0.03,
+                                cash_tickers={CASH})
+        trades = bt.run(bars, membership, engine,
+                        initial_capital=1e6)["result"]["trades"]
+        cash_exits = {t["exit_reason"] for t in trades if t["ticker"] == CASH}
+        assert cash_exits <= {"rebalance", "end"}, cash_exits
+
+    def test_legacy_cash_position_stops(self):
+        # Negative control: without the exemption the same crash DOES
+        # stop the parked position out (the test can see the bug).
+        bars = self._crashing_cash_universe()
+        engine = EtfRotationEngine(cash_ticker=CASH, top_n=2,
+                                   windows=(20, 60), weights=(0.6, 0.4),
+                                   abs_window=60, holding_period=5)
+        membership = {t: ["ETF"] for t in bars}
+        bt = RotationBacktester(stamp_duty_rate=0.0, stop_mode="atr",
+                                atr_mult=1.0, breakdown_buffer=0.03)
+        trades = bt.run(bars, membership, engine,
+                        initial_capital=1e6)["result"]["trades"]
+        cash_exits = {t["exit_reason"] for t in trades if t["ticker"] == CASH}
+        assert "stop_loss" in cash_exits or "breakdown" in cash_exits
 
 
 # ── 5. Engine + backtester smoke ────────────────────────────────────────────

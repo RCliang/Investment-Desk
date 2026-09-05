@@ -48,6 +48,7 @@ from __future__ import annotations
 
 import logging
 import math
+from datetime import date
 from typing import Optional
 
 import numpy as np
@@ -70,6 +71,11 @@ MOMENTUM_WEIGHTS = (0.15, 0.15, 0.7)  # long-window leg dominates (TOP1)
 VOL_WINDOW = 20            # volatility estimator window (days)
 ABS_WINDOW = 180           # absolute-momentum lookback (days)
 HOLDING_PERIOD = 20        # rebalance cadence in trading days (monthly)
+# MA20 trend-confirmation entry filter (short-rotation preset): an ETF is
+# only eligible while it closes above a RISING MA20. Fixed per the design
+# doc (§二 辅助因子) — not exposed as separate knobs.
+TREND_MA_WINDOW = 20
+TREND_SLOPE_WINDOW = 5     # MA20 > MA20[5d ago] defines "rising"
 
 
 def compute_momentum_panels(
@@ -199,6 +205,7 @@ class EtfRotationEngine:
         market_ticker: str = "510300",
         market_ma_window: int = 200,
         market_gate_tickers: Optional[set[str]] = None,
+        use_trend_filter: bool = False,
         replacement_tickers: Optional[set[str]] = None,
         rebalance_mode: str = "fixed",
         rebalance_anchor: str = "grid",
@@ -215,8 +222,9 @@ class EtfRotationEngine:
             weights = weights + (0.0,)
         if rebalance_mode not in ("fixed", "dynamic"):
             raise ValueError("rebalance_mode must be 'fixed' or 'dynamic'")
-        if rebalance_anchor not in ("grid", "calendar"):
-            raise ValueError("rebalance_anchor must be 'grid' or 'calendar'")
+        if rebalance_anchor not in ("grid", "calendar", "weekly"):
+            raise ValueError(
+                "rebalance_anchor must be 'grid', 'calendar' or 'weekly'")
         if weight_mode not in ("equal", "risk_parity"):
             raise ValueError("weight_mode must be 'equal' or 'risk_parity'")
         if target_vol <= 0:
@@ -237,6 +245,12 @@ class EtfRotationEngine:
         # None → gate every non-cash ticker; the service passes the
         # equity-like subset (宽基+行业) so 防守 (国债/黄金/红利) stay rankable.
         self.market_gate_tickers = market_gate_tickers
+        # MA20 trend-confirmation entry filter (short-rotation preset):
+        # while on, an ETF below a falling MA20 is ineligible — neither
+        # selected nor retained (blocked-holding semantics: the slot frees
+        # for the best eligible name, same as the market gate). Warm-up
+        # (MA20/slope not yet formed) counts as blocked — conservative.
+        self.use_trend_filter = use_trend_filter
         # Mid-cycle replacement candidate restriction (None = whole pool
         # with band rules). When set (e.g. the defensive class), the
         # refill semantics change to "upgraded cash parking": the best
@@ -333,9 +347,32 @@ class EtfRotationEngine:
                      trading day of each month"), immune to window phase.
                      calendar_start restricts anchors to months on/after
                      the strategy inception date.
+        "weekly"   — the LAST TRADING DAY of each ISO week (short-rotation
+                     preset: signal + fills at the week's final close).
+                     Holiday-shortened weeks anchor on their actual last
+                     session, computed retrospectively from the panel — a
+                     live Thursday scan before a holiday Friday sees
+                     Thursday as the week's last session and fires the
+                     same day. calendar_start restricts anchors to weeks
+                     on/after the inception date.
         """
-        if self.rebalance_anchor != "calendar":
+        if self.rebalance_anchor == "grid":
             return all_dates[::self.holding_period]
+        if self.rebalance_anchor == "weekly":
+            anchors: list = []
+            cur_week, pending = None, None
+            for d in all_dates:
+                if self.calendar_start and d < self.calendar_start:
+                    continue
+                week = date.fromisoformat(d).isocalendar()[:2]
+                if week != cur_week:
+                    if pending is not None:
+                        anchors.append(pending)
+                    cur_week = week
+                pending = d
+            if pending is not None:
+                anchors.append(pending)
+            return anchors
         anchors, last_month = [], None
         for d in all_dates:
             if self.calendar_start and d < self.calendar_start:
@@ -375,9 +412,18 @@ class EtfRotationEngine:
             close, self.windows, self.weights, self.vol_window)
         abs_ret = panels[f"r{self.abs_window}"]
         daily_ret = close.pct_change(fill_method=None)  # for target-vol cov
+        # MA20 trend-confirmation panel (boolean): close above a rising
+        # MA20. NaN comparisons fold to False → warm-up counts as blocked.
+        trend_ok: Optional[pd.DataFrame] = None
+        if self.use_trend_filter:
+            ma = close.rolling(TREND_MA_WINDOW,
+                               min_periods=TREND_MA_WINDOW).mean()
+            ma_rising = ma > ma.shift(TREND_SLOPE_WINDOW)
+            trend_ok = (close > ma) & ma_rising
         # Kept for pick_replacement(): mid-cycle slot refills after exits
         # (fixed cadence + event-driven replacement — see service layer).
-        self._repl_ctx = (panels["score"], abs_ret, daily_ret, panels["vol"])
+        self._repl_ctx = (panels["score"], abs_ret, daily_ret,
+                          panels["vol"], trend_ok)
 
         # Market-timing gate: a boolean per-date Series from the market
         # proxy's close vs its own SMA. Below-MA dates block the
@@ -395,16 +441,35 @@ class EtfRotationEngine:
             market_ok = mkt > ma
 
         def blocked_at(dt) -> Optional[set[str]]:
-            """Tickers the market gate excludes on this date (None = open)."""
-            if market_ok is None:
-                return None
-            ok = market_ok.get(dt)
-            if ok is True or pd.isna(ok):
-                return None
-            gate_set = self.market_gate_tickers
-            if gate_set is None:
-                gate_set = set(close.columns) - {self.cash_ticker}
-            return {t for t in gate_set if t in close.columns}
+            """Tickers excluded from ranking on this date (None = all open).
+
+            Union of the market gate (equity-like subset below the market
+            MA) and the trend filter (any non-cash ticker below a falling
+            MA20). Blocked holdings free their slot to the best eligible
+            name — same semantics for both gates.
+            """
+            blocked: Optional[set[str]] = None
+            if market_ok is not None:
+                ok = market_ok.get(dt)
+                # bool(ok): market_ok holds numpy.bool_ — a bare `ok is
+                # True` is False for np.True_ and would block equity-like
+                # names EVERY day the gate is on (regression, caught by
+                # the short-rotation weekly backtest).
+                if not (pd.isna(ok) or bool(ok)):
+                    gate_set = self.market_gate_tickers
+                    if gate_set is None:
+                        gate_set = set(close.columns) - {self.cash_ticker}
+                    blocked = {t for t in gate_set if t in close.columns}
+            if trend_ok is not None:
+                if dt in trend_ok.index:
+                    row = trend_ok.loc[dt]
+                    failed = {t for t in close.columns
+                              if t != self.cash_ticker
+                              and not bool(row.get(t, False))}
+                else:  # date outside the panel → nothing eligible anyway
+                    failed = set(close.columns) - {self.cash_ticker}
+                blocked = failed if blocked is None else blocked | failed
+            return blocked
 
         # Same rebalance-grid convention as SectorRotationEngine.run.
         all_dates = list(close.index)
@@ -454,13 +519,14 @@ class EtfRotationEngine:
         latest = valid[-1] if len(valid) else None
         latest_snapshot: dict = {"date": None, "weights": {}, "detail": {}}
         if latest is not None:
-            if (self.rebalance_anchor == "calendar"
+            if (self.rebalance_anchor in ("calendar", "weekly")
                     and latest not in portfolios):
-                # Calendar anchors freeze the portfolio between rebalance
-                # dates (backtest parity): the in-force recommendation on
-                # a non-anchor day is the last anchor's portfolio, NOT a
-                # fresh selection. Mid-month exits/defensive replacement
-                # are handled by the daily exit rules, not re-selection.
+                # Calendar/weekly anchors freeze the portfolio between
+                # rebalance dates (backtest parity): the in-force
+                # recommendation on a non-anchor day is the last anchor's
+                # portfolio, NOT a fresh selection. Mid-cycle exits and
+                # defensive replacement are handled by the daily exit
+                # rules, not re-selection.
                 anchors_le = [d for d in portfolios if d <= latest]
                 if anchors_le:
                     a = anchors_le[-1]
@@ -507,6 +573,7 @@ class EtfRotationEngine:
                 "use_market_gate": self.use_market_gate,
                 "market_ticker": self.market_ticker,
                 "market_ma_window": self.market_ma_window,
+                "use_trend_filter": self.use_trend_filter,
                 "rebalance_mode": self.rebalance_mode,
                 "rebalance_anchor": self.rebalance_anchor,
                 "calendar_start": self.calendar_start,
@@ -527,24 +594,26 @@ class EtfRotationEngine:
         the next-best eligible replacement the SAME day instead of parking
         in cash until the next scheduled rebalance.
 
-        Rules mirror the monthly selection (same gate + band semantics):
+        Rules mirror the scheduled selection (same gate + band semantics):
         candidates must (a) not be held, (b) not have exited today, (c)
         rank ≤ top_n + buffer (band width — a slot opened by an exit, so
-        band-level entrants are consistent with the sticky buffer), and
-        (d) pass the absolute-momentum gate. With replacement_tickers
+        band-level entrants are consistent with the sticky buffer), (d)
+        pass the absolute-momentum gate and — when the trend filter is on —
+        the MA20 trend-confirmation filter. With replacement_tickers
         set (defensive parking), (c) is dropped and candidates come only
         from that set — best gate-passer by score, "upgraded cash
-        parking" semantics. Buys are sized at 1/top_n per slot, then
-        target-vol scaled like a normal rebalance. Cash exits don't
-        trigger refills; market-gate overlay not applied (strategy runs
-        with it off).
+        parking" semantics (a defensive name below a falling MA20 fails
+        (d) → the slot stays in the money ETF). Buys are sized at 1/top_n
+        per slot, then target-vol scaled like a normal rebalance. Cash
+        exits don't trigger refills; market-gate overlay not applied
+        (defensive names are never market-gated).
 
         Called by RotationBacktester's replacement_fn hook; requires
         run() to have been called first (panel context).
         """
         if not hasattr(self, "_repl_ctx"):
             return {}
-        score, abs_ret, daily_ret, vol_panel = self._repl_ctx
+        score, abs_ret, daily_ret, vol_panel, trend_ok = self._repl_ctx
         exited_risk = {t for t in exited_today if t != self.cash_ticker}
         if not exited_risk:
             return {}
@@ -566,7 +635,10 @@ class EtfRotationEngine:
             pd.notna(abs_row.get(t))
             and (not self.use_abs_gate
                  or (cash_ret is not None and pd.notna(cash_ret)
-                     and float(abs_row[t]) >= float(cash_ret))))
+                     and float(abs_row[t]) >= float(cash_ret)))
+            and (not self.use_trend_filter or trend_ok is None
+                 or (dt in trend_ok.index and t in trend_ok.columns
+                     and bool(trend_ok.at[dt, t]))))
 
         if self.replacement_tickers is not None:
             # Designated parking universe ("upgraded cash parking"): the

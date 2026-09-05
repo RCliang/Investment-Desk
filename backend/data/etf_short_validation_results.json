@@ -1,0 +1,3494 @@
+{
+ "generated_at": "2026-09-04",
+ "eval_window": [
+  "2019-10-08",
+  "2026-09-04"
+ ],
+ "split": "2023-12-29",
+ "bars_limit": 2600,
+ "pool_size": 27,
+ "short_base": {
+  "windows": [
+   20,
+   60
+  ],
+  "weights": [
+   0.6,
+   0.4
+  ],
+  "vol_window": 20,
+  "abs_window": 60,
+  "rebalance_anchor": "weekly",
+  "rebalance_mode": "fixed",
+  "holding_period": 5,
+  "use_abs_gate": true,
+  "use_buffer": true,
+  "use_market_gate": true,
+  "market_ma_window": 250,
+  "use_trend_filter": true,
+  "weight_mode": "equal",
+  "use_target_vol": true,
+  "target_vol": 0.12,
+  "exit_replacement": true
+ },
+ "grid_cells": [
+  {
+   "cfg": {
+    "windows": [
+     20,
+     60
+    ],
+    "weights": [
+     0.6,
+     0.4
+    ],
+    "vol_window": 20,
+    "abs_window": 60,
+    "rebalance_anchor": "weekly",
+    "rebalance_mode": "fixed",
+    "holding_period": 5,
+    "use_abs_gate": true,
+    "use_buffer": true,
+    "use_market_gate": true,
+    "market_ma_window": 250,
+    "use_trend_filter": true,
+    "weight_mode": "equal",
+    "use_target_vol": true,
+    "target_vol": 0.12,
+    "exit_replacement": true,
+    "top_n": 1,
+    "buffer_rank": 0,
+    "atr_mult": 2.0
+   },
+   "full": {
+    "total_pct": 24.69,
+    "annual_pct": 3.37,
+    "max_dd_pct": 29.31,
+    "sharpe": 0.325,
+    "calmar": 0.115,
+    "avg_turnover_pct": 35.45
+   },
+   "train": {
+    "total_pct": -11.06,
+    "annual_pct": -2.82,
+    "max_dd_pct": 29.31,
+    "sharpe": -0.19,
+    "calmar": -0.096,
+    "avg_turnover_pct": 37.85
+   },
+   "valid": {
+    "total_pct": 40.2,
+    "annual_pct": 14.0,
+    "max_dd_pct": 13.95,
+    "sharpe": 0.991,
+    "calmar": 1.003,
+    "avg_turnover_pct": 31.46
+   },
+   "bench_full": {
+    "total_pct": 89.11,
+    "annual_pct": 10.03,
+    "max_dd_pct": 33.58,
+    "sharpe": 0.622,
+    "calmar": 0.299,
+    "avg_turnover_pct": 0.0
+   },
+   "trade_count": 306,
+   "win_rate_pct": 31.4,
+   "exit_reasons": {
+    "rebalance": 247,
+    "stop_loss": 51,
+    "trailing_stop": 5,
+    "breakdown": 2,
+    "end": 1
+   },
+   "asset_pnl": {
+    "宽基": 32408.49,
+    "行业": 411853.59,
+    "货币": -80935.03,
+    "防守": -19054.38
+   }
+  },
+  {
+   "cfg": {
+    "windows": [
+     20,
+     60
+    ],
+    "weights": [
+     0.6,
+     0.4
+    ],
+    "vol_window": 20,
+    "abs_window": 60,
+    "rebalance_anchor": "weekly",
+    "rebalance_mode": "fixed",
+    "holding_period": 5,
+    "use_abs_gate": true,
+    "use_buffer": true,
+    "use_market_gate": true,
+    "market_ma_window": 250,
+    "use_trend_filter": true,
+    "weight_mode": "equal",
+    "use_target_vol": true,
+    "target_vol": 0.12,
+    "exit_replacement": true,
+    "top_n": 1,
+    "buffer_rank": 0,
+    "atr_mult": 3.0
+   },
+   "full": {
+    "total_pct": 32.26,
+    "annual_pct": 4.28,
+    "max_dd_pct": 23.42,
+    "sharpe": 0.393,
+    "calmar": 0.183,
+    "avg_turnover_pct": 35.74
+   },
+   "train": {
+    "total_pct": -2.16,
+    "annual_pct": -0.53,
+    "max_dd_pct": 23.42,
+    "sharpe": 0.012,
+    "calmar": -0.023,
+    "avg_turnover_pct": 37.86
+   },
+   "valid": {
+    "total_pct": 35.18,
+    "annual_pct": 12.4,
+    "max_dd_pct": 16.35,
+    "sharpe": 0.888,
+    "calmar": 0.758,
+    "avg_turnover_pct": 32.18
+   },
+   "bench_full": {
+    "total_pct": 89.11,
+    "annual_pct": 10.03,
+    "max_dd_pct": 33.58,
+    "sharpe": 0.622,
+    "calmar": 0.299,
+    "avg_turnover_pct": 0.0
+   },
+   "trade_count": 291,
+   "win_rate_pct": 33.0,
+   "exit_reasons": {
+    "rebalance": 261,
+    "stop_loss": 21,
+    "breakdown": 3,
+    "trailing_stop": 5,
+    "end": 1
+   },
+   "asset_pnl": {
+    "宽基": 22444.75,
+    "行业": 394503.14,
+    "货币": -81480.21,
+    "防守": 30743.05
+   }
+  },
+  {
+   "cfg": {
+    "windows": [
+     20,
+     60
+    ],
+    "weights": [
+     0.6,
+     0.4
+    ],
+    "vol_window": 20,
+    "abs_window": 60,
+    "rebalance_anchor": "weekly",
+    "rebalance_mode": "fixed",
+    "holding_period": 5,
+    "use_abs_gate": true,
+    "use_buffer": true,
+    "use_market_gate": true,
+    "market_ma_window": 250,
+    "use_trend_filter": true,
+    "weight_mode": "equal",
+    "use_target_vol": true,
+    "target_vol": 0.12,
+    "exit_replacement": true,
+    "top_n": 1,
+    "buffer_rank": 0,
+    "atr_mult": 4.0
+   },
+   "full": {
+    "total_pct": 36.0,
+    "annual_pct": 4.72,
+    "max_dd_pct": 23.01,
+    "sharpe": 0.425,
+    "calmar": 0.205,
+    "avg_turnover_pct": 36.21
+   },
+   "train": {
+    "total_pct": -1.63,
+    "annual_pct": -0.4,
+    "max_dd_pct": 23.01,
+    "sharpe": 0.024,
+    "calmar": -0.017,
+    "avg_turnover_pct": 37.87
+   },
+   "valid": {
+    "total_pct": 38.25,
+    "annual_pct": 13.38,
+    "max_dd_pct": 14.38,
+    "sharpe": 0.945,
+    "calmar": 0.93,
+    "avg_turnover_pct": 33.38
+   },
+   "bench_full": {
+    "total_pct": 89.11,
+    "annual_pct": 10.03,
+    "max_dd_pct": 33.58,
+    "sharpe": 0.622,
+    "calmar": 0.299,
+    "avg_turnover_pct": 0.0
+   },
+   "trade_count": 289,
+   "win_rate_pct": 32.9,
+   "exit_reasons": {
+    "rebalance": 270,
+    "stop_loss": 9,
+    "breakdown": 4,
+    "trailing_stop": 5,
+    "end": 1
+   },
+   "asset_pnl": {
+    "宽基": 21611.52,
+    "行业": 415674.36,
+    "货币": -81758.41,
+    "防守": 43607.87
+   }
+  },
+  {
+   "cfg": {
+    "windows": [
+     20,
+     60
+    ],
+    "weights": [
+     0.6,
+     0.4
+    ],
+    "vol_window": 20,
+    "abs_window": 60,
+    "rebalance_anchor": "weekly",
+    "rebalance_mode": "fixed",
+    "holding_period": 5,
+    "use_abs_gate": true,
+    "use_buffer": true,
+    "use_market_gate": true,
+    "market_ma_window": 250,
+    "use_trend_filter": true,
+    "weight_mode": "equal",
+    "use_target_vol": true,
+    "target_vol": 0.12,
+    "exit_replacement": true,
+    "top_n": 1,
+    "buffer_rank": 2,
+    "atr_mult": 2.0
+   },
+   "full": {
+    "total_pct": 4.85,
+    "annual_pct": 0.71,
+    "max_dd_pct": 29.55,
+    "sharpe": 0.12,
+    "calmar": 0.024,
+    "avg_turnover_pct": 22.3
+   },
+   "train": {
+    "total_pct": -17.9,
+    "annual_pct": -4.71,
+    "max_dd_pct": 27.55,
+    "sharpe": -0.359,
+    "calmar": -0.171,
+    "avg_turnover_pct": 23.06
+   },
+   "valid": {
+    "total_pct": 27.71,
+    "annual_pct": 9.95,
+    "max_dd_pct": 13.25,
+    "sharpe": 0.747,
+    "calmar": 0.75,
+    "avg_turnover_pct": 20.97
+   },
+   "bench_full": {
+    "total_pct": 89.11,
+    "annual_pct": 10.03,
+    "max_dd_pct": 33.58,
+    "sharpe": 0.622,
+    "calmar": 0.299,
+    "avg_turnover_pct": 0.0
+   },
+   "trade_count": 207,
+   "win_rate_pct": 30.4,
+   "exit_reasons": {
+    "rebalance": 150,
+    "stop_loss": 43,
+    "trailing_stop": 7,
+    "breakdown": 5,
+    "end": 2
+   },
+   "asset_pnl": {
+    "宽基": 25771.5,
+    "行业": 473407.28,
+    "货币": -48149.42,
+    "防守": -306896.36
+   }
+  },
+  {
+   "cfg": {
+    "windows": [
+     20,
+     60
+    ],
+    "weights": [
+     0.6,
+     0.4
+    ],
+    "vol_window": 20,
+    "abs_window": 60,
+    "rebalance_anchor": "weekly",
+    "rebalance_mode": "fixed",
+    "holding_period": 5,
+    "use_abs_gate": true,
+    "use_buffer": true,
+    "use_market_gate": true,
+    "market_ma_window": 250,
+    "use_trend_filter": true,
+    "weight_mode": "equal",
+    "use_target_vol": true,
+    "target_vol": 0.12,
+    "exit_replacement": true,
+    "top_n": 1,
+    "buffer_rank": 2,
+    "atr_mult": 3.0
+   },
+   "full": {
+    "total_pct": 26.56,
+    "annual_pct": 3.6,
+    "max_dd_pct": 24.06,
+    "sharpe": 0.341,
+    "calmar": 0.149,
+    "avg_turnover_pct": 21.82
+   },
+   "train": {
+    "total_pct": -1.07,
+    "annual_pct": -0.26,
+    "max_dd_pct": 20.91,
+    "sharpe": 0.036,
+    "calmar": -0.013,
+    "avg_turnover_pct": 22.4
+   },
+   "valid": {
+    "total_pct": 27.92,
+    "annual_pct": 10.02,
+    "max_dd_pct": 12.64,
+    "sharpe": 0.738,
+    "calmar": 0.793,
+    "avg_turnover_pct": 20.75
+   },
+   "bench_full": {
+    "total_pct": 89.11,
+    "annual_pct": 10.03,
+    "max_dd_pct": 33.58,
+    "sharpe": 0.622,
+    "calmar": 0.299,
+    "avg_turnover_pct": 0.0
+   },
+   "trade_count": 187,
+   "win_rate_pct": 32.6,
+   "exit_reasons": {
+    "rebalance": 158,
+    "stop_loss": 15,
+    "trailing_stop": 7,
+    "breakdown": 5,
+    "end": 2
+   },
+   "asset_pnl": {
+    "宽基": 27670.67,
+    "行业": 575975.34,
+    "货币": -52335.53,
+    "防守": -199722.9
+   }
+  },
+  {
+   "cfg": {
+    "windows": [
+     20,
+     60
+    ],
+    "weights": [
+     0.6,
+     0.4
+    ],
+    "vol_window": 20,
+    "abs_window": 60,
+    "rebalance_anchor": "weekly",
+    "rebalance_mode": "fixed",
+    "holding_period": 5,
+    "use_abs_gate": true,
+    "use_buffer": true,
+    "use_market_gate": true,
+    "market_ma_window": 250,
+    "use_trend_filter": true,
+    "weight_mode": "equal",
+    "use_target_vol": true,
+    "target_vol": 0.12,
+    "exit_replacement": true,
+    "top_n": 1,
+    "buffer_rank": 2,
+    "atr_mult": 4.0
+   },
+   "full": {
+    "total_pct": 28.36,
+    "annual_pct": 3.82,
+    "max_dd_pct": 23.46,
+    "sharpe": 0.357,
+    "calmar": 0.163,
+    "avg_turnover_pct": 21.99
+   },
+   "train": {
+    "total_pct": -0.05,
+    "annual_pct": -0.01,
+    "max_dd_pct": 20.92,
+    "sharpe": 0.058,
+    "calmar": -0.001,
+    "avg_turnover_pct": 22.38
+   },
+   "valid": {
+    "total_pct": 28.42,
+    "annual_pct": 10.18,
+    "max_dd_pct": 12.78,
+    "sharpe": 0.749,
+    "calmar": 0.797,
+    "avg_turnover_pct": 21.22
+   },
+   "bench_full": {
+    "total_pct": 89.11,
+    "annual_pct": 10.03,
+    "max_dd_pct": 33.58,
+    "sharpe": 0.622,
+    "calmar": 0.299,
+    "avg_turnover_pct": 0.0
+   },
+   "trade_count": 184,
+   "win_rate_pct": 32.6,
+   "exit_reasons": {
+    "rebalance": 162,
+    "stop_loss": 8,
+    "trailing_stop": 7,
+    "breakdown": 5,
+    "end": 2
+   },
+   "asset_pnl": {
+    "宽基": 25827.2,
+    "行业": 553905.31,
+    "货币": -51272.25,
+    "防守": -207694.49
+   }
+  },
+  {
+   "cfg": {
+    "windows": [
+     20,
+     60
+    ],
+    "weights": [
+     0.6,
+     0.4
+    ],
+    "vol_window": 20,
+    "abs_window": 60,
+    "rebalance_anchor": "weekly",
+    "rebalance_mode": "fixed",
+    "holding_period": 5,
+    "use_abs_gate": true,
+    "use_buffer": true,
+    "use_market_gate": true,
+    "market_ma_window": 250,
+    "use_trend_filter": true,
+    "weight_mode": "equal",
+    "use_target_vol": true,
+    "target_vol": 0.12,
+    "exit_replacement": true,
+    "top_n": 1,
+    "buffer_rank": 3,
+    "atr_mult": 2.0
+   },
+   "full": {
+    "total_pct": 16.6,
+    "annual_pct": 2.33,
+    "max_dd_pct": 23.67,
+    "sharpe": 0.247,
+    "calmar": 0.098,
+    "avg_turnover_pct": 18.81
+   },
+   "train": {
+    "total_pct": -11.83,
+    "annual_pct": -3.03,
+    "max_dd_pct": 23.66,
+    "sharpe": -0.198,
+    "calmar": -0.128,
+    "avg_turnover_pct": 19.28
+   },
+   "valid": {
+    "total_pct": 32.24,
+    "annual_pct": 11.44,
+    "max_dd_pct": 15.81,
+    "sharpe": 0.885,
+    "calmar": 0.724,
+    "avg_turnover_pct": 17.95
+   },
+   "bench_full": {
+    "total_pct": 89.11,
+    "annual_pct": 10.03,
+    "max_dd_pct": 33.58,
+    "sharpe": 0.622,
+    "calmar": 0.299,
+    "avg_turnover_pct": 0.0
+   },
+   "trade_count": 173,
+   "win_rate_pct": 32.9,
+   "exit_reasons": {
+    "rebalance": 125,
+    "stop_loss": 34,
+    "trailing_stop": 7,
+    "breakdown": 5,
+    "end": 2
+   },
+   "asset_pnl": {
+    "宽基": 4543.96,
+    "行业": 657750.26,
+    "货币": -44711.52,
+    "防守": -40847.55
+   }
+  },
+  {
+   "cfg": {
+    "windows": [
+     20,
+     60
+    ],
+    "weights": [
+     0.6,
+     0.4
+    ],
+    "vol_window": 20,
+    "abs_window": 60,
+    "rebalance_anchor": "weekly",
+    "rebalance_mode": "fixed",
+    "holding_period": 5,
+    "use_abs_gate": true,
+    "use_buffer": true,
+    "use_market_gate": true,
+    "market_ma_window": 250,
+    "use_trend_filter": true,
+    "weight_mode": "equal",
+    "use_target_vol": true,
+    "target_vol": 0.12,
+    "exit_replacement": true,
+    "top_n": 1,
+    "buffer_rank": 3,
+    "atr_mult": 3.0
+   },
+   "full": {
+    "total_pct": 38.38,
+    "annual_pct": 4.99,
+    "max_dd_pct": 19.75,
+    "sharpe": 0.449,
+    "calmar": 0.253,
+    "avg_turnover_pct": 18.6
+   },
+   "train": {
+    "total_pct": 3.15,
+    "annual_pct": 0.76,
+    "max_dd_pct": 19.75,
+    "sharpe": 0.123,
+    "calmar": 0.039,
+    "avg_turnover_pct": 19.53
+   },
+   "valid": {
+    "total_pct": 34.15,
+    "annual_pct": 12.07,
+    "max_dd_pct": 14.59,
+    "sharpe": 0.908,
+    "calmar": 0.827,
+    "avg_turnover_pct": 17.02
+   },
+   "bench_full": {
+    "total_pct": 89.11,
+    "annual_pct": 10.03,
+    "max_dd_pct": 33.58,
+    "sharpe": 0.622,
+    "calmar": 0.299,
+    "avg_turnover_pct": 0.0
+   },
+   "trade_count": 158,
+   "win_rate_pct": 34.8,
+   "exit_reasons": {
+    "rebalance": 133,
+    "stop_loss": 11,
+    "trailing_stop": 7,
+    "breakdown": 5,
+    "end": 2
+   },
+   "asset_pnl": {
+    "宽基": 5798.5,
+    "行业": 783165.03,
+    "货币": -47652.64,
+    "防守": 47610.59
+   }
+  },
+  {
+   "cfg": {
+    "windows": [
+     20,
+     60
+    ],
+    "weights": [
+     0.6,
+     0.4
+    ],
+    "vol_window": 20,
+    "abs_window": 60,
+    "rebalance_anchor": "weekly",
+    "rebalance_mode": "fixed",
+    "holding_period": 5,
+    "use_abs_gate": true,
+    "use_buffer": true,
+    "use_market_gate": true,
+    "market_ma_window": 250,
+    "use_trend_filter": true,
+    "weight_mode": "equal",
+    "use_target_vol": true,
+    "target_vol": 0.12,
+    "exit_replacement": true,
+    "top_n": 1,
+    "buffer_rank": 3,
+    "atr_mult": 4.0
+   },
+   "full": {
+    "total_pct": 36.55,
+    "annual_pct": 4.78,
+    "max_dd_pct": 19.75,
+    "sharpe": 0.433,
+    "calmar": 0.242,
+    "avg_turnover_pct": 18.69
+   },
+   "train": {
+    "total_pct": 4.21,
+    "annual_pct": 1.01,
+    "max_dd_pct": 19.75,
+    "sharpe": 0.144,
+    "calmar": 0.051,
+    "avg_turnover_pct": 19.53
+   },
+   "valid": {
+    "total_pct": 31.03,
+    "annual_pct": 11.05,
+    "max_dd_pct": 16.58,
+    "sharpe": 0.839,
+    "calmar": 0.666,
+    "avg_turnover_pct": 17.24
+   },
+   "bench_full": {
+    "total_pct": 89.11,
+    "annual_pct": 10.03,
+    "max_dd_pct": 33.58,
+    "sharpe": 0.622,
+    "calmar": 0.299,
+    "avg_turnover_pct": 0.0
+   },
+   "trade_count": 156,
+   "win_rate_pct": 34.6,
+   "exit_reasons": {
+    "rebalance": 135,
+    "stop_loss": 7,
+    "trailing_stop": 7,
+    "breakdown": 5,
+    "end": 2
+   },
+   "asset_pnl": {
+    "宽基": 5494.3,
+    "行业": 770853.77,
+    "货币": -47757.86,
+    "防守": 36347.87
+   }
+  },
+  {
+   "cfg": {
+    "windows": [
+     20,
+     60
+    ],
+    "weights": [
+     0.6,
+     0.4
+    ],
+    "vol_window": 20,
+    "abs_window": 60,
+    "rebalance_anchor": "weekly",
+    "rebalance_mode": "fixed",
+    "holding_period": 5,
+    "use_abs_gate": true,
+    "use_buffer": true,
+    "use_market_gate": true,
+    "market_ma_window": 250,
+    "use_trend_filter": true,
+    "weight_mode": "equal",
+    "use_target_vol": true,
+    "target_vol": 0.12,
+    "exit_replacement": true,
+    "top_n": 1,
+    "buffer_rank": 5,
+    "atr_mult": 2.0
+   },
+   "full": {
+    "total_pct": 16.95,
+    "annual_pct": 2.38,
+    "max_dd_pct": 20.45,
+    "sharpe": 0.257,
+    "calmar": 0.116,
+    "avg_turnover_pct": 16.96
+   },
+   "train": {
+    "total_pct": -10.03,
+    "annual_pct": -2.55,
+    "max_dd_pct": 20.45,
+    "sharpe": -0.174,
+    "calmar": -0.125,
+    "avg_turnover_pct": 17.73
+   },
+   "valid": {
+    "total_pct": 29.99,
+    "annual_pct": 10.7,
+    "max_dd_pct": 15.34,
+    "sharpe": 0.85,
+    "calmar": 0.698,
+    "avg_turnover_pct": 15.64
+   },
+   "bench_full": {
+    "total_pct": 89.11,
+    "annual_pct": 10.03,
+    "max_dd_pct": 33.58,
+    "sharpe": 0.622,
+    "calmar": 0.299,
+    "avg_turnover_pct": 0.0
+   },
+   "trade_count": 158,
+   "win_rate_pct": 30.4,
+   "exit_reasons": {
+    "rebalance": 114,
+    "stop_loss": 28,
+    "trailing_stop": 9,
+    "breakdown": 5,
+    "end": 2
+   },
+   "asset_pnl": {
+    "宽基": -75011.82,
+    "行业": 778932.73,
+    "货币": -39231.99,
+    "防守": -85946.07
+   }
+  },
+  {
+   "cfg": {
+    "windows": [
+     20,
+     60
+    ],
+    "weights": [
+     0.6,
+     0.4
+    ],
+    "vol_window": 20,
+    "abs_window": 60,
+    "rebalance_anchor": "weekly",
+    "rebalance_mode": "fixed",
+    "holding_period": 5,
+    "use_abs_gate": true,
+    "use_buffer": true,
+    "use_market_gate": true,
+    "market_ma_window": 250,
+    "use_trend_filter": true,
+    "weight_mode": "equal",
+    "use_target_vol": true,
+    "target_vol": 0.12,
+    "exit_replacement": true,
+    "top_n": 1,
+    "buffer_rank": 5,
+    "atr_mult": 3.0
+   },
+   "full": {
+    "total_pct": 42.93,
+    "annual_pct": 5.5,
+    "max_dd_pct": 17.16,
+    "sharpe": 0.502,
+    "calmar": 0.321,
+    "avg_turnover_pct": 16.67
+   },
+   "train": {
+    "total_pct": 8.63,
+    "annual_pct": 2.04,
+    "max_dd_pct": 17.15,
+    "sharpe": 0.235,
+    "calmar": 0.119,
+    "avg_turnover_pct": 17.86
+   },
+   "valid": {
+    "total_pct": 31.58,
+    "annual_pct": 11.23,
+    "max_dd_pct": 14.3,
+    "sharpe": 0.867,
+    "calmar": 0.785,
+    "avg_turnover_pct": 14.7
+   },
+   "bench_full": {
+    "total_pct": 89.11,
+    "annual_pct": 10.03,
+    "max_dd_pct": 33.58,
+    "sharpe": 0.622,
+    "calmar": 0.299,
+    "avg_turnover_pct": 0.0
+   },
+   "trade_count": 144,
+   "win_rate_pct": 31.2,
+   "exit_reasons": {
+    "rebalance": 120,
+    "stop_loss": 8,
+    "trailing_stop": 9,
+    "breakdown": 5,
+    "end": 2
+   },
+   "asset_pnl": {
+    "宽基": -78127.15,
+    "行业": 987820.83,
+    "货币": -43436.41,
+    "防守": 27999.53
+   }
+  },
+  {
+   "cfg": {
+    "windows": [
+     20,
+     60
+    ],
+    "weights": [
+     0.6,
+     0.4
+    ],
+    "vol_window": 20,
+    "abs_window": 60,
+    "rebalance_anchor": "weekly",
+    "rebalance_mode": "fixed",
+    "holding_period": 5,
+    "use_abs_gate": true,
+    "use_buffer": true,
+    "use_market_gate": true,
+    "market_ma_window": 250,
+    "use_trend_filter": true,
+    "weight_mode": "equal",
+    "use_target_vol": true,
+    "target_vol": 0.12,
+    "exit_replacement": true,
+    "top_n": 1,
+    "buffer_rank": 5,
+    "atr_mult": 4.0
+   },
+   "full": {
+    "total_pct": 42.97,
+    "annual_pct": 5.51,
+    "max_dd_pct": 17.15,
+    "sharpe": 0.502,
+    "calmar": 0.321,
+    "avg_turnover_pct": 16.76
+   },
+   "train": {
+    "total_pct": 11.2,
+    "annual_pct": 2.63,
+    "max_dd_pct": 17.15,
+    "sharpe": 0.285,
+    "calmar": 0.153,
+    "avg_turnover_pct": 17.86
+   },
+   "valid": {
+    "total_pct": 28.57,
+    "annual_pct": 10.23,
+    "max_dd_pct": 16.26,
+    "sharpe": 0.798,
+    "calmar": 0.629,
+    "avg_turnover_pct": 14.93
+   },
+   "bench_full": {
+    "total_pct": 89.11,
+    "annual_pct": 10.03,
+    "max_dd_pct": 33.58,
+    "sharpe": 0.622,
+    "calmar": 0.299,
+    "avg_turnover_pct": 0.0
+   },
+   "trade_count": 142,
+   "win_rate_pct": 31.0,
+   "exit_reasons": {
+    "rebalance": 121,
+    "stop_loss": 5,
+    "trailing_stop": 9,
+    "breakdown": 5,
+    "end": 2
+   },
+   "asset_pnl": {
+    "宽基": -77405.79,
+    "行业": 970394.88,
+    "货币": -42609.93,
+    "防守": -22127.02
+   }
+  },
+  {
+   "cfg": {
+    "windows": [
+     20,
+     60
+    ],
+    "weights": [
+     0.6,
+     0.4
+    ],
+    "vol_window": 20,
+    "abs_window": 60,
+    "rebalance_anchor": "weekly",
+    "rebalance_mode": "fixed",
+    "holding_period": 5,
+    "use_abs_gate": true,
+    "use_buffer": true,
+    "use_market_gate": true,
+    "market_ma_window": 250,
+    "use_trend_filter": true,
+    "weight_mode": "equal",
+    "use_target_vol": true,
+    "target_vol": 0.12,
+    "exit_replacement": true,
+    "top_n": 2,
+    "buffer_rank": 0,
+    "atr_mult": 2.0
+   },
+   "full": {
+    "total_pct": 49.5,
+    "annual_pct": 6.22,
+    "max_dd_pct": 31.52,
+    "sharpe": 0.538,
+    "calmar": 0.197,
+    "avg_turnover_pct": 29.72
+   },
+   "train": {
+    "total_pct": 14.11,
+    "annual_pct": 3.28,
+    "max_dd_pct": 28.44,
+    "sharpe": 0.341,
+    "calmar": 0.115,
+    "avg_turnover_pct": 29.69
+   },
+   "valid": {
+    "total_pct": 31.02,
+    "annual_pct": 11.04,
+    "max_dd_pct": 14.23,
+    "sharpe": 0.791,
+    "calmar": 0.776,
+    "avg_turnover_pct": 29.55
+   },
+   "bench_full": {
+    "total_pct": 89.11,
+    "annual_pct": 10.03,
+    "max_dd_pct": 33.58,
+    "sharpe": 0.622,
+    "calmar": 0.299,
+    "avg_turnover_pct": 0.0
+   },
+   "trade_count": 431,
+   "win_rate_pct": 36.7,
+   "exit_reasons": {
+    "rebalance": 341,
+    "stop_loss": 76,
+    "trailing_stop": 8,
+    "breakdown": 4,
+    "end": 2
+   },
+   "asset_pnl": {
+    "宽基": -52860.04,
+    "行业": 796752.14,
+    "货币": -69773.85,
+    "防守": 70235.04
+   }
+  },
+  {
+   "cfg": {
+    "windows": [
+     20,
+     60
+    ],
+    "weights": [
+     0.6,
+     0.4
+    ],
+    "vol_window": 20,
+    "abs_window": 60,
+    "rebalance_anchor": "weekly",
+    "rebalance_mode": "fixed",
+    "holding_period": 5,
+    "use_abs_gate": true,
+    "use_buffer": true,
+    "use_market_gate": true,
+    "market_ma_window": 250,
+    "use_trend_filter": true,
+    "weight_mode": "equal",
+    "use_target_vol": true,
+    "target_vol": 0.12,
+    "exit_replacement": true,
+    "top_n": 2,
+    "buffer_rank": 0,
+    "atr_mult": 3.0
+   },
+   "full": {
+    "total_pct": 51.17,
+    "annual_pct": 6.4,
+    "max_dd_pct": 28.1,
+    "sharpe": 0.55,
+    "calmar": 0.228,
+    "avg_turnover_pct": 29.97
+   },
+   "train": {
+    "total_pct": 20.22,
+    "annual_pct": 4.6,
+    "max_dd_pct": 24.57,
+    "sharpe": 0.452,
+    "calmar": 0.187,
+    "avg_turnover_pct": 29.76
+   },
+   "valid": {
+    "total_pct": 25.74,
+    "annual_pct": 9.29,
+    "max_dd_pct": 15.89,
+    "sharpe": 0.681,
+    "calmar": 0.584,
+    "avg_turnover_pct": 30.08
+   },
+   "bench_full": {
+    "total_pct": 89.11,
+    "annual_pct": 10.03,
+    "max_dd_pct": 33.58,
+    "sharpe": 0.622,
+    "calmar": 0.299,
+    "avg_turnover_pct": 0.0
+   },
+   "trade_count": 416,
+   "win_rate_pct": 38.2,
+   "exit_reasons": {
+    "rebalance": 373,
+    "stop_loss": 28,
+    "breakdown": 5,
+    "trailing_stop": 8,
+    "end": 2
+   },
+   "asset_pnl": {
+    "宽基": -81133.1,
+    "行业": 785855.05,
+    "货币": -69973.87,
+    "防守": 83762.96
+   }
+  },
+  {
+   "cfg": {
+    "windows": [
+     20,
+     60
+    ],
+    "weights": [
+     0.6,
+     0.4
+    ],
+    "vol_window": 20,
+    "abs_window": 60,
+    "rebalance_anchor": "weekly",
+    "rebalance_mode": "fixed",
+    "holding_period": 5,
+    "use_abs_gate": true,
+    "use_buffer": true,
+    "use_market_gate": true,
+    "market_ma_window": 250,
+    "use_trend_filter": true,
+    "weight_mode": "equal",
+    "use_target_vol": true,
+    "target_vol": 0.12,
+    "exit_replacement": true,
+    "top_n": 2,
+    "buffer_rank": 0,
+    "atr_mult": 4.0
+   },
+   "full": {
+    "total_pct": 53.23,
+    "annual_pct": 6.61,
+    "max_dd_pct": 28.23,
+    "sharpe": 0.564,
+    "calmar": 0.234,
+    "avg_turnover_pct": 30.11
+   },
+   "train": {
+    "total_pct": 19.34,
+    "annual_pct": 4.42,
+    "max_dd_pct": 24.7,
+    "sharpe": 0.436,
+    "calmar": 0.179,
+    "avg_turnover_pct": 29.75
+   },
+   "valid": {
+    "total_pct": 28.4,
+    "annual_pct": 10.18,
+    "max_dd_pct": 14.24,
+    "sharpe": 0.731,
+    "calmar": 0.714,
+    "avg_turnover_pct": 30.44
+   },
+   "bench_full": {
+    "total_pct": 89.11,
+    "annual_pct": 10.03,
+    "max_dd_pct": 33.58,
+    "sharpe": 0.622,
+    "calmar": 0.299,
+    "avg_turnover_pct": 0.0
+   },
+   "trade_count": 412,
+   "win_rate_pct": 38.1,
+   "exit_reasons": {
+    "rebalance": 387,
+    "stop_loss": 9,
+    "breakdown": 6,
+    "trailing_stop": 8,
+    "end": 2
+   },
+   "asset_pnl": {
+    "宽基": -84654.64,
+    "行业": 821898.33,
+    "货币": -69955.46,
+    "防守": 83308.9
+   }
+  },
+  {
+   "cfg": {
+    "windows": [
+     20,
+     60
+    ],
+    "weights": [
+     0.6,
+     0.4
+    ],
+    "vol_window": 20,
+    "abs_window": 60,
+    "rebalance_anchor": "weekly",
+    "rebalance_mode": "fixed",
+    "holding_period": 5,
+    "use_abs_gate": true,
+    "use_buffer": true,
+    "use_market_gate": true,
+    "market_ma_window": 250,
+    "use_trend_filter": true,
+    "weight_mode": "equal",
+    "use_target_vol": true,
+    "target_vol": 0.12,
+    "exit_replacement": true,
+    "top_n": 2,
+    "buffer_rank": 2,
+    "atr_mult": 2.0
+   },
+   "full": {
+    "total_pct": 34.08,
+    "annual_pct": 4.5,
+    "max_dd_pct": 27.78,
+    "sharpe": 0.414,
+    "calmar": 0.162,
+    "avg_turnover_pct": 19.28
+   },
+   "train": {
+    "total_pct": 2.53,
+    "annual_pct": 0.61,
+    "max_dd_pct": 26.15,
+    "sharpe": 0.111,
+    "calmar": 0.023,
+    "avg_turnover_pct": 19.86
+   },
+   "valid": {
+    "total_pct": 30.78,
+    "annual_pct": 10.96,
+    "max_dd_pct": 12.79,
+    "sharpe": 0.835,
+    "calmar": 0.857,
+    "avg_turnover_pct": 18.24
+   },
+   "bench_full": {
+    "total_pct": 89.11,
+    "annual_pct": 10.03,
+    "max_dd_pct": 33.58,
+    "sharpe": 0.622,
+    "calmar": 0.299,
+    "avg_turnover_pct": 0.0
+   },
+   "trade_count": 304,
+   "win_rate_pct": 34.2,
+   "exit_reasons": {
+    "rebalance": 217,
+    "stop_loss": 68,
+    "trailing_stop": 10,
+    "breakdown": 6,
+    "end": 3
+   },
+   "asset_pnl": {
+    "宽基": 102796.33,
+    "行业": 590908.14,
+    "货币": -26711.44,
+    "防守": -84518.27
+   }
+  },
+  {
+   "cfg": {
+    "windows": [
+     20,
+     60
+    ],
+    "weights": [
+     0.6,
+     0.4
+    ],
+    "vol_window": 20,
+    "abs_window": 60,
+    "rebalance_anchor": "weekly",
+    "rebalance_mode": "fixed",
+    "holding_period": 5,
+    "use_abs_gate": true,
+    "use_buffer": true,
+    "use_market_gate": true,
+    "market_ma_window": 250,
+    "use_trend_filter": true,
+    "weight_mode": "equal",
+    "use_target_vol": true,
+    "target_vol": 0.12,
+    "exit_replacement": true,
+    "top_n": 2,
+    "buffer_rank": 2,
+    "atr_mult": 3.0
+   },
+   "full": {
+    "total_pct": 46.72,
+    "annual_pct": 5.92,
+    "max_dd_pct": 24.07,
+    "sharpe": 0.52,
+    "calmar": 0.246,
+    "avg_turnover_pct": 19.6
+   },
+   "train": {
+    "total_pct": 13.79,
+    "annual_pct": 3.21,
+    "max_dd_pct": 21.79,
+    "sharpe": 0.324,
+    "calmar": 0.147,
+    "avg_turnover_pct": 20.3
+   },
+   "valid": {
+    "total_pct": 28.94,
+    "annual_pct": 10.36,
+    "max_dd_pct": 12.25,
+    "sharpe": 0.796,
+    "calmar": 0.846,
+    "avg_turnover_pct": 18.37
+   },
+   "bench_full": {
+    "total_pct": 89.11,
+    "annual_pct": 10.03,
+    "max_dd_pct": 33.58,
+    "sharpe": 0.622,
+    "calmar": 0.299,
+    "avg_turnover_pct": 0.0
+   },
+   "trade_count": 286,
+   "win_rate_pct": 36.0,
+   "exit_reasons": {
+    "rebalance": 243,
+    "stop_loss": 23,
+    "breakdown": 7,
+    "trailing_stop": 10,
+    "end": 3
+   },
+   "asset_pnl": {
+    "宽基": 104772.62,
+    "行业": 690464.08,
+    "货币": -27907.38,
+    "防守": -66750.42
+   }
+  },
+  {
+   "cfg": {
+    "windows": [
+     20,
+     60
+    ],
+    "weights": [
+     0.6,
+     0.4
+    ],
+    "vol_window": 20,
+    "abs_window": 60,
+    "rebalance_anchor": "weekly",
+    "rebalance_mode": "fixed",
+    "holding_period": 5,
+    "use_abs_gate": true,
+    "use_buffer": true,
+    "use_market_gate": true,
+    "market_ma_window": 250,
+    "use_trend_filter": true,
+    "weight_mode": "equal",
+    "use_target_vol": true,
+    "target_vol": 0.12,
+    "exit_replacement": true,
+    "top_n": 2,
+    "buffer_rank": 2,
+    "atr_mult": 4.0
+   },
+   "full": {
+    "total_pct": 45.01,
+    "annual_pct": 5.73,
+    "max_dd_pct": 25.38,
+    "sharpe": 0.505,
+    "calmar": 0.226,
+    "avg_turnover_pct": 19.83
+   },
+   "train": {
+    "total_pct": 14.42,
+    "annual_pct": 3.35,
+    "max_dd_pct": 23.14,
+    "sharpe": 0.335,
+    "calmar": 0.145,
+    "avg_turnover_pct": 20.54
+   },
+   "valid": {
+    "total_pct": 26.74,
+    "annual_pct": 9.62,
+    "max_dd_pct": 13.3,
+    "sharpe": 0.746,
+    "calmar": 0.724,
+    "avg_turnover_pct": 18.59
+   },
+   "bench_full": {
+    "total_pct": 89.11,
+    "annual_pct": 10.03,
+    "max_dd_pct": 33.58,
+    "sharpe": 0.622,
+    "calmar": 0.299,
+    "avg_turnover_pct": 0.0
+   },
+   "trade_count": 281,
+   "win_rate_pct": 36.3,
+   "exit_reasons": {
+    "rebalance": 249,
+    "stop_loss": 12,
+    "breakdown": 7,
+    "trailing_stop": 10,
+    "end": 3
+   },
+   "asset_pnl": {
+    "宽基": 106410.32,
+    "行业": 655680.69,
+    "货币": -28103.37,
+    "防守": -56053.7
+   }
+  },
+  {
+   "cfg": {
+    "windows": [
+     20,
+     60
+    ],
+    "weights": [
+     0.6,
+     0.4
+    ],
+    "vol_window": 20,
+    "abs_window": 60,
+    "rebalance_anchor": "weekly",
+    "rebalance_mode": "fixed",
+    "holding_period": 5,
+    "use_abs_gate": true,
+    "use_buffer": true,
+    "use_market_gate": true,
+    "market_ma_window": 250,
+    "use_trend_filter": true,
+    "weight_mode": "equal",
+    "use_target_vol": true,
+    "target_vol": 0.12,
+    "exit_replacement": true,
+    "top_n": 2,
+    "buffer_rank": 3,
+    "atr_mult": 2.0
+   },
+   "full": {
+    "total_pct": 37.43,
+    "annual_pct": 4.88,
+    "max_dd_pct": 26.69,
+    "sharpe": 0.453,
+    "calmar": 0.183,
+    "avg_turnover_pct": 17.52
+   },
+   "train": {
+    "total_pct": -1.88,
+    "annual_pct": -0.46,
+    "max_dd_pct": 26.05,
+    "sharpe": 0.013,
+    "calmar": -0.018,
+    "avg_turnover_pct": 18.87
+   },
+   "valid": {
+    "total_pct": 40.06,
+    "annual_pct": 13.95,
+    "max_dd_pct": 11.69,
+    "sharpe": 1.021,
+    "calmar": 1.193,
+    "avg_turnover_pct": 15.29
+   },
+   "bench_full": {
+    "total_pct": 89.11,
+    "annual_pct": 10.03,
+    "max_dd_pct": 33.58,
+    "sharpe": 0.622,
+    "calmar": 0.299,
+    "avg_turnover_pct": 0.0
+   },
+   "trade_count": 281,
+   "win_rate_pct": 35.2,
+   "exit_reasons": {
+    "rebalance": 196,
+    "stop_loss": 65,
+    "trailing_stop": 11,
+    "breakdown": 6,
+    "end": 3
+   },
+   "asset_pnl": {
+    "宽基": 56500.13,
+    "行业": 777718.57,
+    "货币": -25714.44,
+    "防守": -118194.07
+   }
+  },
+  {
+   "cfg": {
+    "windows": [
+     20,
+     60
+    ],
+    "weights": [
+     0.6,
+     0.4
+    ],
+    "vol_window": 20,
+    "abs_window": 60,
+    "rebalance_anchor": "weekly",
+    "rebalance_mode": "fixed",
+    "holding_period": 5,
+    "use_abs_gate": true,
+    "use_buffer": true,
+    "use_market_gate": true,
+    "market_ma_window": 250,
+    "use_trend_filter": true,
+    "weight_mode": "equal",
+    "use_target_vol": true,
+    "target_vol": 0.12,
+    "exit_replacement": true,
+    "top_n": 2,
+    "buffer_rank": 3,
+    "atr_mult": 3.0
+   },
+   "full": {
+    "total_pct": 50.6,
+    "annual_pct": 6.33,
+    "max_dd_pct": 22.3,
+    "sharpe": 0.563,
+    "calmar": 0.284,
+    "avg_turnover_pct": 18.16
+   },
+   "train": {
+    "total_pct": 10.27,
+    "annual_pct": 2.42,
+    "max_dd_pct": 21.09,
+    "sharpe": 0.269,
+    "calmar": 0.115,
+    "avg_turnover_pct": 19.22
+   },
+   "valid": {
+    "total_pct": 36.57,
+    "annual_pct": 12.84,
+    "max_dd_pct": 11.82,
+    "sharpe": 0.953,
+    "calmar": 1.086,
+    "avg_turnover_pct": 16.37
+   },
+   "bench_full": {
+    "total_pct": 89.11,
+    "annual_pct": 10.03,
+    "max_dd_pct": 33.58,
+    "sharpe": 0.622,
+    "calmar": 0.299,
+    "avg_turnover_pct": 0.0
+   },
+   "trade_count": 265,
+   "win_rate_pct": 36.6,
+   "exit_reasons": {
+    "rebalance": 222,
+    "stop_loss": 22,
+    "breakdown": 7,
+    "trailing_stop": 11,
+    "end": 3
+   },
+   "asset_pnl": {
+    "宽基": 60404.04,
+    "行业": 903164.69,
+    "货币": -27680.31,
+    "防守": -75954.99
+   }
+  },
+  {
+   "cfg": {
+    "windows": [
+     20,
+     60
+    ],
+    "weights": [
+     0.6,
+     0.4
+    ],
+    "vol_window": 20,
+    "abs_window": 60,
+    "rebalance_anchor": "weekly",
+    "rebalance_mode": "fixed",
+    "holding_period": 5,
+    "use_abs_gate": true,
+    "use_buffer": true,
+    "use_market_gate": true,
+    "market_ma_window": 250,
+    "use_trend_filter": true,
+    "weight_mode": "equal",
+    "use_target_vol": true,
+    "target_vol": 0.12,
+    "exit_replacement": true,
+    "top_n": 2,
+    "buffer_rank": 3,
+    "atr_mult": 4.0
+   },
+   "full": {
+    "total_pct": 49.83,
+    "annual_pct": 6.25,
+    "max_dd_pct": 23.94,
+    "sharpe": 0.557,
+    "calmar": 0.261,
+    "avg_turnover_pct": 18.24
+   },
+   "train": {
+    "total_pct": 10.87,
+    "annual_pct": 2.56,
+    "max_dd_pct": 22.75,
+    "sharpe": 0.281,
+    "calmar": 0.112,
+    "avg_turnover_pct": 19.45
+   },
+   "valid": {
+    "total_pct": 35.14,
+    "annual_pct": 12.38,
+    "max_dd_pct": 12.98,
+    "sharpe": 0.922,
+    "calmar": 0.954,
+    "avg_turnover_pct": 16.23
+   },
+   "bench_full": {
+    "total_pct": 89.11,
+    "annual_pct": 10.03,
+    "max_dd_pct": 33.58,
+    "sharpe": 0.622,
+    "calmar": 0.299,
+    "avg_turnover_pct": 0.0
+   },
+   "trade_count": 260,
+   "win_rate_pct": 37.3,
+   "exit_reasons": {
+    "rebalance": 228,
+    "stop_loss": 10,
+    "breakdown": 8,
+    "trailing_stop": 11,
+    "end": 3
+   },
+   "asset_pnl": {
+    "宽基": 61347.64,
+    "行业": 879927.13,
+    "货币": -27803.81,
+    "防守": -66341.01
+   }
+  },
+  {
+   "cfg": {
+    "windows": [
+     20,
+     60
+    ],
+    "weights": [
+     0.6,
+     0.4
+    ],
+    "vol_window": 20,
+    "abs_window": 60,
+    "rebalance_anchor": "weekly",
+    "rebalance_mode": "fixed",
+    "holding_period": 5,
+    "use_abs_gate": true,
+    "use_buffer": true,
+    "use_market_gate": true,
+    "market_ma_window": 250,
+    "use_trend_filter": true,
+    "weight_mode": "equal",
+    "use_target_vol": true,
+    "target_vol": 0.12,
+    "exit_replacement": true,
+    "top_n": 2,
+    "buffer_rank": 5,
+    "atr_mult": 2.0
+   },
+   "full": {
+    "total_pct": 28.55,
+    "annual_pct": 3.84,
+    "max_dd_pct": 26.67,
+    "sharpe": 0.382,
+    "calmar": 0.144,
+    "avg_turnover_pct": 16.42
+   },
+   "train": {
+    "total_pct": -0.85,
+    "annual_pct": -0.21,
+    "max_dd_pct": 25.98,
+    "sharpe": 0.033,
+    "calmar": -0.008,
+    "avg_turnover_pct": 17.36
+   },
+   "valid": {
+    "total_pct": 29.66,
+    "annual_pct": 10.59,
+    "max_dd_pct": 12.87,
+    "sharpe": 0.828,
+    "calmar": 0.823,
+    "avg_turnover_pct": 14.84
+   },
+   "bench_full": {
+    "total_pct": 89.11,
+    "annual_pct": 10.03,
+    "max_dd_pct": 33.58,
+    "sharpe": 0.622,
+    "calmar": 0.299,
+    "avg_turnover_pct": 0.0
+   },
+   "trade_count": 265,
+   "win_rate_pct": 34.3,
+   "exit_reasons": {
+    "rebalance": 178,
+    "stop_loss": 66,
+    "trailing_stop": 12,
+    "breakdown": 6,
+    "end": 3
+   },
+   "asset_pnl": {
+    "宽基": 27315.01,
+    "行业": 651554.56,
+    "货币": -23650.03,
+    "防守": -97781.83
+   }
+  },
+  {
+   "cfg": {
+    "windows": [
+     20,
+     60
+    ],
+    "weights": [
+     0.6,
+     0.4
+    ],
+    "vol_window": 20,
+    "abs_window": 60,
+    "rebalance_anchor": "weekly",
+    "rebalance_mode": "fixed",
+    "holding_period": 5,
+    "use_abs_gate": true,
+    "use_buffer": true,
+    "use_market_gate": true,
+    "market_ma_window": 250,
+    "use_trend_filter": true,
+    "weight_mode": "equal",
+    "use_target_vol": true,
+    "target_vol": 0.12,
+    "exit_replacement": true,
+    "top_n": 2,
+    "buffer_rank": 5,
+    "atr_mult": 3.0
+   },
+   "full": {
+    "total_pct": 39.75,
+    "annual_pct": 5.15,
+    "max_dd_pct": 22.48,
+    "sharpe": 0.485,
+    "calmar": 0.229,
+    "avg_turnover_pct": 16.93
+   },
+   "train": {
+    "total_pct": 12.38,
+    "annual_pct": 2.89,
+    "max_dd_pct": 21.11,
+    "sharpe": 0.319,
+    "calmar": 0.137,
+    "avg_turnover_pct": 17.79
+   },
+   "valid": {
+    "total_pct": 24.36,
+    "annual_pct": 8.82,
+    "max_dd_pct": 14.47,
+    "sharpe": 0.706,
+    "calmar": 0.61,
+    "avg_turnover_pct": 15.47
+   },
+   "bench_full": {
+    "total_pct": 89.11,
+    "annual_pct": 10.03,
+    "max_dd_pct": 33.58,
+    "sharpe": 0.622,
+    "calmar": 0.299,
+    "avg_turnover_pct": 0.0
+   },
+   "trade_count": 249,
+   "win_rate_pct": 35.3,
+   "exit_reasons": {
+    "rebalance": 203,
+    "stop_loss": 24,
+    "breakdown": 7,
+    "trailing_stop": 12,
+    "end": 3
+   },
+   "asset_pnl": {
+    "宽基": 29064.76,
+    "行业": 758320.37,
+    "货币": -25083.49,
+    "防守": -92713.04
+   }
+  },
+  {
+   "cfg": {
+    "windows": [
+     20,
+     60
+    ],
+    "weights": [
+     0.6,
+     0.4
+    ],
+    "vol_window": 20,
+    "abs_window": 60,
+    "rebalance_anchor": "weekly",
+    "rebalance_mode": "fixed",
+    "holding_period": 5,
+    "use_abs_gate": true,
+    "use_buffer": true,
+    "use_market_gate": true,
+    "market_ma_window": 250,
+    "use_trend_filter": true,
+    "weight_mode": "equal",
+    "use_target_vol": true,
+    "target_vol": 0.12,
+    "exit_replacement": true,
+    "top_n": 2,
+    "buffer_rank": 5,
+    "atr_mult": 4.0
+   },
+   "full": {
+    "total_pct": 40.01,
+    "annual_pct": 5.18,
+    "max_dd_pct": 23.6,
+    "sharpe": 0.487,
+    "calmar": 0.219,
+    "avg_turnover_pct": 17.01
+   },
+   "train": {
+    "total_pct": 13.77,
+    "annual_pct": 3.2,
+    "max_dd_pct": 22.26,
+    "sharpe": 0.346,
+    "calmar": 0.144,
+    "avg_turnover_pct": 18.01
+   },
+   "valid": {
+    "total_pct": 23.07,
+    "annual_pct": 8.38,
+    "max_dd_pct": 15.59,
+    "sharpe": 0.675,
+    "calmar": 0.537,
+    "avg_turnover_pct": 15.33
+   },
+   "bench_full": {
+    "total_pct": 89.11,
+    "annual_pct": 10.03,
+    "max_dd_pct": 33.58,
+    "sharpe": 0.622,
+    "calmar": 0.299,
+    "avg_turnover_pct": 0.0
+   },
+   "trade_count": 245,
+   "win_rate_pct": 36.3,
+   "exit_reasons": {
+    "rebalance": 213,
+    "stop_loss": 9,
+    "breakdown": 8,
+    "trailing_stop": 12,
+    "end": 3
+   },
+   "asset_pnl": {
+    "宽基": 29421.74,
+    "行业": 736067.12,
+    "货币": -24983.48,
+    "防守": -96102.38
+   }
+  },
+  {
+   "cfg": {
+    "windows": [
+     20,
+     60
+    ],
+    "weights": [
+     0.6,
+     0.4
+    ],
+    "vol_window": 20,
+    "abs_window": 60,
+    "rebalance_anchor": "weekly",
+    "rebalance_mode": "fixed",
+    "holding_period": 5,
+    "use_abs_gate": true,
+    "use_buffer": true,
+    "use_market_gate": true,
+    "market_ma_window": 250,
+    "use_trend_filter": true,
+    "weight_mode": "equal",
+    "use_target_vol": true,
+    "target_vol": 0.12,
+    "exit_replacement": true,
+    "top_n": 3,
+    "buffer_rank": 0,
+    "atr_mult": 2.0
+   },
+   "full": {
+    "total_pct": 59.35,
+    "annual_pct": 7.24,
+    "max_dd_pct": 23.17,
+    "sharpe": 0.632,
+    "calmar": 0.312,
+    "avg_turnover_pct": 22.46
+   },
+   "train": {
+    "total_pct": 15.89,
+    "annual_pct": 3.67,
+    "max_dd_pct": 21.32,
+    "sharpe": 0.381,
+    "calmar": 0.172,
+    "avg_turnover_pct": 21.48
+   },
+   "valid": {
+    "total_pct": 37.5,
+    "annual_pct": 13.14,
+    "max_dd_pct": 12.07,
+    "sharpe": 0.959,
+    "calmar": 1.088,
+    "avg_turnover_pct": 23.83
+   },
+   "bench_full": {
+    "total_pct": 89.11,
+    "annual_pct": 10.03,
+    "max_dd_pct": 33.58,
+    "sharpe": 0.622,
+    "calmar": 0.299,
+    "avg_turnover_pct": 0.0
+   },
+   "trade_count": 483,
+   "win_rate_pct": 39.8,
+   "exit_reasons": {
+    "rebalance": 368,
+    "stop_loss": 90,
+    "trailing_stop": 16,
+    "breakdown": 6,
+    "end": 3
+   },
+   "asset_pnl": {
+    "宽基": -33801.81,
+    "行业": 1045152.79,
+    "货币": -35147.57,
+    "防守": -20898.88
+   }
+  },
+  {
+   "cfg": {
+    "windows": [
+     20,
+     60
+    ],
+    "weights": [
+     0.6,
+     0.4
+    ],
+    "vol_window": 20,
+    "abs_window": 60,
+    "rebalance_anchor": "weekly",
+    "rebalance_mode": "fixed",
+    "holding_period": 5,
+    "use_abs_gate": true,
+    "use_buffer": true,
+    "use_market_gate": true,
+    "market_ma_window": 250,
+    "use_trend_filter": true,
+    "weight_mode": "equal",
+    "use_target_vol": true,
+    "target_vol": 0.12,
+    "exit_replacement": true,
+    "top_n": 3,
+    "buffer_rank": 0,
+    "atr_mult": 3.0
+   },
+   "full": {
+    "total_pct": 56.43,
+    "annual_pct": 6.94,
+    "max_dd_pct": 22.73,
+    "sharpe": 0.611,
+    "calmar": 0.305,
+    "avg_turnover_pct": 22.65
+   },
+   "train": {
+    "total_pct": 15.96,
+    "annual_pct": 3.68,
+    "max_dd_pct": 20.76,
+    "sharpe": 0.384,
+    "calmar": 0.178,
+    "avg_turnover_pct": 21.69
+   },
+   "valid": {
+    "total_pct": 34.91,
+    "annual_pct": 12.31,
+    "max_dd_pct": 12.25,
+    "sharpe": 0.906,
+    "calmar": 1.005,
+    "avg_turnover_pct": 23.98
+   },
+   "bench_full": {
+    "total_pct": 89.11,
+    "annual_pct": 10.03,
+    "max_dd_pct": 33.58,
+    "sharpe": 0.622,
+    "calmar": 0.299,
+    "avg_turnover_pct": 0.0
+   },
+   "trade_count": 471,
+   "win_rate_pct": 40.8,
+   "exit_reasons": {
+    "rebalance": 416,
+    "stop_loss": 27,
+    "breakdown": 9,
+    "trailing_stop": 16,
+    "end": 3
+   },
+   "asset_pnl": {
+    "宽基": -48520.01,
+    "行业": 1009699.96,
+    "货币": -35419.27,
+    "防守": 20097.67
+   }
+  },
+  {
+   "cfg": {
+    "windows": [
+     20,
+     60
+    ],
+    "weights": [
+     0.6,
+     0.4
+    ],
+    "vol_window": 20,
+    "abs_window": 60,
+    "rebalance_anchor": "weekly",
+    "rebalance_mode": "fixed",
+    "holding_period": 5,
+    "use_abs_gate": true,
+    "use_buffer": true,
+    "use_market_gate": true,
+    "market_ma_window": 250,
+    "use_trend_filter": true,
+    "weight_mode": "equal",
+    "use_target_vol": true,
+    "target_vol": 0.12,
+    "exit_replacement": true,
+    "top_n": 3,
+    "buffer_rank": 0,
+    "atr_mult": 4.0
+   },
+   "full": {
+    "total_pct": 61.9,
+    "annual_pct": 7.49,
+    "max_dd_pct": 23.54,
+    "sharpe": 0.648,
+    "calmar": 0.318,
+    "avg_turnover_pct": 22.7
+   },
+   "train": {
+    "total_pct": 18.94,
+    "annual_pct": 4.33,
+    "max_dd_pct": 21.6,
+    "sharpe": 0.436,
+    "calmar": 0.201,
+    "avg_turnover_pct": 21.63
+   },
+   "valid": {
+    "total_pct": 36.12,
+    "annual_pct": 12.7,
+    "max_dd_pct": 12.45,
+    "sharpe": 0.926,
+    "calmar": 1.02,
+    "avg_turnover_pct": 24.2
+   },
+   "bench_full": {
+    "total_pct": 89.11,
+    "annual_pct": 10.03,
+    "max_dd_pct": 33.58,
+    "sharpe": 0.622,
+    "calmar": 0.299,
+    "avg_turnover_pct": 0.0
+   },
+   "trade_count": 466,
+   "win_rate_pct": 41.0,
+   "exit_reasons": {
+    "rebalance": 426,
+    "stop_loss": 11,
+    "breakdown": 10,
+    "trailing_stop": 16,
+    "end": 3
+   },
+   "asset_pnl": {
+    "宽基": -10945.69,
+    "行业": 1003062.63,
+    "货币": -36021.09,
+    "防守": 58643.42
+   }
+  },
+  {
+   "cfg": {
+    "windows": [
+     20,
+     60
+    ],
+    "weights": [
+     0.6,
+     0.4
+    ],
+    "vol_window": 20,
+    "abs_window": 60,
+    "rebalance_anchor": "weekly",
+    "rebalance_mode": "fixed",
+    "holding_period": 5,
+    "use_abs_gate": true,
+    "use_buffer": true,
+    "use_market_gate": true,
+    "market_ma_window": 250,
+    "use_trend_filter": true,
+    "weight_mode": "equal",
+    "use_target_vol": true,
+    "target_vol": 0.12,
+    "exit_replacement": true,
+    "top_n": 3,
+    "buffer_rank": 2,
+    "atr_mult": 2.0
+   },
+   "full": {
+    "total_pct": 64.83,
+    "annual_pct": 7.78,
+    "max_dd_pct": 21.45,
+    "sharpe": 0.666,
+    "calmar": 0.363,
+    "avg_turnover_pct": 17.8
+   },
+   "train": {
+    "total_pct": 6.57,
+    "annual_pct": 1.57,
+    "max_dd_pct": 20.68,
+    "sharpe": 0.197,
+    "calmar": 0.076,
+    "avg_turnover_pct": 18.06
+   },
+   "valid": {
+    "total_pct": 54.66,
+    "annual_pct": 18.42,
+    "max_dd_pct": 12.22,
+    "sharpe": 1.247,
+    "calmar": 1.507,
+    "avg_turnover_pct": 17.26
+   },
+   "bench_full": {
+    "total_pct": 89.11,
+    "annual_pct": 10.03,
+    "max_dd_pct": 33.58,
+    "sharpe": 0.622,
+    "calmar": 0.299,
+    "avg_turnover_pct": 0.0
+   },
+   "trade_count": 384,
+   "win_rate_pct": 37.2,
+   "exit_reasons": {
+    "rebalance": 269,
+    "stop_loss": 91,
+    "trailing_stop": 15,
+    "breakdown": 6,
+    "end": 3
+   },
+   "asset_pnl": {
+    "宽基": -70629.22,
+    "行业": 1152647.3,
+    "货币": -22097.72,
+    "防守": 22235.67
+   }
+  },
+  {
+   "cfg": {
+    "windows": [
+     20,
+     60
+    ],
+    "weights": [
+     0.6,
+     0.4
+    ],
+    "vol_window": 20,
+    "abs_window": 60,
+    "rebalance_anchor": "weekly",
+    "rebalance_mode": "fixed",
+    "holding_period": 5,
+    "use_abs_gate": true,
+    "use_buffer": true,
+    "use_market_gate": true,
+    "market_ma_window": 250,
+    "use_trend_filter": true,
+    "weight_mode": "equal",
+    "use_target_vol": true,
+    "target_vol": 0.12,
+    "exit_replacement": true,
+    "top_n": 3,
+    "buffer_rank": 2,
+    "atr_mult": 3.0
+   },
+   "full": {
+    "total_pct": 68.43,
+    "annual_pct": 8.13,
+    "max_dd_pct": 22.45,
+    "sharpe": 0.693,
+    "calmar": 0.362,
+    "avg_turnover_pct": 18.13
+   },
+   "train": {
+    "total_pct": 9.28,
+    "annual_pct": 2.19,
+    "max_dd_pct": 21.15,
+    "sharpe": 0.253,
+    "calmar": 0.104,
+    "avg_turnover_pct": 18.41
+   },
+   "valid": {
+    "total_pct": 54.13,
+    "annual_pct": 18.26,
+    "max_dd_pct": 11.26,
+    "sharpe": 1.242,
+    "calmar": 1.621,
+    "avg_turnover_pct": 17.58
+   },
+   "bench_full": {
+    "total_pct": 89.11,
+    "annual_pct": 10.03,
+    "max_dd_pct": 33.58,
+    "sharpe": 0.622,
+    "calmar": 0.299,
+    "avg_turnover_pct": 0.0
+   },
+   "trade_count": 372,
+   "win_rate_pct": 38.2,
+   "exit_reasons": {
+    "rebalance": 318,
+    "stop_loss": 27,
+    "breakdown": 9,
+    "trailing_stop": 15,
+    "end": 3
+   },
+   "asset_pnl": {
+    "宽基": -97202.53,
+    "行业": 1234136.22,
+    "货币": -22467.56,
+    "防守": 28987.64
+   }
+  },
+  {
+   "cfg": {
+    "windows": [
+     20,
+     60
+    ],
+    "weights": [
+     0.6,
+     0.4
+    ],
+    "vol_window": 20,
+    "abs_window": 60,
+    "rebalance_anchor": "weekly",
+    "rebalance_mode": "fixed",
+    "holding_period": 5,
+    "use_abs_gate": true,
+    "use_buffer": true,
+    "use_market_gate": true,
+    "market_ma_window": 250,
+    "use_trend_filter": true,
+    "weight_mode": "equal",
+    "use_target_vol": true,
+    "target_vol": 0.12,
+    "exit_replacement": true,
+    "top_n": 3,
+    "buffer_rank": 2,
+    "atr_mult": 4.0
+   },
+   "full": {
+    "total_pct": 76.42,
+    "annual_pct": 8.89,
+    "max_dd_pct": 23.12,
+    "sharpe": 0.744,
+    "calmar": 0.384,
+    "avg_turnover_pct": 18.07
+   },
+   "train": {
+    "total_pct": 13.83,
+    "annual_pct": 3.22,
+    "max_dd_pct": 21.94,
+    "sharpe": 0.34,
+    "calmar": 0.147,
+    "avg_turnover_pct": 18.21
+   },
+   "valid": {
+    "total_pct": 54.99,
+    "annual_pct": 18.52,
+    "max_dd_pct": 10.54,
+    "sharpe": 1.252,
+    "calmar": 1.757,
+    "avg_turnover_pct": 17.72
+   },
+   "bench_full": {
+    "total_pct": 89.11,
+    "annual_pct": 10.03,
+    "max_dd_pct": 33.58,
+    "sharpe": 0.622,
+    "calmar": 0.299,
+    "avg_turnover_pct": 0.0
+   },
+   "trade_count": 365,
+   "win_rate_pct": 38.9,
+   "exit_reasons": {
+    "rebalance": 327,
+    "stop_loss": 10,
+    "breakdown": 10,
+    "trailing_stop": 15,
+    "end": 3
+   },
+   "asset_pnl": {
+    "宽基": -59376.94,
+    "行业": 1248229.81,
+    "货币": -23028.31,
+    "防守": 85825.31
+   }
+  },
+  {
+   "cfg": {
+    "windows": [
+     20,
+     60
+    ],
+    "weights": [
+     0.6,
+     0.4
+    ],
+    "vol_window": 20,
+    "abs_window": 60,
+    "rebalance_anchor": "weekly",
+    "rebalance_mode": "fixed",
+    "holding_period": 5,
+    "use_abs_gate": true,
+    "use_buffer": true,
+    "use_market_gate": true,
+    "market_ma_window": 250,
+    "use_trend_filter": true,
+    "weight_mode": "equal",
+    "use_target_vol": true,
+    "target_vol": 0.12,
+    "exit_replacement": true,
+    "top_n": 3,
+    "buffer_rank": 3,
+    "atr_mult": 2.0
+   },
+   "full": {
+    "total_pct": 69.11,
+    "annual_pct": 8.2,
+    "max_dd_pct": 21.83,
+    "sharpe": 0.698,
+    "calmar": 0.376,
+    "avg_turnover_pct": 16.69
+   },
+   "train": {
+    "total_pct": 7.89,
+    "annual_pct": 1.87,
+    "max_dd_pct": 21.83,
+    "sharpe": 0.223,
+    "calmar": 0.086,
+    "avg_turnover_pct": 16.95
+   },
+   "valid": {
+    "total_pct": 56.74,
+    "annual_pct": 19.03,
+    "max_dd_pct": 12.22,
+    "sharpe": 1.298,
+    "calmar": 1.557,
+    "avg_turnover_pct": 16.16
+   },
+   "bench_full": {
+    "total_pct": 89.11,
+    "annual_pct": 10.03,
+    "max_dd_pct": 33.58,
+    "sharpe": 0.622,
+    "calmar": 0.299,
+    "avg_turnover_pct": 0.0
+   },
+   "trade_count": 364,
+   "win_rate_pct": 37.4,
+   "exit_reasons": {
+    "rebalance": 255,
+    "stop_loss": 85,
+    "trailing_stop": 15,
+    "breakdown": 6,
+    "end": 3
+   },
+   "asset_pnl": {
+    "宽基": -48076.43,
+    "行业": 1113592.2,
+    "货币": -20685.38,
+    "防守": 54855.51
+   }
+  },
+  {
+   "cfg": {
+    "windows": [
+     20,
+     60
+    ],
+    "weights": [
+     0.6,
+     0.4
+    ],
+    "vol_window": 20,
+    "abs_window": 60,
+    "rebalance_anchor": "weekly",
+    "rebalance_mode": "fixed",
+    "holding_period": 5,
+    "use_abs_gate": true,
+    "use_buffer": true,
+    "use_market_gate": true,
+    "market_ma_window": 250,
+    "use_trend_filter": true,
+    "weight_mode": "equal",
+    "use_target_vol": true,
+    "target_vol": 0.12,
+    "exit_replacement": true,
+    "top_n": 3,
+    "buffer_rank": 3,
+    "atr_mult": 3.0
+   },
+   "full": {
+    "total_pct": 72.84,
+    "annual_pct": 8.55,
+    "max_dd_pct": 21.9,
+    "sharpe": 0.724,
+    "calmar": 0.391,
+    "avg_turnover_pct": 16.9
+   },
+   "train": {
+    "total_pct": 10.35,
+    "annual_pct": 2.44,
+    "max_dd_pct": 21.9,
+    "sharpe": 0.272,
+    "calmar": 0.111,
+    "avg_turnover_pct": 17.24
+   },
+   "valid": {
+    "total_pct": 56.63,
+    "annual_pct": 19.0,
+    "max_dd_pct": 11.26,
+    "sharpe": 1.301,
+    "calmar": 1.687,
+    "avg_turnover_pct": 16.25
+   },
+   "bench_full": {
+    "total_pct": 89.11,
+    "annual_pct": 10.03,
+    "max_dd_pct": 33.58,
+    "sharpe": 0.622,
+    "calmar": 0.299,
+    "avg_turnover_pct": 0.0
+   },
+   "trade_count": 350,
+   "win_rate_pct": 38.3,
+   "exit_reasons": {
+    "rebalance": 296,
+    "stop_loss": 27,
+    "breakdown": 9,
+    "trailing_stop": 15,
+    "end": 3
+   },
+   "asset_pnl": {
+    "宽基": -65724.11,
+    "行业": 1183114.59,
+    "货币": -20898.0,
+    "防守": 49096.68
+   }
+  },
+  {
+   "cfg": {
+    "windows": [
+     20,
+     60
+    ],
+    "weights": [
+     0.6,
+     0.4
+    ],
+    "vol_window": 20,
+    "abs_window": 60,
+    "rebalance_anchor": "weekly",
+    "rebalance_mode": "fixed",
+    "holding_period": 5,
+    "use_abs_gate": true,
+    "use_buffer": true,
+    "use_market_gate": true,
+    "market_ma_window": 250,
+    "use_trend_filter": true,
+    "weight_mode": "equal",
+    "use_target_vol": true,
+    "target_vol": 0.12,
+    "exit_replacement": true,
+    "top_n": 3,
+    "buffer_rank": 3,
+    "atr_mult": 4.0
+   },
+   "full": {
+    "total_pct": 81.94,
+    "annual_pct": 9.39,
+    "max_dd_pct": 22.36,
+    "sharpe": 0.781,
+    "calmar": 0.42,
+    "avg_turnover_pct": 16.94
+   },
+   "train": {
+    "total_pct": 15.52,
+    "annual_pct": 3.59,
+    "max_dd_pct": 22.36,
+    "sharpe": 0.37,
+    "calmar": 0.16,
+    "avg_turnover_pct": 17.22
+   },
+   "valid": {
+    "total_pct": 57.5,
+    "annual_pct": 19.26,
+    "max_dd_pct": 10.86,
+    "sharpe": 1.31,
+    "calmar": 1.773,
+    "avg_turnover_pct": 16.38
+   },
+   "bench_full": {
+    "total_pct": 89.11,
+    "annual_pct": 10.03,
+    "max_dd_pct": 33.58,
+    "sharpe": 0.622,
+    "calmar": 0.299,
+    "avg_turnover_pct": 0.0
+   },
+   "trade_count": 344,
+   "win_rate_pct": 39.2,
+   "exit_reasons": {
+    "rebalance": 306,
+    "stop_loss": 10,
+    "breakdown": 10,
+    "trailing_stop": 15,
+    "end": 3
+   },
+   "asset_pnl": {
+    "宽基": -25095.06,
+    "行业": 1204324.73,
+    "货币": -21486.03,
+    "防守": 102622.61
+   }
+  },
+  {
+   "cfg": {
+    "windows": [
+     20,
+     60
+    ],
+    "weights": [
+     0.6,
+     0.4
+    ],
+    "vol_window": 20,
+    "abs_window": 60,
+    "rebalance_anchor": "weekly",
+    "rebalance_mode": "fixed",
+    "holding_period": 5,
+    "use_abs_gate": true,
+    "use_buffer": true,
+    "use_market_gate": true,
+    "market_ma_window": 250,
+    "use_trend_filter": true,
+    "weight_mode": "equal",
+    "use_target_vol": true,
+    "target_vol": 0.12,
+    "exit_replacement": true,
+    "top_n": 3,
+    "buffer_rank": 5,
+    "atr_mult": 2.0
+   },
+   "full": {
+    "total_pct": 75.44,
+    "annual_pct": 8.8,
+    "max_dd_pct": 22.46,
+    "sharpe": 0.728,
+    "calmar": 0.392,
+    "avg_turnover_pct": 15.71
+   },
+   "train": {
+    "total_pct": 14.4,
+    "annual_pct": 3.34,
+    "max_dd_pct": 22.46,
+    "sharpe": 0.343,
+    "calmar": 0.149,
+    "avg_turnover_pct": 16.28
+   },
+   "valid": {
+    "total_pct": 53.35,
+    "annual_pct": 18.03,
+    "max_dd_pct": 12.19,
+    "sharpe": 1.228,
+    "calmar": 1.479,
+    "avg_turnover_pct": 14.71
+   },
+   "bench_full": {
+    "total_pct": 89.11,
+    "annual_pct": 10.03,
+    "max_dd_pct": 33.58,
+    "sharpe": 0.622,
+    "calmar": 0.299,
+    "avg_turnover_pct": 0.0
+   },
+   "trade_count": 340,
+   "win_rate_pct": 37.6,
+   "exit_reasons": {
+    "rebalance": 233,
+    "stop_loss": 81,
+    "trailing_stop": 16,
+    "breakdown": 7,
+    "end": 3
+   },
+   "asset_pnl": {
+    "宽基": -81061.0,
+    "行业": 1135538.85,
+    "货币": -20116.51,
+    "防守": 75809.56
+   }
+  },
+  {
+   "cfg": {
+    "windows": [
+     20,
+     60
+    ],
+    "weights": [
+     0.6,
+     0.4
+    ],
+    "vol_window": 20,
+    "abs_window": 60,
+    "rebalance_anchor": "weekly",
+    "rebalance_mode": "fixed",
+    "holding_period": 5,
+    "use_abs_gate": true,
+    "use_buffer": true,
+    "use_market_gate": true,
+    "market_ma_window": 250,
+    "use_trend_filter": true,
+    "weight_mode": "equal",
+    "use_target_vol": true,
+    "target_vol": 0.12,
+    "exit_replacement": true,
+    "top_n": 3,
+    "buffer_rank": 5,
+    "atr_mult": 3.0
+   },
+   "full": {
+    "total_pct": 67.27,
+    "annual_pct": 8.02,
+    "max_dd_pct": 22.1,
+    "sharpe": 0.678,
+    "calmar": 0.363,
+    "avg_turnover_pct": 16.26
+   },
+   "train": {
+    "total_pct": 11.85,
+    "annual_pct": 2.77,
+    "max_dd_pct": 22.1,
+    "sharpe": 0.301,
+    "calmar": 0.126,
+    "avg_turnover_pct": 16.67
+   },
+   "valid": {
+    "total_pct": 49.55,
+    "annual_pct": 16.89,
+    "max_dd_pct": 12.91,
+    "sharpe": 1.154,
+    "calmar": 1.308,
+    "avg_turnover_pct": 15.51
+   },
+   "bench_full": {
+    "total_pct": 89.11,
+    "annual_pct": 10.03,
+    "max_dd_pct": 33.58,
+    "sharpe": 0.622,
+    "calmar": 0.299,
+    "avg_turnover_pct": 0.0
+   },
+   "trade_count": 329,
+   "win_rate_pct": 38.3,
+   "exit_reasons": {
+    "rebalance": 273,
+    "stop_loss": 26,
+    "breakdown": 11,
+    "trailing_stop": 16,
+    "end": 3
+   },
+   "asset_pnl": {
+    "宽基": -73813.33,
+    "行业": 1029389.87,
+    "货币": -19803.79,
+    "防守": 80644.11
+   }
+  },
+  {
+   "cfg": {
+    "windows": [
+     20,
+     60
+    ],
+    "weights": [
+     0.6,
+     0.4
+    ],
+    "vol_window": 20,
+    "abs_window": 60,
+    "rebalance_anchor": "weekly",
+    "rebalance_mode": "fixed",
+    "holding_period": 5,
+    "use_abs_gate": true,
+    "use_buffer": true,
+    "use_market_gate": true,
+    "market_ma_window": 250,
+    "use_trend_filter": true,
+    "weight_mode": "equal",
+    "use_target_vol": true,
+    "target_vol": 0.12,
+    "exit_replacement": true,
+    "top_n": 3,
+    "buffer_rank": 5,
+    "atr_mult": 4.0
+   },
+   "full": {
+    "total_pct": 73.98,
+    "annual_pct": 8.66,
+    "max_dd_pct": 22.57,
+    "sharpe": 0.724,
+    "calmar": 0.384,
+    "avg_turnover_pct": 16.02
+   },
+   "train": {
+    "total_pct": 16.31,
+    "annual_pct": 3.76,
+    "max_dd_pct": 22.57,
+    "sharpe": 0.385,
+    "calmar": 0.167,
+    "avg_turnover_pct": 16.63
+   },
+   "valid": {
+    "total_pct": 49.58,
+    "annual_pct": 16.9,
+    "max_dd_pct": 13.4,
+    "sharpe": 1.155,
+    "calmar": 1.261,
+    "avg_turnover_pct": 14.96
+   },
+   "bench_full": {
+    "total_pct": 89.11,
+    "annual_pct": 10.03,
+    "max_dd_pct": 33.58,
+    "sharpe": 0.622,
+    "calmar": 0.299,
+    "avg_turnover_pct": 0.0
+   },
+   "trade_count": 324,
+   "win_rate_pct": 39.2,
+   "exit_reasons": {
+    "rebalance": 284,
+    "stop_loss": 9,
+    "breakdown": 12,
+    "trailing_stop": 16,
+    "end": 3
+   },
+   "asset_pnl": {
+    "宽基": -39986.06,
+    "行业": 1029520.64,
+    "货币": -20030.02,
+    "防守": 103068.59
+   }
+  }
+ ],
+ "champion": {
+  "cfg": {
+   "windows": [
+    20,
+    60
+   ],
+   "weights": [
+    0.6,
+    0.4
+   ],
+   "vol_window": 20,
+   "abs_window": 60,
+   "rebalance_anchor": "weekly",
+   "rebalance_mode": "fixed",
+   "holding_period": 5,
+   "use_abs_gate": true,
+   "use_buffer": true,
+   "use_market_gate": true,
+   "market_ma_window": 250,
+   "use_trend_filter": true,
+   "weight_mode": "equal",
+   "use_target_vol": true,
+   "target_vol": 0.12,
+   "exit_replacement": true,
+   "top_n": 2,
+   "buffer_rank": 0,
+   "atr_mult": 3.0
+  },
+  "full": {
+   "total_pct": 51.17,
+   "annual_pct": 6.4,
+   "max_dd_pct": 28.1,
+   "sharpe": 0.55,
+   "calmar": 0.228,
+   "avg_turnover_pct": 29.97
+  },
+  "train": {
+   "total_pct": 20.22,
+   "annual_pct": 4.6,
+   "max_dd_pct": 24.57,
+   "sharpe": 0.452,
+   "calmar": 0.187,
+   "avg_turnover_pct": 29.76
+  },
+  "valid": {
+   "total_pct": 25.74,
+   "annual_pct": 9.29,
+   "max_dd_pct": 15.89,
+   "sharpe": 0.681,
+   "calmar": 0.584,
+   "avg_turnover_pct": 30.08
+  },
+  "bench_full": {
+   "total_pct": 89.11,
+   "annual_pct": 10.03,
+   "max_dd_pct": 33.58,
+   "sharpe": 0.622,
+   "calmar": 0.299,
+   "avg_turnover_pct": 0.0
+  },
+  "trade_count": 416,
+  "win_rate_pct": 38.2,
+  "exit_reasons": {
+   "rebalance": 373,
+   "stop_loss": 28,
+   "breakdown": 5,
+   "trailing_stop": 8,
+   "end": 2
+  },
+  "asset_pnl": {
+   "宽基": -81133.1,
+   "行业": 785855.05,
+   "货币": -69973.87,
+   "防守": 83762.96
+  }
+ },
+ "champion_yearly": {
+  "2019": 0.0975,
+  "2020": 0.3682,
+  "2021": -0.0825,
+  "2022": -0.0668,
+  "2023": -0.0614,
+  "2024": -0.0212,
+  "2025": 0.3503,
+  "2026": -0.0407
+ },
+ "ablations": {
+  "no_trend_filter": {
+   "cfg": {
+    "windows": [
+     20,
+     60
+    ],
+    "weights": [
+     0.6,
+     0.4
+    ],
+    "vol_window": 20,
+    "abs_window": 60,
+    "rebalance_anchor": "weekly",
+    "rebalance_mode": "fixed",
+    "holding_period": 5,
+    "use_abs_gate": true,
+    "use_buffer": true,
+    "use_market_gate": true,
+    "market_ma_window": 250,
+    "use_trend_filter": false,
+    "weight_mode": "equal",
+    "use_target_vol": true,
+    "target_vol": 0.12,
+    "exit_replacement": true,
+    "top_n": 2,
+    "buffer_rank": 0,
+    "atr_mult": 3.0
+   },
+   "full": {
+    "total_pct": 34.91,
+    "annual_pct": 4.59,
+    "max_dd_pct": 30.06,
+    "sharpe": 0.417,
+    "calmar": 0.153,
+    "avg_turnover_pct": 30.88
+   },
+   "train": {
+    "total_pct": 11.94,
+    "annual_pct": 2.8,
+    "max_dd_pct": 24.81,
+    "sharpe": 0.295,
+    "calmar": 0.113,
+    "avg_turnover_pct": 31.8
+   },
+   "valid": {
+    "total_pct": 20.52,
+    "annual_pct": 7.5,
+    "max_dd_pct": 16.74,
+    "sharpe": 0.579,
+    "calmar": 0.448,
+    "avg_turnover_pct": 29.23
+   },
+   "bench_full": {
+    "total_pct": 89.11,
+    "annual_pct": 10.03,
+    "max_dd_pct": 33.58,
+    "sharpe": 0.622,
+    "calmar": 0.299,
+    "avg_turnover_pct": 0.0
+   },
+   "trade_count": 438,
+   "win_rate_pct": 36.5,
+   "exit_reasons": {
+    "rebalance": 375,
+    "stop_loss": 35,
+    "breakdown": 18,
+    "trailing_stop": 8,
+    "end": 2
+   },
+   "asset_pnl": {
+    "宽基": -71458.14,
+    "行业": 739642.06,
+    "货币": -73470.43,
+    "防守": -10143.96
+   }
+  },
+  "no_market_gate": {
+   "cfg": {
+    "windows": [
+     20,
+     60
+    ],
+    "weights": [
+     0.6,
+     0.4
+    ],
+    "vol_window": 20,
+    "abs_window": 60,
+    "rebalance_anchor": "weekly",
+    "rebalance_mode": "fixed",
+    "holding_period": 5,
+    "use_abs_gate": true,
+    "use_buffer": true,
+    "use_market_gate": false,
+    "market_ma_window": 250,
+    "use_trend_filter": true,
+    "weight_mode": "equal",
+    "use_target_vol": true,
+    "target_vol": 0.12,
+    "exit_replacement": true,
+    "top_n": 2,
+    "buffer_rank": 0,
+    "atr_mult": 3.0
+   },
+   "full": {
+    "total_pct": 36.31,
+    "annual_pct": 4.76,
+    "max_dd_pct": 37.31,
+    "sharpe": 0.4,
+    "calmar": 0.127,
+    "avg_turnover_pct": 33.66
+   },
+   "train": {
+    "total_pct": 11.42,
+    "annual_pct": 2.68,
+    "max_dd_pct": 32.33,
+    "sharpe": 0.263,
+    "calmar": 0.083,
+    "avg_turnover_pct": 35.15
+   },
+   "valid": {
+    "total_pct": 22.34,
+    "annual_pct": 8.13,
+    "max_dd_pct": 15.89,
+    "sharpe": 0.601,
+    "calmar": 0.512,
+    "avg_turnover_pct": 31.46
+   },
+   "bench_full": {
+    "total_pct": 89.11,
+    "annual_pct": 10.03,
+    "max_dd_pct": 33.58,
+    "sharpe": 0.622,
+    "calmar": 0.299,
+    "avg_turnover_pct": 0.0
+   },
+   "trade_count": 483,
+   "win_rate_pct": 37.5,
+   "exit_reasons": {
+    "rebalance": 434,
+    "stop_loss": 31,
+    "breakdown": 7,
+    "trailing_stop": 9,
+    "end": 2
+   },
+   "asset_pnl": {
+    "宽基": -133456.28,
+    "行业": 488390.3,
+    "货币": -55971.21,
+    "防守": 127021.47
+   }
+  },
+  "no_gates": {
+   "cfg": {
+    "windows": [
+     20,
+     60
+    ],
+    "weights": [
+     0.6,
+     0.4
+    ],
+    "vol_window": 20,
+    "abs_window": 60,
+    "rebalance_anchor": "weekly",
+    "rebalance_mode": "fixed",
+    "holding_period": 5,
+    "use_abs_gate": true,
+    "use_buffer": true,
+    "use_market_gate": false,
+    "market_ma_window": 250,
+    "use_trend_filter": false,
+    "weight_mode": "equal",
+    "use_target_vol": true,
+    "target_vol": 0.12,
+    "exit_replacement": true,
+    "top_n": 2,
+    "buffer_rank": 0,
+    "atr_mult": 3.0
+   },
+   "full": {
+    "total_pct": 19.95,
+    "annual_pct": 2.77,
+    "max_dd_pct": 40.15,
+    "sharpe": 0.266,
+    "calmar": 0.069,
+    "avg_turnover_pct": 32.01
+   },
+   "train": {
+    "total_pct": -0.49,
+    "annual_pct": -0.12,
+    "max_dd_pct": 35.95,
+    "sharpe": 0.059,
+    "calmar": -0.003,
+    "avg_turnover_pct": 34.1
+   },
+   "valid": {
+    "total_pct": 20.54,
+    "annual_pct": 7.51,
+    "max_dd_pct": 16.74,
+    "sharpe": 0.573,
+    "calmar": 0.449,
+    "avg_turnover_pct": 28.9
+   },
+   "bench_full": {
+    "total_pct": 89.11,
+    "annual_pct": 10.03,
+    "max_dd_pct": 33.58,
+    "sharpe": 0.622,
+    "calmar": 0.299,
+    "avg_turnover_pct": 0.0
+   },
+   "trade_count": 500,
+   "win_rate_pct": 37.6,
+   "exit_reasons": {
+    "rebalance": 430,
+    "stop_loss": 36,
+    "breakdown": 23,
+    "trailing_stop": 9,
+    "end": 2
+   },
+   "asset_pnl": {
+    "宽基": -130470.54,
+    "行业": 316778.92,
+    "货币": -47916.74,
+    "防守": 74615.23
+   }
+  },
+  "no_target_vol": {
+   "cfg": {
+    "windows": [
+     20,
+     60
+    ],
+    "weights": [
+     0.6,
+     0.4
+    ],
+    "vol_window": 20,
+    "abs_window": 60,
+    "rebalance_anchor": "weekly",
+    "rebalance_mode": "fixed",
+    "holding_period": 5,
+    "use_abs_gate": true,
+    "use_buffer": true,
+    "use_market_gate": true,
+    "market_ma_window": 250,
+    "use_trend_filter": true,
+    "weight_mode": "equal",
+    "use_target_vol": false,
+    "target_vol": 0.12,
+    "exit_replacement": true,
+    "top_n": 2,
+    "buffer_rank": 0,
+    "atr_mult": 3.0
+   },
+   "full": {
+    "total_pct": 84.82,
+    "annual_pct": 9.65,
+    "max_dd_pct": 34.11,
+    "sharpe": 0.511,
+    "calmar": 0.283,
+    "avg_turnover_pct": 39.57
+   },
+   "train": {
+    "total_pct": 33.37,
+    "annual_pct": 7.29,
+    "max_dd_pct": 29.76,
+    "sharpe": 0.468,
+    "calmar": 0.245,
+    "avg_turnover_pct": 37.61
+   },
+   "valid": {
+    "total_pct": 38.58,
+    "annual_pct": 13.48,
+    "max_dd_pct": 25.31,
+    "sharpe": 0.579,
+    "calmar": 0.533,
+    "avg_turnover_pct": 42.34
+   },
+   "bench_full": {
+    "total_pct": 89.11,
+    "annual_pct": 10.03,
+    "max_dd_pct": 33.58,
+    "sharpe": 0.622,
+    "calmar": 0.299,
+    "avg_turnover_pct": 0.0
+   },
+   "trade_count": 410,
+   "win_rate_pct": 38.8,
+   "exit_reasons": {
+    "rebalance": 367,
+    "stop_loss": 28,
+    "breakdown": 5,
+    "trailing_stop": 8,
+    "end": 2
+   },
+   "asset_pnl": {
+    "宽基": -216605.37,
+    "行业": 1372916.26,
+    "货币": -85811.02,
+    "防守": 100619.31
+   }
+  },
+  "no_abs_gate": {
+   "cfg": {
+    "windows": [
+     20,
+     60
+    ],
+    "weights": [
+     0.6,
+     0.4
+    ],
+    "vol_window": 20,
+    "abs_window": 60,
+    "rebalance_anchor": "weekly",
+    "rebalance_mode": "fixed",
+    "holding_period": 5,
+    "use_abs_gate": false,
+    "use_buffer": true,
+    "use_market_gate": true,
+    "market_ma_window": 250,
+    "use_trend_filter": true,
+    "weight_mode": "equal",
+    "use_target_vol": true,
+    "target_vol": 0.12,
+    "exit_replacement": true,
+    "top_n": 2,
+    "buffer_rank": 0,
+    "atr_mult": 3.0
+   },
+   "full": {
+    "total_pct": 49.18,
+    "annual_pct": 6.18,
+    "max_dd_pct": 27.93,
+    "sharpe": 0.532,
+    "calmar": 0.221,
+    "avg_turnover_pct": 31.03
+   },
+   "train": {
+    "total_pct": 19.93,
+    "annual_pct": 4.54,
+    "max_dd_pct": 24.52,
+    "sharpe": 0.445,
+    "calmar": 0.185,
+    "avg_turnover_pct": 30.44
+   },
+   "valid": {
+    "total_pct": 24.39,
+    "annual_pct": 8.83,
+    "max_dd_pct": 15.91,
+    "sharpe": 0.649,
+    "calmar": 0.555,
+    "avg_turnover_pct": 31.73
+   },
+   "bench_full": {
+    "total_pct": 89.11,
+    "annual_pct": 10.03,
+    "max_dd_pct": 33.58,
+    "sharpe": 0.622,
+    "calmar": 0.299,
+    "avg_turnover_pct": 0.0
+   },
+   "trade_count": 435,
+   "win_rate_pct": 37.5,
+   "exit_reasons": {
+    "rebalance": 393,
+    "stop_loss": 27,
+    "breakdown": 5,
+    "trailing_stop": 8,
+    "end": 2
+   },
+   "asset_pnl": {
+    "宽基": -68226.03,
+    "行业": 753036.2,
+    "货币": -74473.43,
+    "防守": 54590.48
+   }
+  },
+  "no_exit_replacement": {
+   "cfg": {
+    "windows": [
+     20,
+     60
+    ],
+    "weights": [
+     0.6,
+     0.4
+    ],
+    "vol_window": 20,
+    "abs_window": 60,
+    "rebalance_anchor": "weekly",
+    "rebalance_mode": "fixed",
+    "holding_period": 5,
+    "use_abs_gate": true,
+    "use_buffer": true,
+    "use_market_gate": true,
+    "market_ma_window": 250,
+    "use_trend_filter": true,
+    "weight_mode": "equal",
+    "use_target_vol": true,
+    "target_vol": 0.12,
+    "exit_replacement": false,
+    "top_n": 2,
+    "buffer_rank": 0,
+    "atr_mult": 3.0
+   },
+   "full": {
+    "total_pct": 51.08,
+    "annual_pct": 6.39,
+    "max_dd_pct": 28.18,
+    "sharpe": 0.55,
+    "calmar": 0.227,
+    "avg_turnover_pct": 30.25
+   },
+   "train": {
+    "total_pct": 20.16,
+    "annual_pct": 4.59,
+    "max_dd_pct": 24.57,
+    "sharpe": 0.451,
+    "calmar": 0.187,
+    "avg_turnover_pct": 29.76
+   },
+   "valid": {
+    "total_pct": 25.74,
+    "annual_pct": 9.29,
+    "max_dd_pct": 15.65,
+    "sharpe": 0.681,
+    "calmar": 0.593,
+    "avg_turnover_pct": 30.81
+   },
+   "bench_full": {
+    "total_pct": 89.11,
+    "annual_pct": 10.03,
+    "max_dd_pct": 33.58,
+    "sharpe": 0.622,
+    "calmar": 0.299,
+    "avg_turnover_pct": 0.0
+   },
+   "trade_count": 406,
+   "win_rate_pct": 38.2,
+   "exit_reasons": {
+    "rebalance": 363,
+    "stop_loss": 28,
+    "breakdown": 5,
+    "trailing_stop": 8,
+    "end": 2
+   },
+   "asset_pnl": {
+    "宽基": -81175.07,
+    "行业": 785133.04,
+    "货币": -69995.47,
+    "防守": 84391.31
+   }
+  },
+  "no_buffer": {
+   "cfg": {
+    "windows": [
+     20,
+     60
+    ],
+    "weights": [
+     0.6,
+     0.4
+    ],
+    "vol_window": 20,
+    "abs_window": 60,
+    "rebalance_anchor": "weekly",
+    "rebalance_mode": "fixed",
+    "holding_period": 5,
+    "use_abs_gate": true,
+    "use_buffer": false,
+    "use_market_gate": true,
+    "market_ma_window": 250,
+    "use_trend_filter": true,
+    "weight_mode": "equal",
+    "use_target_vol": true,
+    "target_vol": 0.12,
+    "exit_replacement": true,
+    "top_n": 2,
+    "buffer_rank": 0,
+    "atr_mult": 3.0
+   },
+   "full": {
+    "total_pct": 51.17,
+    "annual_pct": 6.4,
+    "max_dd_pct": 28.1,
+    "sharpe": 0.55,
+    "calmar": 0.228,
+    "avg_turnover_pct": 29.97
+   },
+   "train": {
+    "total_pct": 20.22,
+    "annual_pct": 4.6,
+    "max_dd_pct": 24.57,
+    "sharpe": 0.452,
+    "calmar": 0.187,
+    "avg_turnover_pct": 29.76
+   },
+   "valid": {
+    "total_pct": 25.74,
+    "annual_pct": 9.29,
+    "max_dd_pct": 15.89,
+    "sharpe": 0.681,
+    "calmar": 0.584,
+    "avg_turnover_pct": 30.08
+   },
+   "bench_full": {
+    "total_pct": 89.11,
+    "annual_pct": 10.03,
+    "max_dd_pct": 33.58,
+    "sharpe": 0.622,
+    "calmar": 0.299,
+    "avg_turnover_pct": 0.0
+   },
+   "trade_count": 416,
+   "win_rate_pct": 38.2,
+   "exit_reasons": {
+    "rebalance": 373,
+    "stop_loss": 28,
+    "breakdown": 5,
+    "trailing_stop": 8,
+    "end": 2
+   },
+   "asset_pnl": {
+    "宽基": -81133.1,
+    "行业": 785855.05,
+    "货币": -69973.87,
+    "防守": 83762.96
+   }
+  }
+ },
+ "mid_term": {
+  "cfg": {
+   "windows": [
+    60,
+    120,
+    250
+   ],
+   "weights": [
+    0.15,
+    0.15,
+    0.7
+   ],
+   "vol_window": 20,
+   "abs_window": 180,
+   "rebalance_anchor": "calendar",
+   "rebalance_mode": "fixed",
+   "holding_period": 20,
+   "use_abs_gate": true,
+   "use_buffer": true,
+   "use_market_gate": false,
+   "market_ma_window": 200,
+   "use_trend_filter": false,
+   "weight_mode": "equal",
+   "use_target_vol": true,
+   "target_vol": 0.12,
+   "exit_replacement": true,
+   "top_n": 2,
+   "buffer_rank": 3,
+   "atr_mult": 4.0
+  },
+  "full": {
+   "total_pct": 107.67,
+   "annual_pct": 11.59,
+   "max_dd_pct": 20.92,
+   "sharpe": 0.792,
+   "calmar": 0.554,
+   "avg_turnover_pct": 19.3
+  },
+  "train": {
+   "total_pct": 16.96,
+   "annual_pct": 3.9,
+   "max_dd_pct": 20.92,
+   "sharpe": 0.312,
+   "calmar": 0.187,
+   "avg_turnover_pct": 21.82
+  },
+  "valid": {
+   "total_pct": 77.55,
+   "annual_pct": 24.93,
+   "max_dd_pct": 12.87,
+   "sharpe": 1.797,
+   "calmar": 1.937,
+   "avg_turnover_pct": 15.39
+  },
+  "bench_full": {
+   "total_pct": 89.11,
+   "annual_pct": 10.03,
+   "max_dd_pct": 33.58,
+   "sharpe": 0.622,
+   "calmar": 0.299,
+   "avg_turnover_pct": 0.0
+  },
+  "trade_count": 134,
+  "win_rate_pct": 46.3,
+  "exit_reasons": {
+   "rebalance": 61,
+   "breakdown": 52,
+   "trailing_stop": 13,
+   "stop_loss": 5,
+   "end": 3
+  },
+  "asset_pnl": {
+   "宽基": 53188.82,
+   "行业": 625182.78,
+   "货币": -12017.22,
+   "防守": 1064364.39
+  }
+ },
+ "mid_term_yearly": {
+  "2019": 0.0992,
+  "2020": 0.0483,
+  "2021": 0.1165,
+  "2022": -0.0717,
+  "2023": 0.0612,
+  "2024": 0.1486,
+  "2025": 0.2418,
+  "2026": 0.2263
+ },
+ "benchmark_pool_ew": {
+  "total_pct": 89.11,
+  "annual_pct": 10.03,
+  "max_dd_pct": 33.58,
+  "sharpe": 0.622,
+  "calmar": 0.299,
+  "avg_turnover_pct": 0.0
+ },
+ "benchmark_510300": {
+  "total_pct": 31.06,
+  "annual_pct": 4.14,
+  "sharpe": 0.326
+ },
+ "elapsed_s": 166.1
+}

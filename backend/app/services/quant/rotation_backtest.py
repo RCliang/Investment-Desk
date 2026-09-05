@@ -60,7 +60,7 @@ class RotationTrade:
     pnl: float
     pnl_pct: float
     hold_days: int
-    exit_reason: str  # rebalance | breakdown | stop_loss | trailing_stop | end
+    exit_reason: str  # rebalance | breakdown | stop_loss | trailing_stop | circuit_breaker | end
 
 
 class RotationBacktester:
@@ -105,6 +105,9 @@ class RotationBacktester:
         reentry_enabled: bool = False,
         reentry_cooldown: int = 5,
         replacement_fn: Optional[Callable] = None,
+        circuit_breaker_drawdown: float = 0.0,
+        circuit_breaker_cooldown: int = 20,
+        cash_tickers: Optional[set[str]] = None,
     ):
         self.commission_rate = commission_rate
         self.commission_min = commission_min
@@ -119,6 +122,25 @@ class RotationBacktester:
         self.reentry_enabled = reentry_enabled
         self.reentry_cooldown = reentry_cooldown
         self.replacement_fn = replacement_fn
+        # Portfolio circuit breaker (research switch, default OFF): when
+        # the whole book's close-basis drawdown from peak crosses the
+        # threshold, force-liquidate everything (T+1 permitting) and sit
+        # in cash for `circuit_breaker_cooldown` trading days; the peak
+        # base resets at the end of the cooldown so the next trigger
+        # measures from the restart point. Signal on the previous close,
+        # execute at today's close — same T-1→T convention as breakdown.
+        if circuit_breaker_drawdown < 0:
+            raise ValueError("circuit_breaker_drawdown must be ≥ 0")
+        if circuit_breaker_cooldown < 1:
+            raise ValueError("circuit_breaker_cooldown must be ≥ 1")
+        self.circuit_breaker_drawdown = circuit_breaker_drawdown
+        self.circuit_breaker_cooldown = circuit_breaker_cooldown
+        # Cash-proxy tickers (e.g. the money ETF 511990) are exempt from
+        # per-position exits (stop/breakdown/trailing): their near-zero
+        # volatility makes an ATR stop a few ticks wide, so every park →
+        # next-day stop-out churns pure spread+commission. They still
+        # enter/leave via the rebalance target like any holding.
+        self.cash_tickers = cash_tickers or set()
 
     def _entry_stop(
         self,
@@ -198,6 +220,10 @@ class RotationBacktester:
         # exit (stop/breakdown/trailing) for the cooldown check.
         last_target: dict[str, float] = {}
         last_exit_idx: dict[str, int] = {}
+        # Circuit-breaker state (see __init__ docstring).
+        cb_active = False
+        cb_cooldown = 0
+        cb_events: list[str] = []
 
         def sector_of(ticker: str) -> str:
             return membership.get(ticker, ["?"])[0]
@@ -210,10 +236,53 @@ class RotationBacktester:
                     return float(prices[t])
                 return None
 
+            # ── 0. Portfolio circuit breaker (research switch). ──────────
+            if self.circuit_breaker_drawdown > 0:
+                if not cb_active:
+                    dd_prev = (peak - prev_equity) / peak if peak > 0 else 0.0
+                    if dd_prev >= self.circuit_breaker_drawdown:
+                        cb_active = True
+                        cb_cooldown = self.circuit_breaker_cooldown
+                        cb_events.append(str(dt))
+                if cb_active:
+                    for t, pos in list(positions.items()):
+                        if i <= pos["entry_idx"]:  # T+1: goes tomorrow
+                            continue
+                        c = price_of(t)
+                        if c is None:
+                            continue
+                        fill = c * (1 - self.slippage_rate)
+                        proceeds = self._sell(pos["shares"], fill)
+                        cash += proceeds
+                        cost_basis = pos["shares"] * pos["entry_price"]
+                        trades.append(RotationTrade(
+                            ticker=t, sector=sector_of(t),
+                            entry_date=pos["entry_date"],
+                            entry_price=pos["entry_price"],
+                            exit_date=dt, exit_price=round(fill, 4),
+                            shares=pos["shares"],
+                            pnl=round(proceeds - cost_basis, 2),
+                            pnl_pct=round(
+                                (proceeds - cost_basis) / cost_basis, 4)
+                            if cost_basis else 0.0,
+                            hold_days=i - pos["entry_idx"],
+                            exit_reason="circuit_breaker",
+                        ))
+                        del positions[t]
+                    cb_cooldown -= 1
+                    if cb_cooldown <= 0:
+                        cb_active = False
+                        # Rebase the drawdown hurdle: a cash-flat book
+                        # would otherwise re-trigger on the old peak the
+                        # day the cooldown expires.
+                        peak = prev_equity
+
             # ── 1. Per-position exits (close basis). ──────────────────────
             cooldown: set[str] = set()
             for t, pos in list(positions.items()):
                 if i <= pos["entry_idx"]:  # T+1
+                    continue
+                if t in self.cash_tickers:  # cash proxy: parked, not risk-managed
                     continue
                 c = price_of(t)
                 if c is None:
@@ -258,7 +327,7 @@ class RotationBacktester:
             bullish_row = bullish.loc[dt] if dt in bullish.index else None
 
             # ── 2. Rebalance to target weights (close fills). ─────────────
-            if dt in portfolios:
+            if dt in portfolios and not cb_active:
                 target = portfolios[dt]
                 equity_now = cash + sum(
                     (price_of(t) or pos["entry_price"]) * pos["shares"]
@@ -359,7 +428,7 @@ class RotationBacktester:
             # Redeploy cash freed by stop/breakdown/trailing exits into
             # not-yet-held members of the last target portfolio once they
             # (re-)establish bullish alignment and clear the cooldown.
-            if self.reentry_enabled and last_target:
+            if (self.reentry_enabled and last_target and not cb_active):
                 candidates = [
                     t for t in last_target
                     if t not in positions
@@ -402,7 +471,8 @@ class RotationBacktester:
             # instead of parking in cash until the next rebalance. Runs
             # after the rebalance section so scheduled dates reconcile
             # first and this only fires for genuinely open slots.
-            if self.replacement_fn is not None and cooldown:
+            if (self.replacement_fn is not None and cooldown
+                    and not cb_active):
                 picks = self.replacement_fn(
                     dt, list(positions.keys()), set(cooldown))
                 for t, w in picks.items():
@@ -513,6 +583,7 @@ class RotationBacktester:
                 "win_rate_pct": round(
                     sum(1 for tr in trades if tr.pnl > 0) / len(trades) * 100
                     if trades else 0.0, 1),
+                "circuit_breaker_events": cb_events,
                 "benchmark_total_return_pct": round(bench_total * 100, 2),
                 "excess_return_pct": round(
                     total_return - bench_total * 100, 2),
@@ -534,6 +605,8 @@ class RotationBacktester:
                     "keep_in_trend": self.keep_in_trend,
                     "reentry_enabled": self.reentry_enabled,
                     "reentry_cooldown": self.reentry_cooldown,
+                    "circuit_breaker_drawdown": self.circuit_breaker_drawdown,
+                    "circuit_breaker_cooldown": self.circuit_breaker_cooldown,
                 },
             },
         }

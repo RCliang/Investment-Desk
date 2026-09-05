@@ -31,6 +31,7 @@ from app.models.chain_models import DailyBar, EtfSignal, BacktestRun
 from app.services.quant import etf_pool
 from app.services.quant.etf_rotation import (
     EtfRotationEngine, TOP_N, BUFFER_RANK, HOLDING_PERIOD,
+    MOMENTUM_WINDOWS, MOMENTUM_WEIGHTS, VOL_WINDOW, ABS_WINDOW,
 )
 from app.services.quant.sector_rotation import build_atr_panel
 from app.services.quant.rotation_backtest import RotationBacktester
@@ -224,6 +225,13 @@ def run_backtest_and_store(
     use_target_vol: bool = USE_TARGET_VOL,
     target_vol: float = TARGET_VOL,
     exit_replacement: bool = True,
+    momentum_windows: Optional[list[int]] = None,
+    momentum_weights: Optional[list[float]] = None,
+    vol_window: int = VOL_WINDOW,
+    abs_window: int = ABS_WINDOW,
+    use_trend_filter: bool = False,
+    circuit_breaker_drawdown: float = 0.0,
+    strategy_set: str = "etf_momentum_rotation",
     bars_limit: int = 1200,
 ) -> dict:
     """Run the ETF dual-momentum backtest, store, return summary.
@@ -237,10 +245,22 @@ def run_backtest_and_store(
     its `market_ma_window` MA (防守 names + cash stay rankable).
     rebalance_mode: 'fixed' = every holding_period days; 'dynamic' =
     daily check, trade only when the holding set changes.
+    rebalance_anchor: 'grid' | 'calendar' (monthly first trading day,
+    live default) | 'weekly' (last trading day of each ISO week — the
+    short-rotation cadence).
     weight_mode: 'equal' = 1/top_n per slot; 'risk_parity' = inverse-vol
     sizing among the selected. use_target_vol scales risk weights down
     (freed share → cash) when the vol_window covariance estimate exceeds
     `target_vol`.
+    momentum_windows/weights/vol_window/abs_window: the momentum
+    parameterization (defaults = the tuned mid-term 60/120/250 preset;
+    the short-rotation preset passes (20,60)/(0.6,0.4)/20/60).
+    use_trend_filter: MA20 trend-confirmation entry filter (close above
+    a rising MA20 to be eligible).
+    circuit_breaker_drawdown: portfolio-level force-liquidation
+    threshold (0 = off, research switch).
+    strategy_set: label persisted on the BacktestRun row
+    (etf_momentum_rotation | etf_short_rotation).
     """
     bars = load_etf_pool_bars(db, limit=bars_limit)
     if not bars:
@@ -259,10 +279,14 @@ def run_backtest_and_store(
     engine = EtfRotationEngine(
         cash_ticker=etf_pool.get_cash_ticker(),
         top_n=top_n, buffer_rank=buffer_rank, holding_period=holding_period,
+        windows=tuple(momentum_windows or MOMENTUM_WINDOWS),
+        weights=tuple(momentum_weights or MOMENTUM_WEIGHTS),
+        vol_window=vol_window, abs_window=abs_window,
         use_abs_gate=use_abs_gate, use_buffer=use_buffer,
         use_market_gate=use_market_gate,
         market_ma_window=market_ma_window,
         market_gate_tickers=equity_like,
+        use_trend_filter=use_trend_filter,
         replacement_tickers=defensive if exit_replacement else None,
         rebalance_mode=rebalance_mode,
         rebalance_anchor=rebalance_anchor,
@@ -279,6 +303,10 @@ def run_backtest_and_store(
         stop_mode=STOP_MODE,
         atr_mult=ATR_MULT,
         breakdown_buffer=BREAKDOWN_BUFFER,
+        circuit_breaker_drawdown=circuit_breaker_drawdown,
+        # The money ETF is a cash proxy — exempt from per-position stops
+        # (near-zero vol makes an ATR stop a spread-churning machine).
+        cash_tickers={etf_pool.get_cash_ticker()},
         # Event-driven slot refill: replace an exited ETF with the
         # next-best ranked pick the same day (engine-side rules).
         replacement_fn=engine.pick_replacement if exit_replacement else None,
@@ -293,7 +321,7 @@ def run_backtest_and_store(
 
     row = BacktestRun(
         ticker="ETF_ROTATION",
-        strategy_set="etf_momentum_rotation",
+        strategy_set=strategy_set,
         start_date=date.fromisoformat(r["start_date"]),
         end_date=date.fromisoformat(r["end_date"]),
         initial_capital=r["initial_capital"],

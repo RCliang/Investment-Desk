@@ -3,7 +3,7 @@ dist/
 *.pyc
 __pycache__/
 *.DS_Store
-
+backend/data/investlens.db
 
 # Environment variables (keep .env.example tracked)
 .env

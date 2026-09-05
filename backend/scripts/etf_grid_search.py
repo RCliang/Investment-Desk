@@ -168,7 +168,8 @@ def run_cell(cfg: dict, use_cache: bool = True) -> dict:
         stamp_duty_rate=etf_signal_service.ETF_STAMP_DUTY_RATE,
         slippage_rate=etf_signal_service.ETF_SLIPPAGE_RATE,
         stop_mode="atr", atr_mult=c["atr_mult"],
-        breakdown_buffer=c["breakdown_buffer"])
+        breakdown_buffer=c["breakdown_buffer"],
+        cash_tickers={etf_pool.get_cash_ticker()})
     out = bt.run(ctx["bars"], ctx["membership"], engine,
                  initial_capital=1e6)
     r = out["result"]
