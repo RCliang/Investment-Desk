@@ -42,8 +42,9 @@ sys.path.insert(0, str(BACKEND_DIR))
 
 from app.db import SessionLocal                              # noqa: E402
 from app.services.quant import etf_pool, etf_signal_service  # noqa: E402
-from app.services.quant.etf_rotation import EtfRotationEngine  # noqa: E402
-from app.services.quant.rotation_backtest import RotationBacktester  # noqa: E402
+from app.services.quant.etf_lab import (  # noqa: E402,F401 (re-exported)
+    PRESETS, run_preset, slice_metrics,
+)
 
 OUT_PATH = BACKEND_DIR / "data" / "etf_short_validation_results.json"
 
@@ -52,55 +53,12 @@ TRAIN_END = "2023-12-29"
 EVAL_END = "2026-09-04"
 BARS_LIMIT = 2600            # ~2016-01 → every fixed window warm by 2019-10
 
-# Short preset — everything FIXED outside the grid (§9.1).
-SHORT_BASE = dict(
-    windows=(20, 60), weights=(0.6, 0.4), vol_window=20, abs_window=60,
-    rebalance_anchor="weekly", rebalance_mode="fixed", holding_period=5,
-    use_abs_gate=True, use_buffer=True, use_market_gate=True,
-    market_ma_window=250, use_trend_filter=True, weight_mode="equal",
-    use_target_vol=True, target_vol=0.12, exit_replacement=True,
-)
-# Live mid-term preset (mirrors etf_signal_service defaults + scan config).
-MID_BASE = dict(
-    windows=(60, 120, 250), weights=(0.15, 0.15, 0.7), vol_window=20,
-    abs_window=180, rebalance_anchor="calendar", rebalance_mode="fixed",
-    holding_period=20, use_abs_gate=True, use_buffer=True,
-    use_market_gate=False, market_ma_window=200, use_trend_filter=False,
-    weight_mode="equal", use_target_vol=True, target_vol=0.12,
-    exit_replacement=True, top_n=2, buffer_rank=3, atr_mult=4.0,
-)
-
-
-# ── Metrics from an equity-curve slice (same convention as etf_grid_search) ─
-
-def slice_metrics(curve: list[dict], lo: str, hi: str,
-                  rebalance_log: list[dict] | None = None) -> dict | None:
-    pts = [p for p in curve if lo <= p["date"] <= hi]
-    eq = np.array([p["equity"] for p in pts], dtype=float)
-    if len(pts) < 40 or eq[0] <= 0:
-        return None
-    total = eq[-1] / eq[0] - 1.0
-    years = len(pts) / 252.0
-    annual = (eq[-1] / eq[0]) ** (1.0 / years) - 1.0 if years > 0 else 0.0
-    peak = np.maximum.accumulate(eq)
-    dd = float(np.max((peak - eq) / peak)) if len(eq) else 0.0
-    rets = np.diff(eq) / eq[:-1]
-    std = rets.std(ddof=1) if len(rets) > 1 else 0.0
-    sharpe = float(rets.mean() / std * math.sqrt(252)) if std > 0 else 0.0
-    calmar = annual / dd if dd > 1e-9 else 0.0
-    to = 0.0
-    if rebalance_log is not None:
-        xs = [r["turnover_pct"] for r in rebalance_log
-              if lo <= r["date"] <= hi]
-        to = float(np.mean(xs)) if xs else 0.0
-    return {
-        "total_pct": round(total * 100, 2),
-        "annual_pct": round(annual * 100, 2),
-        "max_dd_pct": round(dd * 100, 2),
-        "sharpe": round(sharpe, 3),
-        "calmar": round(calmar, 3),
-        "avg_turnover_pct": round(to, 2),
-    }
+# Presets live in etf_lab (single source with the live service constants).
+# SHORT_BASE ≡ PRESETS["short"] at its §9.5 champion cell (top2/b0/atr3);
+# MID_BASE ≡ PRESETS["mid"] (the pre-sleeve live baseline this harness
+# compared against — the live scan itself is PRESETS["hybrid"]).
+SHORT_BASE = PRESETS["short"]
+MID_BASE = PRESETS["mid"]
 
 
 # ── Run one config ──────────────────────────────────────────────────────────
@@ -124,47 +82,20 @@ def _context() -> dict:
     return _CTX
 
 
-def run_config(cfg: dict) -> dict:
-    """One backtest (engine + backtester fully configured). Returns
+def run_config(cfg: dict, preset: str = "short") -> dict:
+    """Thin shell over etf_lab.run_preset (the ONE wiring copy). Returns
     {cfg, full/train/valid metrics, bench slice, curve, trades, rebal_log}.
     """
     ctx = _context()
-    c = {**SHORT_BASE, **cfg}
-    engine = EtfRotationEngine(
-        cash_ticker=etf_pool.get_cash_ticker(),
-        top_n=c["top_n"], buffer_rank=c["buffer_rank"],
-        holding_period=c["holding_period"],
-        windows=tuple(c["windows"]), weights=tuple(c["weights"]),
-        vol_window=c["vol_window"], abs_window=c["abs_window"],
-        use_abs_gate=c["use_abs_gate"], use_buffer=c["use_buffer"],
-        use_market_gate=c["use_market_gate"],
-        market_ma_window=c["market_ma_window"],
-        market_gate_tickers=ctx["equity_like"],
-        use_trend_filter=c["use_trend_filter"],
-        replacement_tickers=ctx["defensive"] if c["exit_replacement"] else None,
-        rebalance_mode=c["rebalance_mode"],
-        rebalance_anchor=c["rebalance_anchor"],
-        weight_mode=c["weight_mode"],
-        use_target_vol=c["use_target_vol"], target_vol=c["target_vol"])
-    bt = RotationBacktester(
-        commission_rate=etf_signal_service.ETF_COMMISSION_RATE,
-        commission_min=etf_signal_service.ETF_COMMISSION_MIN,
-        stamp_duty_rate=etf_signal_service.ETF_STAMP_DUTY_RATE,
-        slippage_rate=etf_signal_service.ETF_SLIPPAGE_RATE,
-        stop_mode="atr", atr_mult=c["atr_mult"],
-        breakdown_buffer=0.03,
-        cash_tickers={etf_pool.get_cash_ticker()},
-        replacement_fn=engine.pick_replacement if c["exit_replacement"]
-        else None)
-    out = bt.run(ctx["bars"], ctx["membership"], engine,
-                 initial_capital=1e6)
+    out = run_preset(preset, overrides=cfg,
+                     bars=ctx["bars"], membership=ctx["membership"])
     r = out["result"]
     curve, bench = r["equity_curve"], r["benchmark_curve"]
     log_ = r.get("rebalance_log") or []
     trades = r.get("trades") or []
     cell = {
         "cfg": {k: (list(v) if isinstance(v, tuple) else v)
-                for k, v in c.items()},
+                for k, v in out["cfg"].items()},
         "full": slice_metrics(curve, EVAL_START, EVAL_END, log_),
         "train": slice_metrics(curve, EVAL_START, TRAIN_END, log_),
         "valid": slice_metrics(curve, TRAIN_END, EVAL_END, log_),
@@ -177,7 +108,7 @@ def run_config(cfg: dict) -> dict:
         "_trades": trades,
     }
     if any(cell[k] is None for k in ("full", "train", "valid")):
-        raise RuntimeError(f"degenerate curve for cfg={c}")
+        raise RuntimeError(f"degenerate curve for cfg={out['cfg']}")
     return cell
 
 
@@ -284,7 +215,7 @@ def main():
               f"trades {cell['trade_count']:4d}")
 
     print("\n════ head-to-head vs mid-term preset (same window, same pool) ════")
-    mid = run_config(MID_BASE)
+    mid = run_config(None, preset="mid")
     print("  short champion:")
     _print_cell(champ)
     print("  mid-term (live preset):")

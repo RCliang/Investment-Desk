@@ -213,6 +213,9 @@ class EtfRotationEngine:
         weight_mode: str = "equal",
         use_target_vol: bool = False,
         target_vol: float = 0.10,
+        defensive_sleeve: Optional[set[str]] = None,
+        regime_ticker: str = "510300",
+        regime_ma_window: int = 250,
     ):
         if len(windows) != len(weights):
             raise ValueError("windows/weights length mismatch")
@@ -229,6 +232,10 @@ class EtfRotationEngine:
             raise ValueError("weight_mode must be 'equal' or 'risk_parity'")
         if target_vol <= 0:
             raise ValueError("target_vol must be positive")
+        if defensive_sleeve and rebalance_anchor == "grid":
+            raise ValueError(
+                "defensive_sleeve requires 'calendar' or 'weekly' anchors — "
+                "the regime flips on calendar months and grid anchors drift")
         self.cash_ticker = cash_ticker
         self.top_n = top_n
         self.buffer_rank = buffer_rank
@@ -268,6 +275,16 @@ class EtfRotationEngine:
         self.weight_mode = weight_mode
         self.use_target_vol = use_target_vol
         self.target_vol = target_vol
+        # Hybrid regime sleeve (validated 2026-09-05, docs §十): while the
+        # regime proxy's month-END close sits below its regime_ma_window
+        # SMA, every anchor in the FOLLOWING month targets equal weights
+        # over the sleeve (gold/treasury/dividend) instead of momentum
+        # picks — no gates, no ranking, no target-vol scaling. Mid-cycle
+        # risk management for sleeve names is the caller's job (the
+        # backtester/service exempt them via cash_tickers).
+        self.defensive_sleeve = defensive_sleeve
+        self.regime_ticker = regime_ticker
+        self.regime_ma_window = regime_ma_window
 
     def _apply_weight_mode(
         self,
@@ -440,6 +457,47 @@ class EtfRotationEngine:
                              min_periods=self.market_ma_window).mean()
             market_ok = mkt > ma
 
+        # Hybrid regime sleeve: month-END close of the regime proxy vs its
+        # SMA, confirmed monthly and applied to the FOLLOWING month's
+        # anchors (the state observed at the end of month M-1 governs all
+        # of month M — no look-ahead). Warm-up months (SMA not yet formed)
+        # count as risk-on; momentum panels are NaN there anyway. While
+        # risk-off, anchors target equal weights over the sleeve — no
+        # ranking, no gates, no target-vol scaling.
+        risk_off_at = None
+        sleeve: list[str] = []
+        if self.defensive_sleeve:
+            if self.regime_ticker not in close.columns:
+                raise ValueError(
+                    f"regime proxy {self.regime_ticker} missing from bars — "
+                    f"pool/data mismatch (run the ETF kline backfill first)")
+            sleeve = sorted(
+                t for t in self.defensive_sleeve
+                if t in close.columns and t != self.cash_ticker)
+            if not sleeve:
+                raise ValueError(
+                    "defensive_sleeve tickers all missing from bars")
+            mkt = close[self.regime_ticker]
+            ma = mkt.rolling(self.regime_ma_window,
+                             min_periods=self.regime_ma_window).mean()
+            above = (mkt > ma).where(ma.notna())   # NaN through warm-up
+            # close panel indexes dates as ISO STRINGS — resample needs a
+            # DatetimeIndex, so convert locally and map back to "%Y-%m".
+            above_dt = above.copy()
+            above_dt.index = pd.to_datetime(above_dt.index)
+            month_end_state = above_dt.resample("ME").last()
+            confirmed = month_end_state.shift(1)    # end of M-1 → month M
+            off_months = {ts.strftime("%Y-%m")
+                          for ts, v in confirmed.items() if v == 0.0}
+
+            def risk_off_at(d):  # noqa: E731 — closure over off_months
+                return d[:7] in off_months
+
+            def sleeve_target():
+                w = 1.0 / len(sleeve)
+                return ({t: w for t in sleeve},
+                        {"selected": list(sleeve), "sleeve": True})
+
         def blocked_at(dt) -> Optional[set[str]]:
             """Tickers excluded from ranking on this date (None = all open).
 
@@ -477,6 +535,7 @@ class EtfRotationEngine:
         portfolios: dict[str, dict[str, float]] = {}
         selection_detail: dict[str, dict] = {}
         prev_holdings: list[str] = []
+        prev_sleeve_flag = False
 
         if self.rebalance_mode == "dynamic":
             # Dynamic rebalancing: the selection is re-checked EVERY day,
@@ -486,30 +545,49 @@ class EtfRotationEngine:
             # hysteresis that keeps turnover low — this mode just removes
             # the up-to-(holding_period-1)-day lag of the fixed grid.
             for dt in all_dates:
-                weights, detail = select_portfolio_at(
-                    dt, panels["score"], abs_ret, self.cash_ticker,
-                    prev_holdings, top_n=self.top_n,
-                    buffer_rank=self.buffer_rank,
-                    use_abs_gate=self.use_abs_gate,
-                    use_buffer=self.use_buffer,
-                    blocked=blocked_at(dt))
-                weights = self._apply_weight_mode(
-                    dt, weights, detail, daily_ret, panels["vol"])
+                if risk_off_at is not None and risk_off_at(dt):
+                    weights, detail = sleeve_target()
+                    prev_holdings = detail["selected"]
+                    prev_sleeve_flag = True
+                else:
+                    prev_for_sel = [] if prev_sleeve_flag else prev_holdings
+                    weights, detail = select_portfolio_at(
+                        dt, panels["score"], abs_ret, self.cash_ticker,
+                        prev_for_sel, top_n=self.top_n,
+                        buffer_rank=self.buffer_rank,
+                        use_abs_gate=self.use_abs_gate,
+                        use_buffer=self.use_buffer,
+                        blocked=blocked_at(dt))
+                    weights = self._apply_weight_mode(
+                        dt, weights, detail, daily_ret, panels["vol"])
+                    prev_sleeve_flag = False
                 selected = detail["selected"]
                 if set(selected) != set(prev_holdings):
                     portfolios[dt] = weights
                     selection_detail[dt] = detail
                     prev_holdings = selected
         else:
+            prev_was_sleeve = False
             for dt in self._anchor_dates(all_dates):
-                weights, detail = select_portfolio_at(
-                    dt, panels["score"], abs_ret, self.cash_ticker,
-                    prev_holdings, top_n=self.top_n,
-                    buffer_rank=self.buffer_rank,
-                    use_abs_gate=self.use_abs_gate, use_buffer=self.use_buffer,
-                    blocked=blocked_at(dt))
-                weights = self._apply_weight_mode(
-                    dt, weights, detail, daily_ret, panels["vol"])
+                if risk_off_at is not None and risk_off_at(dt):
+                    weights, detail = sleeve_target()
+                    prev_was_sleeve = True
+                else:
+                    # A regime flip is a full-book change: the anchor right
+                    # after a sleeve month must NOT inherit band retention
+                    # from sleeve names (they'd linger in the risk-on book
+                    # and dilute the equity exposure — regression found by
+                    # the integrated 2018-2020 gold hold).
+                    prev_for_sel = [] if prev_was_sleeve else prev_holdings
+                    weights, detail = select_portfolio_at(
+                        dt, panels["score"], abs_ret, self.cash_ticker,
+                        prev_for_sel, top_n=self.top_n,
+                        buffer_rank=self.buffer_rank,
+                        use_abs_gate=self.use_abs_gate, use_buffer=self.use_buffer,
+                        blocked=blocked_at(dt))
+                    weights = self._apply_weight_mode(
+                        dt, weights, detail, daily_ret, panels["vol"])
+                    prev_was_sleeve = False
                 portfolios[dt] = weights
                 selection_detail[dt] = detail
                 prev_holdings = detail["selected"]
@@ -540,23 +618,39 @@ class EtfRotationEngine:
                 prev_dates = [d for d in portfolios if d < latest]
                 prev = selection_detail[prev_dates[-1]]["selected"] \
                     if prev_dates else []
-                w_now, d_now = select_portfolio_at(
-                    latest, panels["score"], abs_ret, self.cash_ticker, prev,
-                    top_n=self.top_n, buffer_rank=self.buffer_rank,
-                    use_abs_gate=self.use_abs_gate, use_buffer=self.use_buffer,
-                    blocked=blocked_at(latest))
-                w_now = self._apply_weight_mode(
-                    latest, w_now, d_now, daily_ret, panels["vol"])
+                if risk_off_at is not None and risk_off_at(latest):
+                    w_now, d_now = sleeve_target()
+                else:
+                    w_now, d_now = select_portfolio_at(
+                        latest, panels["score"], abs_ret, self.cash_ticker,
+                        prev, top_n=self.top_n,
+                        buffer_rank=self.buffer_rank,
+                        use_abs_gate=self.use_abs_gate,
+                        use_buffer=self.use_buffer,
+                        blocked=blocked_at(latest))
+                    w_now = self._apply_weight_mode(
+                        latest, w_now, d_now, daily_ret, panels["vol"])
                 latest_snapshot = {
                     "date": latest, "weights": w_now, "detail": d_now,
                     "prev_holdings": prev,
                 }
+
+        regime_info = None
+        if self.defensive_sleeve:
+            regime_info = {
+                "sleeve": sleeve,
+                "regime_ticker": self.regime_ticker,
+                "regime_ma_window": self.regime_ma_window,
+                "risk_off": (bool(risk_off_at(latest))
+                             if latest is not None else None),
+            }
 
         return {
             "panels": panels,
             "portfolios": portfolios,
             "selection_detail": selection_detail,
             "latest": latest_snapshot,
+            "regime": regime_info,
             # RotationBacktester reads these two keys — placeholders that
             # keep its result JSON intact (no factor ICs in this strategy).
             "ic_summary": {},
@@ -581,6 +675,9 @@ class EtfRotationEngine:
                 "use_target_vol": self.use_target_vol,
                 "target_vol": self.target_vol,
                 "cash_ticker": self.cash_ticker,
+                "defensive_sleeve": sleeve or None,
+                "regime_ticker": self.regime_ticker,
+                "regime_ma_window": self.regime_ma_window,
             },
         }
 

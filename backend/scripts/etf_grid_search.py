@@ -81,44 +81,8 @@ BASELINE = dict(top_n=3, holding_period=5, target_vol=None,
 WINDOW_COMBOS = [(10, 60, 120), (20, 60, 120), (20, 40, 120), (60, 120, 250)]
 
 
-# ── Metrics from an equity-curve slice ─────────────────────────────────────
-
-def slice_metrics(
-    curve: list[dict], lo: str, hi: str,
-    rebalance_log: list[dict] | None = None,
-) -> dict | None:
-    pts = [p for p in curve if lo <= p["date"] <= hi]
-    eq = np.array([p["equity"] for p in pts], dtype=float)
-    if len(pts) < 40 or eq[0] <= 0:
-        return None
-    total = eq[-1] / eq[0] - 1.0
-    years = len(pts) / 252.0
-    annual = (eq[-1] / eq[0]) ** (1.0 / years) - 1.0 if years > 0 else 0.0
-    peak = np.maximum.accumulate(eq)
-    dd = float(np.max((peak - eq) / peak)) if len(eq) else 0.0
-    rets = np.diff(eq) / eq[:-1]
-    std = rets.std(ddof=1) if len(rets) > 1 else 0.0
-    sharpe = float(rets.mean() / std * math.sqrt(252)) if std > 0 else 0.0
-    calmar = annual / dd if dd > 1e-9 else 0.0
-    to = 0.0
-    if rebalance_log is not None:
-        xs = [r["turnover_pct"] for r in rebalance_log
-              if lo <= r["date"] <= hi]
-        to = float(np.mean(xs)) if xs else 0.0
-    return {
-        "total_pct": round(total * 100, 2),
-        "annual_pct": round(annual * 100, 2),
-        "max_dd_pct": round(dd * 100, 2),
-        "sharpe": round(sharpe, 3),
-        "calmar": round(calmar, 3),
-        "avg_turnover_pct": round(to, 2),
-    }
-
-
-# ── One grid cell ───────────────────────────────────────────────────────────
-
-_CTX: dict = {}
-_CELL_CACHE: dict = {}   # cfg-key → cell (dedup across layers/WF rounds)
+# Metrics: canonical lab version (re-exported for older callers)
+from app.services.quant.etf_lab import slice_metrics  # noqa: E402
 
 
 def _context() -> dict:
@@ -152,27 +116,22 @@ def run_cell(cfg: dict, use_cache: bool = True) -> dict:
 
     ctx = _context()
     c = {**BASELINE, **cfg}
-    engine = EtfRotationEngine(
-        cash_ticker=etf_pool.get_cash_ticker(),
-        top_n=c["top_n"], buffer_rank=c["buffer_rank"],
-        holding_period=c["holding_period"],
-        windows=tuple(c["windows"]), weights=tuple(c["weights"]),
-        vol_window=c["vol_window"], abs_window=c["abs_window"],
-        use_target_vol=c["target_vol"] is not None,
-        target_vol=c["target_vol"] if c["target_vol"] is not None else 0.10,
-        market_gate_tickers=ctx["equity_like"],
-        **FIXED)
-    bt = RotationBacktester(
-        commission_rate=etf_signal_service.ETF_COMMISSION_RATE,
-        commission_min=etf_signal_service.ETF_COMMISSION_MIN,
-        stamp_duty_rate=etf_signal_service.ETF_STAMP_DUTY_RATE,
-        slippage_rate=etf_signal_service.ETF_SLIPPAGE_RATE,
-        stop_mode="atr", atr_mult=c["atr_mult"],
-        breakdown_buffer=c["breakdown_buffer"],
-        cash_tickers={etf_pool.get_cash_ticker()})
-    out = bt.run(ctx["bars"], ctx["membership"], engine,
-                 initial_capital=1e6)
-    r = out["result"]
+    # Legacy axes layered over PRESETS["mid"] as overrides; the explicit
+    # exit_replacement/rebalance_anchor preserve this harness's original
+    # semantics (no replacement, grid anchors) so old results reproduce.
+    from app.services.quant.etf_lab import run_preset as _run_preset
+    r = _run_preset("mid", overrides={
+        "top_n": c["top_n"], "buffer_rank": c["buffer_rank"],
+        "holding_period": c["holding_period"],
+        "windows": c["windows"], "weights": c["weights"],
+        "vol_window": c["vol_window"], "abs_window": c["abs_window"],
+        "use_target_vol": c["target_vol"] is not None,
+        "target_vol": c["target_vol"],
+        "atr_mult": c["atr_mult"],
+        "breakdown_buffer": c["breakdown_buffer"],
+        "exit_replacement": False, "rebalance_anchor": "grid",
+        **FIXED,
+    }, bars=ctx["bars"], membership=ctx["membership"])["result"]
     curve, bench = r["equity_curve"], r["benchmark_curve"]
     log_ = r.get("rebalance_log") or []
 

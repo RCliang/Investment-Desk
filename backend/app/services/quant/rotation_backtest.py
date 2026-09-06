@@ -32,6 +32,13 @@ import numpy as np
 import pandas as pd
 from sqlalchemy.orm import Session
 
+
+def _native(v):
+    """np.float64 → float at the result boundary. np scalars subclass
+    float (sqlite/pysqlite accepted them silently), but psycopg2 renders
+    them as a literal `np.float64(...)` — normalize before persisting."""
+    return v.item() if isinstance(v, np.generic) else v
+
 from .sector_rotation import (
     SectorRotationEngine, build_breakdown_panel, build_atr_panel,
     build_bullish_panel, TOP_K_SECTORS, TOP_N_PER_SECTOR, MAX_WEIGHT,
@@ -572,22 +579,22 @@ class RotationBacktester:
                 "end_date": str(all_dates[-1]),
                 "initial_capital": initial_capital,
                 "final_equity": final_equity,
-                "total_return_pct": round(total_return, 2),
-                "annual_return_pct": round(annual, 2),
-                "max_drawdown_pct": round(max_dd * 100, 2),
-                "sharpe_ratio": round(sharpe, 3),
+                "total_return_pct": _native(round(total_return, 2)),
+                "annual_return_pct": _native(round(annual, 2)),
+                "max_drawdown_pct": _native(round(max_dd * 100, 2)),
+                "sharpe_ratio": _native(round(sharpe, 3)),
                 "rebalance_count": len(rebalance_log),
-                "avg_turnover_pct": round(
-                    sum(turnovers) / len(turnovers) * 100 if turnovers else 0.0, 2),
+                "avg_turnover_pct": _native(round(
+                    sum(turnovers) / len(turnovers) * 100 if turnovers else 0.0, 2)),
                 "trade_count": len(trades),
-                "win_rate_pct": round(
+                "win_rate_pct": _native(round(
                     sum(1 for tr in trades if tr.pnl > 0) / len(trades) * 100
-                    if trades else 0.0, 1),
+                    if trades else 0.0, 1)),
                 "circuit_breaker_events": cb_events,
-                "benchmark_total_return_pct": round(bench_total * 100, 2),
-                "excess_return_pct": round(
-                    total_return - bench_total * 100, 2),
-                "sector_pnl": {k: round(v, 2)
+                "benchmark_total_return_pct": _native(round(bench_total * 100, 2)),
+                "excess_return_pct": _native(round(
+                    total_return - bench_total * 100, 2)),
+                "sector_pnl": {k: _native(round(v, 2))
                                for k, v in sorted(sector_pnl.items())},
                 "equity_curve": equity_curve,
                 "benchmark_curve": bench_curve,

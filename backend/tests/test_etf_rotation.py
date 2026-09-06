@@ -659,6 +659,11 @@ class TestScanService:
         # its range so the scan has anchors.
         monkeypatch.setattr(etf_signal_service, "STRATEGY_INCEPTION",
                             bars[CASH]["date"].iloc[0])
+        # This test pins the momentum scan; the live sleeve needs 510300
+        # bars the synthetic universe doesn't have (covered separately
+        # in TestRegimeSleeve).
+        monkeypatch.setattr(etf_signal_service, "USE_DEFENSIVE_SLEEVE",
+                            False)
 
         result = etf_signal_service.scan_etf_signals(db_session, top_n=2)
         assert result["scanned"] == len(risk)
@@ -682,3 +687,192 @@ class TestScanService:
         port = etf_signal_service.get_latest_portfolio(db_session)
         assert len(port["holdings"]) == result["selected"] + (
             1 if result["cash_weight"] > 0 else 0)
+
+
+# ── 7. Hybrid regime sleeve (docs §十, live 2026-09-05) ─────────────────────
+
+MKT = "510300"          # synthetic regime proxy
+SLEEVE = ("D1", "D2")   # synthetic defensive names
+
+
+def _wrap_close(close: pd.Series, seed: int = 41) -> pd.DataFrame:
+    """OHLCV frame around a hand-built close path (deterministic)."""
+    rng = np.random.default_rng(seed)
+    high = close * (1 + rng.uniform(0, 0.006, len(close)))
+    low = close * (1 - rng.uniform(0, 0.006, len(close)))
+    volume = rng.integers(1e6, 5e7, len(close)).astype(float)
+    return pd.DataFrame({
+        "date": close.index.strftime("%Y-%m-%d"),
+        "open": (high + low) / 2, "high": high, "low": low,
+        "close": close, "volume": volume, "amount": volume * close,
+    })
+
+
+def make_regime_universe(n: int = 400) -> dict[str, pd.DataFrame]:
+    """Risky names + a regime proxy that ramps above its MA250, breaks
+    below it on 2025-02-10 and recovers on 2025-04-10, + flat sleeve
+    names momentum would never rank.
+
+    Month-end states (the ONLY thing the regime reads):
+      ≤ Jan-2025 end  above;  Feb/Mar-2025 end  below;  ≥ Apr-2025 end above
+    → risk-OFF active months: 2025-03 and 2025-04 (anchors 1st trading day).
+    """
+    dates = pd.date_range("2024-01-01", periods=n, freq="B")
+    bars = {CASH: make_etf_bars(n=n, drift=7e-5, vol=0.0, seed=1)}
+    for i, drift in enumerate((0.003, 0.001, -0.001)):
+        bars[f"60000{i + 1}"] = make_etf_bars(n=n, drift=drift, seed=40 + i)
+    mkt = pd.Series(100 + np.arange(n) * 0.8, index=dates)
+    crash = dates.get_loc(pd.Timestamp("2025-02-10"))
+    rec = dates.get_loc(pd.Timestamp("2025-04-10"))
+    mkt.iloc[crash:rec] *= 0.55          # below the MA250 once formed
+    bars[MKT] = _wrap_close(mkt)
+    for t in SLEEVE:
+        bars[t] = _wrap_close(pd.Series(50.0, index=dates), seed=51)
+    return bars
+
+
+def make_sleeve_engine(**kw) -> EtfRotationEngine:
+    opts = dict(cash_ticker=CASH, top_n=2, rebalance_anchor="calendar",
+                defensive_sleeve=set(SLEEVE), regime_ticker=MKT,
+                regime_ma_window=250)
+    opts.update(kw)
+    return EtfRotationEngine(**opts)
+
+
+class TestRegimeSleeve:
+
+    @pytest.fixture
+    def db_session(self):
+        from sqlalchemy import create_engine
+        from sqlalchemy.orm import sessionmaker
+        from app.db import Base
+        from app.models import chain_models  # noqa: F401 register tables
+
+        engine = create_engine("sqlite:///:memory:")
+        Base.metadata.create_all(engine)
+        session = sessionmaker(bind=engine)()
+        yield session
+        session.close()
+
+    def test_grid_anchor_rejected(self):
+        with pytest.raises(ValueError, match="defensive_sleeve"):
+            make_sleeve_engine(rebalance_anchor="grid")
+
+    def test_off_months_hold_equal_sleeve(self):
+        model = make_sleeve_engine().run(make_regime_universe())
+        portfolios = model["portfolios"]
+        detail = model["selection_detail"]
+        off = [d for d in portfolios if d[:7] in ("2025-03", "2025-04")]
+        on = [d for d in portfolios if d[:7] in ("2025-01", "2025-05")]
+        assert off, "expected sleeve anchors in the risk-off months"
+        for d in off:
+            assert portfolios[d] == {"D1": 0.5, "D2": 0.5}
+            assert detail[d]["sleeve"] is True
+        for d in on:
+            assert set(portfolios[d]) & set(SLEEVE) == set()
+            assert "sleeve" not in detail[d]
+
+    def test_regime_info_and_recovery(self):
+        model = make_sleeve_engine().run(make_regime_universe())
+        # data ends mid-2025 after the April recovery → risk-on
+        assert model["regime"]["risk_off"] is False
+        assert model["regime"]["sleeve"] == list(SLEEVE)
+        assert model["config"]["defensive_sleeve"] == list(SLEEVE)
+
+    def test_no_lookahead_regime(self):
+        bars = make_regime_universe()
+        base = make_sleeve_engine().run(bars)["portfolios"]
+        cut = pd.Timestamp("2025-03-31")
+        perturbed = {t: df.copy() for t, df in bars.items()}
+        for t, df in perturbed.items():
+            mask = pd.to_datetime(df["date"]) > cut
+            df.loc[mask, ["open", "high", "low", "close"]] *= 1.3
+        after = make_sleeve_engine().run(perturbed)["portfolios"]
+        # April's sleeve month was confirmed by March-end data: perturbing
+        # April onward cannot move any anchor on/before 2025-04-01.
+        horizon = [d for d in base if d <= "2025-04-01"]
+        assert horizon
+        for d in horizon:
+            assert base[d] == after[d]
+
+    def test_sleeve_exempt_from_stops(self):
+        bars = make_regime_universe()
+        # D1 craters mid risk-off month — sleeve names must ride through.
+        d1 = bars["D1"]
+        mask = pd.to_datetime(d1["date"]).between(
+            "2025-03-10", "2025-03-14")
+        d1.loc[mask, ["open", "high", "low", "close"]] *= 0.5
+        engine = make_sleeve_engine()
+        bt = RotationBacktester(
+            stamp_duty_rate=0.0, stop_mode="atr", atr_mult=2.0,
+            breakdown_buffer=0.03,
+            cash_tickers={CASH, *SLEEVE})   # service wiring: sleeve exempt
+        out = bt.run(bars, {t: ["ETF"] for t in bars}, engine,
+                     initial_capital=1e6)
+        d1_trades = [t for t in out["result"]["trades"]
+                     if t["ticker"] == "D1"]
+        assert d1_trades, "sleeve should trade (bought at the 2025-03 anchor)"
+        for t in d1_trades:
+            assert t["exit_reason"] == "rebalance"  # never stop/breakdown
+        exits = [t for t in d1_trades if t["exit_date"]]
+        assert all(e["exit_date"] >= "2025-04-01" for e in exits)
+
+    def test_scan_outputs_sleeve_when_risk_off(
+            self, db_session, monkeypatch):
+        from app.models.chain_models import DailyBar, EtfSignal
+        from app.services.quant import etf_signal_service as svc
+
+        # Crash the proxy mid-May, never recover: May-end below → the
+        # June anchor (last in data) targets the sleeve.
+        bars = make_regime_universe()
+        mkt = bars[MKT]
+        mask = pd.to_datetime(mkt["date"]) >= "2025-05-15"
+        mkt.loc[mask, ["open", "high", "low", "close"]] *= 0.55
+        for t, df in bars.items():
+            for _, r in df.iterrows():
+                db_session.add(DailyBar(
+                    ticker=t, date=date_cls.fromisoformat(r["date"]),
+                    open=r["open"], high=r["high"], low=r["low"],
+                    close=r["close"], volume=r["volume"], amount=r["amount"]))
+        db_session.commit()
+
+        monkeypatch.setattr(etf_pool, "get_all_tickers",
+                            lambda: sorted(bars))
+        monkeypatch.setattr(etf_pool, "get_cash_ticker", lambda: CASH)
+        monkeypatch.setattr(etf_pool, "get_names",
+                            lambda: {t: f"ETF{t}" for t in bars})
+        monkeypatch.setattr(
+            etf_pool, "get_asset_classes",
+            lambda: {t: ("货币" if t == CASH else
+                         "防守" if t in SLEEVE else "宽基")
+                     for t in bars})
+        monkeypatch.setattr(svc, "STRATEGY_INCEPTION",
+                            bars[CASH]["date"].iloc[0])
+        monkeypatch.setattr(svc, "DEFENSIVE_SLEEVE", set(SLEEVE))
+        monkeypatch.setattr(svc, "REGIME_TICKER", MKT)
+
+        result = svc.scan_etf_signals(db_session, top_n=2)
+        assert result["regime"]["risk_off"] is True
+        holdings = {h["ticker"]: h["weight"] for h in result["holdings"]}
+        assert holdings == {"D1": 0.5, "D2": 0.5}
+
+    def test_no_sleeve_leakage_after_flip_on(self):
+        # Sleeve names with STRONG momentum (rank inside the band) must
+        # NOT linger in the risk-on book via buffer retention: a regime
+        # flip is a full-book change. Regression for the 2018-2020 gold
+        # hold found by the integrated backtest.
+        bars = make_regime_universe()
+        dates = pd.to_datetime(bars[MKT]["date"])
+        # D1 ramps hard through the whole window → top-ranked, band-retained
+        d1 = pd.Series(50 * np.exp(np.linspace(0, 1.2, len(dates))),
+                       index=dates)
+        bars["D1"] = _wrap_close(d1, seed=52)
+        model = make_sleeve_engine().run(bars)
+        portfolios = model["portfolios"]
+        # first risk-on anchor after the sleeve months (2025-03/04)
+        anchors = sorted(portfolios)
+        i_off = [i for i, d in enumerate(anchors)
+                 if d[:7] in ("2025-03", "2025-04")]
+        after = anchors[i_off[-1] + 1]
+        assert "D1" not in portfolios[after], (
+            "sleeve name leaked into the risk-on book at the flip anchor")

@@ -31,37 +31,36 @@ from app.models.chain_models import DailyBar, EtfSignal, BacktestRun
 from app.services.quant import etf_pool
 from app.services.quant.etf_rotation import (
     EtfRotationEngine, TOP_N, BUFFER_RANK, HOLDING_PERIOD,
-    MOMENTUM_WINDOWS, MOMENTUM_WEIGHTS, VOL_WINDOW, ABS_WINDOW,
+    VOL_WINDOW, ABS_WINDOW,
 )
 from app.services.quant.sector_rotation import build_atr_panel
-from app.services.quant.rotation_backtest import RotationBacktester
 from .signal_service import _load_bars_df
 
 log = logging.getLogger(__name__)
 
-# ETF cost model: no stamp duty (A-share ETFs are exempt), 万1 commission.
-# Slippage kept at the stock backtester's 0.1% (conservative for top
-# liquidity ETFs).
-ETF_COMMISSION_RATE = 0.0001
-ETF_COMMISSION_MIN = 5.0
-ETF_STAMP_DUTY_RATE = 0.0
-ETF_SLIPPAGE_RATE = 0.001
-# Exit rules + vol targeting, tuned 2026-09-02 by the grid search
-# (docs/etf-rotation-grid-search-plan.md 落地记录): loose ATR stop
-# (4×ATR14 — the momentum/absolute gates own the exits, the stop is a
-# disaster brake) and a 12% target-vol overlay riding the engine's fast
-# 20d covariance estimator. (TOP1 cell per decision.)
+# Costs, exit rules and the sleeve live in etf_lab.PRESETS — the single
+# source shared with every research run (architecture review 2026-09-06:
+# the hand-mirrored MID_BASE had already drifted). Local names re-exported
+# so tests' monkeypatch targets and existing imports stay valid.
+from .etf_lab import (  # noqa: E402
+    ETF_COMMISSION_RATE, ETF_COMMISSION_MIN, ETF_STAMP_DUTY_RATE,
+    ETF_SLIPPAGE_RATE, DEFENSIVE_SLEEVE, REGIME_TICKER, REGIME_MA_WINDOW,
+    PRESETS,
+)
 STOP_MODE = "atr"
-ATR_MULT = 4.0
+ATR_MULT = PRESETS["mid"]["atr_mult"]              # 4×ATR14 disaster brake
 BREAKDOWN_BUFFER = 0.03
-USE_TARGET_VOL = True
-TARGET_VOL = 0.12
+USE_TARGET_VOL = PRESETS["mid"]["use_target_vol"]
+TARGET_VOL = PRESETS["mid"]["target_vol"]
 # Calendar-anchored rebalancing (2026-09-03 fix): selection re-runs on the
 # FIRST TRADING DAY of each month; between anchors the live recommendation
 # is frozen (exits / defensive replacement still act daily). Inception =
 # the first anchor: signal 2026-09-03 → execution 2026-09-04, next anchor
 # 2026-10-09 (first trading day after the National Day holiday).
 STRATEGY_INCEPTION = "2026-09-03"
+# Hybrid regime sleeve ON for the live scan (docs §十, go-live 2026-09-05).
+# PRESETS["hybrid"] ≡ this scan's engine configuration by construction.
+USE_DEFENSIVE_SLEEVE = True
 
 
 # ── Data loading ────────────────────────────────────────────────────────────
@@ -107,7 +106,9 @@ def scan_etf_signals(
         cash_ticker=etf_pool.get_cash_ticker(),
         top_n=top_n, buffer_rank=buffer_rank, holding_period=holding_period,
         use_target_vol=USE_TARGET_VOL, target_vol=TARGET_VOL,
-        rebalance_anchor="calendar", calendar_start=STRATEGY_INCEPTION)
+        rebalance_anchor="calendar", calendar_start=STRATEGY_INCEPTION,
+        defensive_sleeve=DEFENSIVE_SLEEVE if USE_DEFENSIVE_SLEEVE else None,
+        regime_ticker=REGIME_TICKER, regime_ma_window=REGIME_MA_WINDOW)
     model = engine.run(bars)
 
     latest = model["latest"]["date"]
@@ -191,6 +192,12 @@ def scan_etf_signals(
              "cash=%.0f%%, %.1fs", sig_date, len(ranks), len(selected),
              weights.get(cash_t, 0.0) * 100, elapsed)
 
+    regime = model.get("regime")
+    if regime is not None:
+        log.info("ETF rotation regime: risk_off=%s sleeve=%s (%s vs MA%d)",
+                 regime.get("risk_off"), regime.get("sleeve"),
+                 regime.get("regime_ticker"), regime.get("regime_ma_window"))
+
     return {
         "date": str(sig_date),
         "scanned": len(ranks),
@@ -200,6 +207,7 @@ def scan_etf_signals(
             {"ticker": t, "name": names.get(t, ""), "weight": round(w, 4)}
             for t, w in sorted(weights.items(), key=lambda kv: -kv[1])
         ],
+        "regime": regime,
         "config": model["config"],
         "elapsed_s": round(elapsed, 1),
     }
@@ -231,6 +239,8 @@ def run_backtest_and_store(
     abs_window: int = ABS_WINDOW,
     use_trend_filter: bool = False,
     circuit_breaker_drawdown: float = 0.0,
+    use_defensive_sleeve: bool = False,
+    atr_mult: Optional[float] = None,   # None → preset value
     strategy_set: str = "etf_momentum_rotation",
     bars_limit: int = 1200,
 ) -> dict:
@@ -259,6 +269,10 @@ def run_backtest_and_store(
     a rising MA20 to be eligible).
     circuit_breaker_drawdown: portfolio-level force-liquidation
     threshold (0 = off, research switch).
+    use_defensive_sleeve: hybrid mode — while the regime proxy's
+    month-end close is below its MA250, anchors hold the defensive trio
+    equal-weight (live preset since 2026-09-05; sleeve names exempt from
+    stop management). Requires 'calendar' or 'weekly' anchors.
     strategy_set: label persisted on the BacktestRun row
     (etf_momentum_rotation | etf_short_rotation).
     """
@@ -267,57 +281,34 @@ def run_backtest_and_store(
         raise ValueError("No ETF bars loaded — run the ETF kline backfill "
                          "first (refresh type etf_klines)")
 
-    # Equity-like = the classes the market gate blocks; 防守 (国债/黄金/
-    # 纳指) and the cash ETF remain rankable in weak regimes.
-    classes = etf_pool.get_asset_classes()
-    equity_like = {t for t, c in classes.items() if c in ("宽基", "行业")}
-    # Defensive replacement universe (multi-phase validated 2026-09-03):
-    # an exit mid-cycle parks the freed slot in the best gate-passing
-    # defensive ETF (upgraded cash parking), not a rotation-rank bet.
-    defensive = {t for t, c in classes.items() if c == "防守"}
-
-    engine = EtfRotationEngine(
-        cash_ticker=etf_pool.get_cash_ticker(),
-        top_n=top_n, buffer_rank=buffer_rank, holding_period=holding_period,
-        windows=tuple(momentum_windows or MOMENTUM_WINDOWS),
-        weights=tuple(momentum_weights or MOMENTUM_WEIGHTS),
-        vol_window=vol_window, abs_window=abs_window,
-        use_abs_gate=use_abs_gate, use_buffer=use_buffer,
-        use_market_gate=use_market_gate,
-        market_ma_window=market_ma_window,
-        market_gate_tickers=equity_like,
-        use_trend_filter=use_trend_filter,
-        replacement_tickers=defensive if exit_replacement else None,
-        rebalance_mode=rebalance_mode,
-        rebalance_anchor=rebalance_anchor,
-        weight_mode=weight_mode,
-        use_target_vol=use_target_vol,
-        target_vol=target_vol)
-    membership = etf_pool.get_membership()
-
-    bt = RotationBacktester(
-        commission_rate=ETF_COMMISSION_RATE,
-        commission_min=ETF_COMMISSION_MIN,
-        stamp_duty_rate=ETF_STAMP_DUTY_RATE,
-        slippage_rate=ETF_SLIPPAGE_RATE,
-        stop_mode=STOP_MODE,
-        atr_mult=ATR_MULT,
-        breakdown_buffer=BREAKDOWN_BUFFER,
-        circuit_breaker_drawdown=circuit_breaker_drawdown,
-        # The money ETF is a cash proxy — exempt from per-position stops
-        # (near-zero vol makes an ATR stop a spread-churning machine).
-        cash_tickers={etf_pool.get_cash_ticker()},
-        # Event-driven slot refill: replace an exited ETF with the
-        # next-best ranked pick the same day (engine-side rules).
-        replacement_fn=engine.pick_replacement if exit_replacement else None,
-    )
-    out = bt.run(
-        bars, membership, engine,
-        initial_capital=initial_capital,
-        start_date=str(start_date) if start_date else None,
-        end_date=str(end_date) if end_date else None,
-    )
-    r = out["result"]
+    # The ONE wiring copy lives in etf_lab.run_preset (architecture review
+    # 2026-09-06): this service resolves preset ∪ explicit params — None
+    # overrides fall through to the preset, whose values ARE these
+    # function's defaults (both sourced from etf_lab.PRESETS).
+    from .etf_lab import run_preset
+    lab_out = run_preset(
+        "hybrid" if use_defensive_sleeve else "mid",
+        overrides={
+            "top_n": top_n, "buffer_rank": buffer_rank,
+            "holding_period": holding_period,
+            "windows": momentum_windows, "weights": momentum_weights,
+            "vol_window": vol_window, "abs_window": abs_window,
+            "use_abs_gate": use_abs_gate, "use_buffer": use_buffer,
+            "use_market_gate": use_market_gate,
+            "market_ma_window": market_ma_window,
+            "use_trend_filter": use_trend_filter,
+            "exit_replacement": exit_replacement,
+            "rebalance_mode": rebalance_mode,
+            "rebalance_anchor": rebalance_anchor,
+            "weight_mode": weight_mode,
+            "use_target_vol": use_target_vol, "target_vol": target_vol,
+            "atr_mult": atr_mult,
+            "circuit_breaker_drawdown": circuit_breaker_drawdown,
+            "start_date": start_date, "end_date": end_date,
+            "initial_capital": initial_capital,
+        },
+        db=db, bars=bars, bars_limit=bars_limit)
+    r = lab_out["result"]
 
     row = BacktestRun(
         ticker="ETF_ROTATION",

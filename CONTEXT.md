@@ -114,3 +114,21 @@ _Avoid_: Draft, pending, suggested, AI-generated.
 An entity that was once Canonical but has been superseded or removed. Retained
 for history; hidden from default views.
 _Avoid_: Archived, retired, deleted, old.
+
+## Quant strategy language
+
+**Preset**:
+A named, complete configuration of the ETF rotation strategy — every engine
+and backtest knob in one dict (`etf_lab.PRESETS`). Three exist: `mid`
+(the monthly dual-momentum engine, research baseline), `hybrid` (mid +
+regime sleeve — the live scan behavior), `short` (the weekly §9 preset at
+its champion cell). The live service imports its defaults from PRESETS, so
+research runs and production share one source; hand-mirrored preset copies
+are how the 2026-09 grid-search drift happened.
+_Avoid_: Profile, config snapshot, parameter set, BASE/BASELINE.
+
+**Sleeve** (defensive sleeve, 防守袖):
+The equal-weight gold/treasury/dividend trio a preset holds while the regime
+proxy (510300) closes below its MA250 at month-end. Sleeve names are exempt
+from stop management — they enter and exit purely on regime flips.
+_Avoid_: Safe haven, parking basket, cash proxy (that's the money ETF).

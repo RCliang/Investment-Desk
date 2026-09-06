@@ -515,6 +515,12 @@ class EtfBacktestRequest(BaseModel):
     circuit_breaker_drawdown: float = Field(
         0.0, ge=0.0, le=0.5,
         description="组合熔断阈值(0=关闭): 净值自高点回撤超阈值时全清仓并冷却(研究开关)")
+    use_defensive_sleeve: bool = Field(
+        False, description="混合版防守袖: 510300月末收盘低于MA250时, 次月锚点等权持有金/债/红利"
+        "(袖内免止损), 月末确认次月首个交易日生效(实盘扫描默认开启, 回测默认关闭以保持旧口径)")
+    atr_mult: Optional[float] = Field(
+        None, gt=0.5, le=10.0,
+        description="ATR止损倍数(如3.0/4.0); 缺省走预设: 中期/混合=4.0, 短线=3.0")
     strategy_set: str = Field(
         "etf_momentum_rotation",
         description="落库标签: etf_momentum_rotation(中期版) / etf_short_rotation(短线版)")
@@ -559,6 +565,8 @@ def run_etf_backtest(
             abs_window=req.abs_window,
             use_trend_filter=req.use_trend_filter,
             circuit_breaker_drawdown=req.circuit_breaker_drawdown,
+            use_defensive_sleeve=req.use_defensive_sleeve,
+            atr_mult=req.atr_mult,
             strategy_set=req.strategy_set,
         )
     except ValueError as e:
