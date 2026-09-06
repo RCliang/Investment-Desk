@@ -16,7 +16,9 @@ class AnalyzeRequest(BaseModel):
 
 @router.post("/analyze")
 async def analyze(req: AnalyzeRequest, db: Session = Depends(get_db)):
-    cutoff = datetime.now() - timedelta(days=7)
+    # The analysis entity doubles as its own cache: a row younger than
+    # CACHE_TTL_CHAIN is served without re-running the LLM.
+    cutoff = datetime.now() - timedelta(seconds=CACHE_TTL_CHAIN)
     cached = db.query(ChainAnalysis).filter(
         ChainAnalysis.industry == req.industry,
         ChainAnalysis.created_at >= cutoff,

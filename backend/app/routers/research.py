@@ -8,7 +8,7 @@ POST /api/research/download  — 批量下载 PDF 上传 OSS
 import hashlib
 import json
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
@@ -17,7 +17,7 @@ from sqlalchemy.orm import Session
 from app.auth import verify_admin_token
 from app.config import CACHE_TTL_RESEARCH, IWENCAI_API_KEY
 from app.db import get_db
-from app.models.models import DataCache
+from app.services.cache import cache_get, cache_set
 from app.services import oss_service
 from app.services.research_service import (
     download_and_upload_reports,
@@ -29,25 +29,6 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/research", tags=["research"])
 
-
-# ── 缓存 helpers（复用 data_cache 表）──
-
-def _cache_get(db: Session, key: str):
-    cached = db.query(DataCache).filter(DataCache.cache_key == key).first()
-    if cached and cached.expires_at > datetime.now():
-        return json.loads(cached.result_json)
-    return None
-
-
-def _cache_set(db: Session, key: str, data, ttl: int):
-    db.query(DataCache).filter(DataCache.cache_key == key).delete()
-    record = DataCache(
-        cache_key=key,
-        result_json=json.dumps(data, ensure_ascii=False, default=str),
-        expires_at=datetime.now() + timedelta(seconds=ttl),
-    )
-    db.add(record)
-    db.commit()
 
 
 # ═══════════════════════════════════════════════════════════════════
@@ -61,8 +42,7 @@ async def get_reports_by_code(
     db: Session = Depends(get_db),
 ):
     """按股票代码搜索研报（东财 reportapi）"""
-    cache_key = f"research:code:{code}:pages{max_pages}"
-    cached = _cache_get(db, cache_key)
+    cached = cache_get(db, "research", f"code:{code}:pages{max_pages}")
     if cached:
         return cached
 
@@ -73,7 +53,7 @@ async def get_reports_by_code(
         return {"code": code, "total": 0, "reports": [], "error": "upstream_error"}
 
     result = {"code": code, "total": len(reports), "reports": reports}
-    _cache_set(db, cache_key, result, CACHE_TTL_RESEARCH)
+    cache_set(db, "research", f"code:{code}:pages{max_pages}", result, CACHE_TTL_RESEARCH)
     return result
 
 
@@ -92,8 +72,8 @@ async def search_reports(
         raise HTTPException(503, detail="IWENCAI_API_KEY not configured")
 
     kw_hash = hashlib.md5(keyword.encode()).hexdigest()
-    cache_key = f"research:kw:{kw_hash}:s{size}"
-    cached = _cache_get(db, cache_key)
+    kw_key = f"kw:{kw_hash}:s{size}"
+    cached = cache_get(db, "research", kw_key)
     if cached:
         return cached
 
@@ -110,7 +90,7 @@ async def search_reports(
         return {"keyword": keyword, "total": 0, "reports": [], "error": "iwencai_error"}
 
     result = {"keyword": keyword, "total": len(reports), "reports": reports}
-    _cache_set(db, cache_key, result, CACHE_TTL_RESEARCH)
+    cache_set(db, "research", kw_key, result, CACHE_TTL_RESEARCH)
     return result
 
 

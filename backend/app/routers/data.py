@@ -1,34 +1,17 @@
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
+from app.config import CACHE_TTL_FINANCIAL, CACHE_TTL_MARKET
 from app.db import get_db
-from app.models.models import DataCache
+from app.services.cache import cache_get, cache_set
 from app.services.akshare_service import akshare_service
 from app.services.tushare_service import tushare_service
 from app.services.astock_service import astock_service
-from datetime import datetime, timedelta
+from datetime import datetime
 import hashlib
 import json
 
 router = APIRouter(prefix="/api/data", tags=["data"])
-
-
-def _cache_get(db: Session, key: str):
-    cached = db.query(DataCache).filter(DataCache.cache_key == key).first()
-    if cached and cached.expires_at > datetime.now():
-        return json.loads(cached.result_json)
-    return None
-
-
-def _cache_set(db: Session, key: str, data, ttl: int):
-    db.query(DataCache).filter(DataCache.cache_key == key).delete()
-    record = DataCache(
-        cache_key=key,
-        result_json=json.dumps(data, ensure_ascii=False, default=str),
-        expires_at=datetime.now() + timedelta(seconds=ttl),
-    )
-    db.add(record)
-    db.commit()
 
 
 class QueryRequest(BaseModel):
@@ -40,7 +23,7 @@ class QueryRequest(BaseModel):
 @router.post("/query")
 async def query(req: QueryRequest, db: Session = Depends(get_db)):
     cache_key = hashlib.md5(f"{req.source}:{req.action}:{json.dumps(req.params, sort_keys=True)}".encode()).hexdigest()
-    cached = _cache_get(db, cache_key)
+    cached = cache_get(db, "data", cache_key)
     if cached:
         return cached
 
@@ -58,8 +41,11 @@ async def query(req: QueryRequest, db: Session = Depends(get_db)):
         raise HTTPException(400, f"Unknown action: {req.action}")
 
     result = handler(**req.params)
-    ttl = 300 if "hist" in req.action or "realtime" in req.action else 86400
-    _cache_set(db, cache_key, result, ttl)
+    # Same classification rule as before, but wired to the config TTLs
+    # (the hard-coded 300/86400 mirrored CACHE_TTL_MARKET/FINANCIAL).
+    ttl = (CACHE_TTL_MARKET if "hist" in req.action
+           or "realtime" in req.action else CACHE_TTL_FINANCIAL)
+    cache_set(db, "data", cache_key, result, ttl)
     return result
 
 
