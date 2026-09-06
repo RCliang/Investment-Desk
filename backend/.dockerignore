@@ -1,0 +1,6 @@
+# secrets never enter the image — compose's env_file injects them at runtime
+.env
+__pycache__
+*.pyc
+data/
+tests/

@@ -24,7 +24,6 @@ from typing import Optional
 import numpy as np
 import pandas as pd
 from sqlalchemy import select, func, desc, and_
-from sqlalchemy.dialects.sqlite import insert as sqlite_insert
 from sqlalchemy.orm import Session
 
 from app.models.chain_models import DailyBar, MfSignal, Company

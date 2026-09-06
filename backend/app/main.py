@@ -36,11 +36,17 @@ app.include_router(boards.router)
 
 
 def _run_migrations(conn):
-    """SQLite-friendly: create_all 后,补齐 deep_analyses 的新列(老库)。"""
+    """create_all 后,补齐 deep_analyses 的新列(老库)。列探测按方言分支:
+    SQLite 用 PRAGMA,PostgreSQL 用 information_schema。"""
     from sqlalchemy import text  # noqa: F401  (保留与 plan 一致;实际用 exec_driver_sql)
     from app.db import Base  # 局部导入避免循环依赖
     Base.metadata.create_all(conn)
-    cols = [r[1] for r in conn.exec_driver_sql("PRAGMA table_info(deep_analyses)")]
+    if conn.dialect.name == "sqlite":
+        cols = [r[1] for r in conn.exec_driver_sql("PRAGMA table_info(deep_analyses)")]
+    else:
+        cols = [r[0] for r in conn.exec_driver_sql(
+            "SELECT column_name FROM information_schema.columns "
+            "WHERE table_name = 'deep_analyses'")]
     if "analysis_struct_json" not in cols:
         conn.exec_driver_sql("ALTER TABLE deep_analyses ADD COLUMN analysis_struct_json TEXT")
     if "analysis_version" not in cols:
@@ -80,3 +86,7 @@ async def startup_scheduler():
 async def shutdown_scheduler():
     from app.services.scheduler import shutdown_scheduler
     shutdown_scheduler()
+    # Close pooled connections while the loop is still live — an asyncpg
+    # connection disposed after loop close raises "Event loop is closed".
+    from app.db import async_engine
+    await async_engine.dispose()

@@ -1,4 +1,10 @@
 """Shared fixtures for deep-analysis tests."""
+import os
+
+# Tests run on local SQLite regardless of backend/.env's DATABASE_URL —
+# the suite must not depend on the cloud server's availability/latency.
+os.environ.pop("DATABASE_URL", None)
+
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine

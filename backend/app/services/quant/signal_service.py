@@ -26,7 +26,8 @@ from typing import Optional
 
 import pandas as pd
 from sqlalchemy import select, func, and_, case
-from sqlalchemy.dialects.sqlite import insert as sqlite_insert
+from sqlalchemy.dialects import postgresql as _pg_dialect
+from sqlalchemy.dialects import sqlite as _sqlite_dialect
 from sqlalchemy.orm import Session
 
 from app.models.chain_models import (
@@ -153,10 +154,17 @@ def scan_all(db: Session, strategy_set: str = "v1_default",
 
 
 def _upsert_signals(db: Session, rows: list[dict]) -> None:
-    """Idempotent upsert into chain_signals on (ticker, date, strategy_set)."""
+    """Idempotent upsert into chain_signals on (ticker, date, strategy_set).
+
+    Dialect-aware: ON CONFLICT upsert compiles for the active engine
+    (sqlite locally, postgresql on the cloud DATABASE_URL).
+    """
     if not rows:
         return
-    stmt = sqlite_insert(Signal).values(rows)
+    insert = (_pg_dialect.insert
+              if db.get_bind().dialect.name == "postgresql"
+              else _sqlite_dialect.insert)
+    stmt = insert(Signal).values(rows)
     update_cols = {
         "composite_score": stmt.excluded.composite_score,
         "action": stmt.excluded.action,
