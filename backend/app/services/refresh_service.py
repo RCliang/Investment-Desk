@@ -6,7 +6,15 @@ Three callers reach this module:
   - CLI (app.services.refresh_cli)       — trigger='cli'
 
 All three paths converge here so logging, error handling, and concurrency
-checks are uniform. Each public refresh_* function:
+checks are uniform. The ONE inventory of refresh types is REFRESH_REGISTRY:
+per type it carries the backfill script, loader, timeout, cron cadence and
+refresh_all ordering. Router/CLI derive their valid-type lists and the
+scheduler derives its cron jobs from it — adding a type is one registry
+row, and the "list of types" can no longer drift between consumers
+(architecture review 2026-09-06, candidate 2; the API list had already
+drifted and lacked quotes_history/fund_flow/etf_klines).
+
+Each refresh run:
 
   1. Checks for an existing 'running' row of the same type (skip if found).
   2. Inserts a new chain_refresh_log row with status='running'.
@@ -24,9 +32,10 @@ import logging
 import os
 import subprocess
 import sys
+from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Literal
+from typing import Literal, Optional
 
 from sqlalchemy.orm import Session
 
@@ -37,6 +46,8 @@ log = logging.getLogger(__name__)
 BACKEND_DIR = Path(__file__).resolve().parent.parent.parent  # backend/
 SCRIPTS_DIR = BACKEND_DIR / "scripts"
 
+# Kept as a static Literal for type-checkers; test_refresh_registry pins
+# it to the registry keys so it cannot drift either.
 RefreshType = Literal[
     "quotes", "finance", "reports", "concepts",
     "lockup", "holders", "margin", "quotes_history", "fund_flow",
@@ -44,35 +55,100 @@ RefreshType = Literal[
 ]
 Trigger = Literal["manual", "scheduler", "cli"]
 
-# type → (script path, loader function name in load_seed_to_db, extra args)
-# extra_args: CLI flags appended to the backfill script invocation.
-# quotes_history uses --incremental so the daily job only fetches today's
-# bar per ticker (full 5y history is a one-off backfill done manually).
-_TYPE_MAP: dict[str, tuple[str, str, list[str]]] = {
-    "quotes":         ("backfill_tencent_quotes.py",     "load_quotes",      []),
-    "finance":        ("backfill_mootdx_finance.py",     "load_finance",     []),
-    "reports":        ("backfill_em_reports.py",         "load_reports",     []),
-    "concepts":       ("backfill_em_concept_blocks.py",  "load_concept_blocks", []),
-    "lockup":         ("backfill_em_lockup_expiry.py",   "load_lockup",      []),
-    "holders":        ("backfill_em_holder_num.py",      "load_holder_num",  []),
-    "margin":         ("backfill_em_margin_trading.py",  "load_margin",      []),
-    "quotes_history": ("backfill_mootdx_klines.py",      "load_daily_bars",  ["--incremental"]),
-    "fund_flow":      ("backfill_em_fund_flow.py",       "load_fund_flow",   ["--incremental"]),
-    "etf_klines":     ("backfill_etf_klines.py",         "load_etf_daily_bars", ["--incremental"]),
+
+@dataclass(frozen=True)
+class RefreshSpec:
+    """Everything the three consumers need to know about one refresh type.
+
+    cron entries are CronTrigger kwargs (Asia/Shanghai is applied by the
+    scheduler); empty tuple = manual/CLI only. all_order is the position
+    in refresh_all's fast→slow sequence (None = excluded from 'all').
+    """
+
+    script: str                          # backfill script in scripts/
+    loader: str                          # loader fn name in load_seed_to_db
+    timeout: int                         # subprocess timeout (seconds)
+    extra_args: tuple[str, ...] = ()     # CLI flags for the backfill script
+    cron: tuple[dict, ...] = field(default=())
+    all_order: Optional[int] = None
+    desc: str = ""
+
+
+# ── The ONE inventory ───────────────────────────────────────────────────────
+# quotes uses two cron windows (APScheduler CronTrigger can't OR): the
+# 9:00-15:00 session plus the 15:00-15:30 closing auction tail.
+# quotes_history / fund_flow / etf_klines run with --incremental so the
+# daily job only fetches recent bars (full history is a one-off manual
+# backfill of the same scripts).
+REFRESH_REGISTRY: dict[str, RefreshSpec] = {
+    "quotes": RefreshSpec(
+        script="backfill_tencent_quotes.py", loader="load_quotes",
+        timeout=60, all_order=1, desc="实时行情快照(腾讯)",
+        cron=({"day_of_week": "mon-fri", "hour": "9-14", "minute": "*/5"},
+              {"day_of_week": "mon-fri", "hour": "15", "minute": "0-30"}),
+    ),
+    "quotes_history": RefreshSpec(
+        script="backfill_mootdx_klines.py", loader="load_daily_bars",
+        timeout=300, extra_args=("--incremental",), all_order=2,
+        desc="日K线增量(mootdx TCP, 每标的当日一根)",
+        cron=({"day_of_week": "mon-fri", "hour": "16", "minute": "30"},),
+    ),
+    "etf_klines": RefreshSpec(
+        script="backfill_etf_klines.py", loader="load_etf_daily_bars",
+        timeout=300, extra_args=("--incremental",),
+        desc="ETF池后复权K线增量(EM push2his)",
+        cron=({"day_of_week": "mon-fri", "hour": "16", "minute": "35"},),
+    ),
+    "margin": RefreshSpec(
+        script="backfill_em_margin_trading.py", loader="load_margin",
+        timeout=900, all_order=3, desc="融资融券余额(EM)",
+        cron=({"day_of_week": "mon-fri", "hour": "15", "minute": "30"},),
+    ),
+    "fund_flow": RefreshSpec(
+        script="backfill_em_fund_flow.py", loader="load_fund_flow",
+        timeout=600, extra_args=("--incremental",),
+        desc="个股资金流增量(EM push2his, ~5日/标的)",
+        cron=({"day_of_week": "mon-fri", "hour": "16", "minute": "40"},),
+    ),
+    "lockup": RefreshSpec(
+        script="backfill_em_lockup_expiry.py", loader="load_lockup",
+        timeout=900, all_order=4, desc="解禁日历(EM)",
+        cron=({"day_of_week": "sun", "hour": "5"},),
+    ),
+    "holders": RefreshSpec(
+        script="backfill_em_holder_num.py", loader="load_holder_num",
+        timeout=900, all_order=5, desc="股东户数(EM)",
+        cron=({"day": "1", "hour": "3"},),
+    ),
+    "reports": RefreshSpec(
+        script="backfill_em_reports.py", loader="load_reports",
+        timeout=900, all_order=6, desc="研报列表(EM)",
+        cron=({"day_of_week": "sun", "hour": "4"},),
+    ),
+    "concepts": RefreshSpec(
+        script="backfill_em_concept_blocks.py", loader="load_concept_blocks",
+        timeout=900, all_order=7, desc="概念板块成分(EM)",
+        cron=({"day": "1", "hour": "4"},),
+    ),
+    "finance": RefreshSpec(
+        script="backfill_mootdx_finance.py", loader="load_finance",
+        timeout=600, all_order=8, desc="财务三表(F10)",
+        cron=({"day_of_week": "sun", "hour": "3"},),
+    ),
 }
 
-# Per-type subprocess timeout (seconds). Generous upper bound; scripts
-# have their own internal rate-limit sleeps that drive actual runtime.
-_TIMEOUTS: dict[str, int] = {
-    "quotes": 60, "finance": 600, "reports": 900, "concepts": 900,
-    "lockup": 900, "holders": 900, "margin": 900,
-    # mootdx TCP, 321 tickers × 1 page each, ~0.1s gap = ~40s + overhead.
-    "quotes_history": 300,
-    # push2his, ~70 pool tickers × 1.7s throttle = ~2 min + retries.
-    "fund_flow": 600,
-    # push2his kline, ~17 ETFs × ~1.3s throttle ≈ 25s; buffer for retries.
-    "etf_klines": 300,
-}
+
+def valid_types() -> list[str]:
+    """Triggerable type names, sorted (includes 'all')."""
+    return sorted([*REFRESH_REGISTRY, "all"])
+
+
+def all_sequence() -> list[str]:
+    """refresh_all's execution order: fast → slow (registry all_order)."""
+    return [t for t, _ in
+            sorted(((t, s.all_order) for t, s in REFRESH_REGISTRY.items()
+                    if s.all_order is not None),
+                   key=lambda kv: kv[1])]
 
 
 def is_running(session: Session, refresh_type: str) -> bool:
@@ -93,10 +169,10 @@ def _sweep_stale(session: Session, refresh_type: str | None = None) -> int:
     Returns the number of rows swept.
     """
     now = datetime.utcnow()
-    types = [refresh_type] if refresh_type else list(_TYPE_MAP.keys())
+    types = [refresh_type] if refresh_type else list(REFRESH_REGISTRY.keys())
     swept = 0
     for t in types:
-        timeout = _TIMEOUTS.get(t, 900)
+        timeout = REFRESH_REGISTRY[t].timeout
         threshold = now - timedelta(seconds=timeout * 2)
         stale_rows = session.query(ChainRefreshLog).filter(
             ChainRefreshLog.refresh_type == t,
@@ -140,7 +216,7 @@ def freshness(session: Session) -> dict:
     now = datetime.utcnow()
     seven_days_ago = now - timedelta(days=7)
 
-    for t in _TYPE_MAP:
+    for t in REFRESH_REGISTRY:
         latest_success = session.query(ChainRefreshLog).filter_by(
             refresh_type=t, status="succeeded"
         ).order_by(ChainRefreshLog.started_at.desc()).first()
@@ -159,7 +235,7 @@ def freshness(session: Session) -> dict:
 
     # Most recent failure per type within last 7 days
     failed_recent: dict[str, str] = {}
-    for t in _TYPE_MAP:
+    for t in REFRESH_REGISTRY:
         recent_fail = session.query(ChainRefreshLog).filter(
             ChainRefreshLog.refresh_type == t,
             ChainRefreshLog.status == "failed",
@@ -174,14 +250,16 @@ def freshness(session: Session) -> dict:
 
 def _run_one(session: Session, refresh_type: str, trigger: Trigger) -> ChainRefreshLog:
     """Internal: run a single (non-'all') refresh. Inserts log row, raises on failure."""
-    if refresh_type not in _TYPE_MAP:
+    if refresh_type not in REFRESH_REGISTRY:
         raise ValueError(f"unknown refresh type: {refresh_type}")
 
     if is_running(session, refresh_type):
         # Concurrency conflict — caller (HTTP) turns this into 409.
         raise RefreshConflictError(refresh_type)
 
-    script_name, loader_name, extra_args = _TYPE_MAP[refresh_type]
+    spec = REFRESH_REGISTRY[refresh_type]
+    script_name, loader_name = spec.script, spec.loader
+    extra_args = list(spec.extra_args)
     script_path = SCRIPTS_DIR / script_name
 
     log_row = ChainRefreshLog(
@@ -213,7 +291,7 @@ def _run_one(session: Session, refresh_type: str, trigger: Trigger) -> ChainRefr
             encoding="utf-8",
             errors="replace",
             env=env,
-            timeout=_TIMEOUTS[refresh_type],
+            timeout=spec.timeout,
         )
         if result.returncode != 0:
             tail = (result.stderr or result.stdout or "")[-500:]
@@ -248,62 +326,16 @@ def _run_one(session: Session, refresh_type: str, trigger: Trigger) -> ChainRefr
         raise
 
 
-def refresh_quotes(session: Session, trigger: Trigger = "manual") -> ChainRefreshLog:
-    return _run_one(session, "quotes", trigger)
-
-def refresh_finance(session: Session, trigger: Trigger = "manual") -> ChainRefreshLog:
-    return _run_one(session, "finance", trigger)
-
-def refresh_reports(session: Session, trigger: Trigger = "manual") -> ChainRefreshLog:
-    return _run_one(session, "reports", trigger)
-
-def refresh_concepts(session: Session, trigger: Trigger = "manual") -> ChainRefreshLog:
-    return _run_one(session, "concepts", trigger)
-
-def refresh_lockup(session: Session, trigger: Trigger = "manual") -> ChainRefreshLog:
-    return _run_one(session, "lockup", trigger)
-
-def refresh_holders(session: Session, trigger: Trigger = "manual") -> ChainRefreshLog:
-    return _run_one(session, "holders", trigger)
-
-def refresh_margin(session: Session, trigger: Trigger = "manual") -> ChainRefreshLog:
-    return _run_one(session, "margin", trigger)
-
-def refresh_quotes_history(session: Session, trigger: Trigger = "manual") -> ChainRefreshLog:
-    """Incremental daily-bar refresh via mootdx (--incremental flag).
-
-    Only fetches today's bar per ticker; the full 5y history is a one-off
-    backfill run manually via `python scripts/backfill_mootdx_klines.py`.
-    """
-    return _run_one(session, "quotes_history", trigger)
-
-def refresh_fund_flow(session: Session, trigger: Trigger = "manual") -> ChainRefreshLog:
-    """Incremental fund-flow refresh via EM push2his (--incremental flag).
-
-    Only fetches the last ~5 days per pool ticker; the 120-day history is
-    a one-off full backfill via `python scripts/backfill_em_fund_flow.py`.
-    """
-    return _run_one(session, "fund_flow", trigger)
-
-def refresh_etf_klines(session: Session, trigger: Trigger = "manual") -> ChainRefreshLog:
-    """ETF pool daily bars via EM push2his (--incremental flag, hfq).
-
-    Incremental grabs the last ~30 bars per ETF; the full listing history
-    is a one-off via `python scripts/backfill_etf_klines.py`.
-    """
-    return _run_one(session, "etf_klines", trigger)
-
 def refresh_all(session: Session, trigger: Trigger = "manual") -> list[ChainRefreshLog]:
     """Sequentially run all refreshes in order: fast → slow.
 
-    Order: quotes → quotes_history → margin → lockup → holders → reports → concepts → finance.
-    Returns the list of per-type log rows. Continues on per-type failure
-    (each failure is logged; does not abort the sequence).
+    Order comes from the registry's all_order (quotes → quotes_history →
+    margin → lockup → holders → reports → concepts → finance). Returns the
+    list of per-type log rows. Continues on per-type failure (each failure
+    is logged; does not abort the sequence).
     """
-    order = ["quotes", "quotes_history", "margin", "lockup", "holders",
-             "reports", "concepts", "finance"]
     results: list[ChainRefreshLog] = []
-    for t in order:
+    for t in all_sequence():
         try:
             results.append(_run_one(session, t, trigger))
         except RefreshConflictError:
@@ -314,26 +346,13 @@ def refresh_all(session: Session, trigger: Trigger = "manual") -> list[ChainRefr
     return results
 
 
-_REFRESH_FUNCTIONS = {
-    "quotes": refresh_quotes,
-    "finance": refresh_finance,
-    "reports": refresh_reports,
-    "concepts": refresh_concepts,
-    "lockup": refresh_lockup,
-    "holders": refresh_holders,
-    "margin": refresh_margin,
-    "quotes_history": refresh_quotes_history,
-    "fund_flow": refresh_fund_flow,
-    "etf_klines": refresh_etf_klines,
-    "all": refresh_all,
-}
-
-
 def dispatch(refresh_type: str, session: Session, trigger: Trigger = "manual"):
-    """Look up the refresh function by name. Used by router + CLI + scheduler."""
-    if refresh_type not in _REFRESH_FUNCTIONS:
+    """Look up and run the refresh by name. Used by router + CLI + scheduler."""
+    if refresh_type == "all":
+        return refresh_all(session, trigger=trigger)
+    if refresh_type not in REFRESH_REGISTRY:
         raise ValueError(f"unknown refresh type: {refresh_type}")
-    return _REFRESH_FUNCTIONS[refresh_type](session, trigger=trigger)
+    return _run_one(session, refresh_type, trigger)
 
 
 class RefreshConflictError(Exception):

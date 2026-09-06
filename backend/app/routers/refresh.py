@@ -81,9 +81,12 @@ def trigger_refresh(refresh_type: str, db: Session = Depends(get_db)):
 
     - `quotes`: runs synchronously, returns 200 with final result.
     - other types + `all`: enqueues async, returns 202 with job_id.
+
+    Valid types derive from refresh_service.REFRESH_REGISTRY (the ONE
+    inventory) — previously this set was hand-maintained and had drifted,
+    lacking quotes_history/fund_flow/etf_klines which the scheduler runs.
     """
-    valid_types = {"quotes", "finance", "reports", "concepts",
-                   "lockup", "holders", "margin", "all"}
+    valid_types = set(refresh_service.valid_types())
     if refresh_type not in valid_types:
         raise HTTPException(status_code=400,
                             detail=f"unknown type: {refresh_type}. "
@@ -96,8 +99,7 @@ def trigger_refresh(refresh_type: str, db: Session = Depends(get_db)):
 
     # For 'all', also check no sub-type is running
     if refresh_type == "all":
-        for sub in ["quotes", "finance", "reports", "concepts",
-                    "lockup", "holders", "margin"]:
+        for sub in refresh_service.all_sequence():
             if refresh_service.is_running(db, sub):
                 raise HTTPException(
                     status_code=409,

@@ -21,9 +21,8 @@ from app.db import SessionLocal
 from app.services import refresh_service
 
 
-VALID_TYPES = ["quotes", "finance", "reports", "concepts",
-               "lockup", "holders", "margin", "quotes_history",
-               "fund_flow", "etf_klines", "all"]
+# The ONE inventory is refresh_service.REFRESH_REGISTRY.
+VALID_TYPES = refresh_service.valid_types()
 
 
 def cmd_run(refresh_type: str) -> int:

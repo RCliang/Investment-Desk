@@ -3,14 +3,11 @@
 Started on FastAPI startup, gracefully shut down on FastAPI shutdown.
 Each job calls refresh_service.dispatch(<type>, session, trigger='scheduler').
 
-Cadences (timezone Asia/Shanghai):
-  quotes   mon-fri 9:30-15:00 every 5 min  (two cron triggers; APScheduler can't OR)
-  margin   mon-fri 15:30
-  finance  sun 03:00
-  reports  sun 04:00
-  lockup   sun 05:00
-  holders  1st of month 03:00
-  concepts 1st of month 04:00
+Backfill-type cadences live in refresh_service.REFRESH_REGISTRY (the ONE
+inventory — script, loader, timeout and cron together). The scan jobs
+(signal/mf/rotation/boards/etf, no backfill subprocess) are wired below
+( timezone Asia/Shanghai): signal 17:00, mf 17:30, rotation 17:40,
+boards 17:45, etf_scan 17:50 on trading days.
 
 If uvicorn restarts, schedules reset (in-process scheduler). Acceptable
 for a personal tool; documented in spec §Risks.
@@ -32,25 +29,7 @@ log = logging.getLogger(__name__)
 
 _scheduler: Optional[BackgroundScheduler] = None
 
-# quotes: two triggers because APScheduler CronTrigger doesn't support OR.
-#   1. mon-fri 09:00-14:59 every 5 min
-#   2. mon-fri 15:00-15:30 every 5 min
-_QUOTES_TRIGGERS = [
-    CronTrigger(day_of_week="mon-fri", hour="9-14", minute="*/5",
-                timezone="Asia/Shanghai"),
-    CronTrigger(day_of_week="mon-fri", hour="15", minute="0-30",
-                timezone="Asia/Shanghai"),
-]
-_MARGIN_TRIGGER = CronTrigger(day_of_week="mon-fri", hour="15", minute="30",
-                              timezone="Asia/Shanghai")
-# Daily-bar incremental refresh: after close + after margin, mootdx TCP.
-# Only fetches today's bar per ticker via --incremental flag.
-_QUOTES_HISTORY_TRIGGER = CronTrigger(day_of_week="mon-fri", hour="16", minute="30",
-                                      timezone="Asia/Shanghai")
-# Fund-flow incremental refresh (EM push2his, ~70 pool tickers × ~1.7s):
-# after the daily-bar refresh lands, before the signal scans consume it.
-_FUND_FLOW_TRIGGER = CronTrigger(day_of_week="mon-fri", hour="16", minute="40",
-                                 timezone="Asia/Shanghai")
+# ── Scan-job triggers (no backfill subprocess — not registry types) ─────────
 # Quant signal scan: 30 min after the daily-bar refresh lands, recompute
 # all signals so the /api/quant/signals endpoint is fresh next morning.
 _SIGNAL_SCAN_TRIGGER = CronTrigger(day_of_week="mon-fri", hour="17", minute="00",
@@ -71,25 +50,11 @@ _ROTATION_SCAN_TRIGGER = CronTrigger(day_of_week="mon-fri", hour="17", minute="4
 # lifecycle tags. Aborts loudly if EM is IP-blocked; nothing degrades.
 _BOARDS_REFRESH_TRIGGER = CronTrigger(day_of_week="mon-fri", hour="17", minute="45",
                                       timezone="Asia/Shanghai")
-# ETF kline incremental refresh: after the stock daily bars land (16:30),
-# pulls the pool's ~17 hfq bars from EM push2his (throttled, one request
-# per ETF — tiny volume, far below the IP-block thresholds).
-_ETF_KLINES_TRIGGER = CronTrigger(day_of_week="mon-fri", hour="16", minute="35",
-                                  timezone="Asia/Shanghai")
 # ETF dual-momentum scan: after all evening scans, persists the pool's
 # momentum ranking + target portfolio into chain_etf_signals.
 _ETF_SCAN_TRIGGER = CronTrigger(day_of_week="mon-fri", hour="17", minute="50",
                                 timezone="Asia/Shanghai")
-_FINANCE_TRIGGER = CronTrigger(day_of_week="sun", hour="3",
-                               timezone="Asia/Shanghai")
-_REPORTS_TRIGGER = CronTrigger(day_of_week="sun", hour="4",
-                               timezone="Asia/Shanghai")
-_LOCKUP_TRIGGER = CronTrigger(day_of_week="sun", hour="5",
-                              timezone="Asia/Shanghai")
-_HOLDERS_TRIGGER = CronTrigger(day="1", hour="3",
-                               timezone="Asia/Shanghai")
-_CONCEPTS_TRIGGER = CronTrigger(day="1", hour="4",
-                                timezone="Asia/Shanghai")
+
 
 
 def _run_refresh(refresh_type: str) -> None:
@@ -215,29 +180,17 @@ def start_scheduler() -> None:
         },
     )
 
-    # Register quotes with two triggers (APScheduler supports multiple per job-id)
-    for i, trig in enumerate(_QUOTES_TRIGGERS):
-        _scheduler.add_job(
-            _run_refresh, trig,
-            args=["quotes"], id=f"quotes_{i}",
-            replace_existing=True,
-        )
-    for type_name, trig in [
-        ("margin",         _MARGIN_TRIGGER),
-        ("quotes_history", _QUOTES_HISTORY_TRIGGER),
-        ("etf_klines",     _ETF_KLINES_TRIGGER),
-        ("fund_flow",      _FUND_FLOW_TRIGGER),
-        ("finance",        _FINANCE_TRIGGER),
-        ("reports",        _REPORTS_TRIGGER),
-        ("lockup",         _LOCKUP_TRIGGER),
-        ("holders",        _HOLDERS_TRIGGER),
-        ("concepts",       _CONCEPTS_TRIGGER),
-    ]:
-        _scheduler.add_job(
-            _run_refresh, trig,
-            args=[type_name], id=type_name,
-            replace_existing=True,
-        )
+    # Backfill-type jobs: cron specs come straight from the registry
+    # (quotes carries two windows → job ids quotes_0 / quotes_1).
+    for type_name, spec in refresh_service.REFRESH_REGISTRY.items():
+        for i, cron_kw in enumerate(spec.cron):
+            _scheduler.add_job(
+                _run_refresh,
+                CronTrigger(**cron_kw, timezone="Asia/Shanghai"),
+                args=[type_name],
+                id=type_name if len(spec.cron) == 1 else f"{type_name}_{i}",
+                replace_existing=True,
+            )
 
     # Quant signal scan — separate handler (no backfill subprocess).
     _scheduler.add_job(
